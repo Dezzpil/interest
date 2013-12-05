@@ -1,0 +1,62 @@
+{
+    "name": "Crystal Interest",
+    "version": "0.5",
+    "path" : "/home/crystal-crawler/",
+    "maxYields" : 3,
+
+    "request" : {
+        "redirectDeep" : 3,
+        "timeoutInMS" : 10000,
+        "codes" : {
+            "abbruptly" : "990",
+            "maxdeep" : "991",
+            "timeout" : "992",
+            "empty" : "993"
+        }
+    },
+
+    "debug" : 1,
+    "eachLinkDelay" : 500,
+    "eachIterationDelay" : 10000,
+    "codes" : {
+        "badDomain" : "980"
+    },
+
+    "mongo" : {
+        "host" : "localhost",
+        "port" : 27017,
+        "db" : "crawler",
+        "password" : "",
+        "username" : "",
+        "reconnectTimeout" : 10000
+    },
+
+    "mysql" : {
+        "host" : "alpha.crystalteam.ru",
+        "user" : "test",
+        "password": "123456",
+        "dbName" : "Crawler",
+        "tableName" : "domain",
+        "debug" : false,
+        "options" : {
+            "maxProcessLimit" : 100,
+            "timeToReprocessInSec" : 86400,
+            "timeOutForRetryInSec" : 60,
+            "reconnectAfterMS" : 2000
+        }
+    },
+
+    "analyzer" : {
+        "path" : "/home/crystal-crawler/",
+        "version" : "0.3",
+        "fileName" : "proj",
+        "maxInstances" : 100,
+        "killSignal" : "SIGINT"
+    },
+
+    "logs" : {
+        "path" : "logs/",
+        "fileExt" : ".log",
+        "tableName" : "log"
+    }
+}
