@@ -1,0 +1,3 @@
+[submodule "analyzer"]
+	path = analyzer
+	url = git@gitlab.crystalteam.ru:n.orlov/analyzer-crystal-interest.git
