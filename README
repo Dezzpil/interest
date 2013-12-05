@@ -1,0 +1,27 @@
+
+Crystal Interest Bot
+Бот обходит ссылки из белого списка сайтов и пытается обнаружить насколько изменились страницы
+с момента последнего прохода
+
+
+Перенос Crystal Interest на сервер
+
+Подготовка
+
+NodeJS
+выбрать установку под систему
+https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager
+
+MongoDB
+выбрать установку под систему
+http://www.mongodb.org/downloads
+
+Настройка
+
+После пуша файлов в репозиторий, необходимо сделать:
+
+npm install
+cp config.example.json configs/config.json
+
+и в onfigs/config.json прописать правильные пути для подключения и работы бота.
+
