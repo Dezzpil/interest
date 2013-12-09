@@ -49,12 +49,14 @@ function mysqlDriver() {
 
     this.links = function(pid, callback, errorCallback) {
 
+        loggers.file.info('MYSQL - getting links...');
+
         mysqlConnection.query(
             'UPDATE ' + config.dbName + '.' + config.tableName + ' set idProcess=' + pid +
                 ' WHERE ' +
                     'idProcess=0 ' +
-                    '&& UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(lastTest) > ' + (config.options.timeToReprocessInSec * 100) +
-                    '&& lastTest <= lastRechange ' +
+                    '&& UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(lastTest) > ' + (config.options.timeToReprocessInSec) +
+                    '&& UNIX_TIMESTAMP(lastTest) <= UNIX_TIMESTAMP(lastRechange) ' +
                 ' ORDER BY lastTest ASC' +
                 ' LIMIT ' + config.options.maxProcessLimit,
             function(err, rows) {

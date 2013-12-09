@@ -55,8 +55,7 @@
     },
 
     "logs" : {
-        "path" : "logs/",
-        "fileExt" : ".log",
-        "tableName" : "log"
+        "mode" : "modest",
+        "memoryLogTable" : "log"
     }
 }
