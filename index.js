@@ -60,7 +60,10 @@ function init() {
         .setRequestManager(function(guideBook) {
             requestManager.run(guideBook);
         })
-        .setOnIterateFin(function() {
+        .setOnIterateFin(function(guide) {
+            mongo.driver.saveBatchInfo(guide.getIdList(), botPID, function(err) {
+                if (err) botLoggers.console.info('MongoDB error : ', err);
+            });
             botLoggers.mongo.info(heapDiff.end());
         });
 
@@ -73,6 +76,7 @@ main.run();
 process.on('uncaughtException', function(err) {
 
     // если что-то отвалилось внезапно
+    // бот тихо продолжает работать дальше
     botLoggers.file.info('Caught exception: ' + err);
 
 });

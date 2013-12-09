@@ -122,8 +122,8 @@ function model() {
                         );
                     }
 
-                    mongo.saveNewData(link, botPID, responseBody, function(err, impress){
-                        if (err) loggers.file.info('%d IMPRESS HASN`T SAVED, ', idD, err);
+                    mongo.saveNewData(guideBook, botPID, responseBody, function(err, impress){
+                        if (err) loggers.file.info('%d MONGO ERROR (impress saving) : ', idD, err);
                         else loggers.file.info('%d IMPRESS SAVED', idD);
                     });
 
@@ -155,16 +155,17 @@ function model() {
 
 
         // предыдущие данные
-        mongo.findPrevData(link, function(result) {
+        mongo.findPrevData(idD, function(err, result) {
 
-            if (result.length) {
+            if (err) loggers.file.info('%d MONGO ERROR (find prev data) : ', idD, err);
+
+            if (result && result.length) {
 
                 try {
                     analyzer.write(result[0].content);
                     loggers.file.info('%d GOT PREVIOUS DATA', idD);
                 } catch (e) {
                     loggers.file.error('%d PREVIOUS DATA IS BAD', idD, e);
-
                     mysql.setStatusForLink(idD, statusCode, function(err, rows) {
                         loggers.file.info('%d MYSQL ROW UPDATED WITHOUT ANALYZING', idD);
                         guideBook.markLink();

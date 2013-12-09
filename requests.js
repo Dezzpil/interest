@@ -194,7 +194,7 @@ function requestsManager() {
                 return redirect(response, guideBook);
             }
 
-            if ( ! isBadStatusCode(guideBook.getLinkData().statusCode + '')) {
+            if (isBadStatusCode(guideBook.getLinkData().statusCode + '')) {
                 // проверяем какой код был у этой ссылки
                 mysql.setLinkRecovered(idD, statusCode, function(err, rows) {
                     if (err) loggers.console.error(err);

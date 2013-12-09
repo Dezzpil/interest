@@ -9,7 +9,7 @@ function forge(rows, loggers) {
 function LinkGuide(rows, loggers) {
 
     var i,
-        index,
+        index = 0,
         linkMap = {},
         linkListTmp = [], // для постоянного unshifta
         linkList = [], // для сравнения (не должен изменяться)
@@ -30,8 +30,6 @@ function LinkGuide(rows, loggers) {
     }
 
     delete(i);
-    index = -1;
-
 
     this.next = function() {
         index++;
@@ -40,6 +38,10 @@ function LinkGuide(rows, loggers) {
 
     this.isEmpty = function() {
         return (linkListTmp.length == 0);
+    };
+
+    this.getIdList = function() {
+        return linkIds;
     };
 
     this.getList = function() {
@@ -109,6 +111,15 @@ function LinkGuide(rows, loggers) {
         this.getDomain = function() {
             return linkList[i];
         };
+
+        this.getCategory = function() {
+            // до времени пока нет поля для категории в данных
+            if ('category' in linkMap[linkIds[i]]) {
+                return linkMap[linkIds[i]]['category'];
+            } else {
+                return 0;
+            }
+        }
 
         return this;
     }

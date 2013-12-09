@@ -70,7 +70,6 @@ function linksManager() {
         return self;
     };
 
-
     this.stop = function() {
         isTerminated = true;
     };
@@ -124,74 +123,39 @@ function linksManager() {
             // Упреждающая проверка адресов на корректность.
             // На те случаи, когда адреса кончились или
             // состоят из пробелов. Тут можно @todo проверять на корректность адресных имен
-            /*var link = guide.next();
-            while (link) {
 
-                if ( ! link.trim()) {
+            /**
+             * Самая сложная часть для понимания, имхо, в этом куске кода.
+             * Чтобы реализовать асинхронный процесс прохода по ссылкам, полученным из БД
+             * необходимо отказаться от циклов и использовать рекурсию. readLinkList вызывает
+             * сам себя с небольшим интервалом времени после вызова модели. Функция реализующая
+             * модель возвращает ответ очень быстро, так как, все что она делает - инициирует
+             * запрос на переданный из контроллера адрес. Все остальное происходит асинхронно
+             * и делается по мере возникновения соотв. событий :
+             *  - когда приходит заголовки ответа
+             *  - когда приходит тело ответа
+             *  - когда приходят ответы от баз данных
+             *  - когда приходит ответ анализатора
+             *
+             *  Чтобы контроллер был самодостаточен, и понятна логика происходящего,
+             *  рекурсивный вызов контроллера должен помещаться в самом контроллере и происходить
+             *  с некоторой задержкой
+             */
 
-                    mysql.setStatusForLink(guide.getIdD(), config.codes.badDomain, function(rows, err) {
-                        loggers.file.info('%d WARN: bad domain!', guide.getIdD());
-                        guide.markLink(link);
-                    });
+            //guide.next();
+            while (!guide.isEmpty()) {
 
-                    link = guide.next();
-                    continue;
-
-                } else {
-
-                    break;
-
-                }
+                var gb = (new guide.getGuideBook());
+                queue.push(gb, function(err) {
+                    if (err) loggers.console.error(err);
+                });
+                guide.next();
             }
 
-            if (link) {*/
+            self.run(guide);
 
-                /**
-                 * Самая сложная часть для понимания, имхо, в этом куске кода.
-                 * Чтобы реализовать асинхронный процесс прохода по ссылкам, полученным из БД
-                 * необходимо отказаться от циклов и использовать рекурсию. readLinkList вызывает
-                 * сам себя с небольшим интервалом времени после вызова модели. Функция реализующая
-                 * модель возвращает ответ очень быстро, так как, все что она делает - инициирует
-                 * запрос на переданный из контроллера адрес. Все остальное происходит асинхронно
-                 * и делается по мере возникновения соотв. событий :
-                 *  - когда приходит заголовки ответа
-                 *  - когда приходит тело ответа
-                 *  - когда приходят ответы от баз данных
-                 *  - когда приходит ответ анализатора
-                 *
-                 *  Чтобы контроллер был самодостаточен, и понятна логика происходящего,
-                 *  рекурсивный вызов контроллера должен помещаться в самом контроллере и происходить
-                 *  с некоторой задержкой
-                 */
+            return true;
 
-
-                //callback(new (guide.getGuideBook()));
-
-                /**
-                 * Тест - просто обновлеям записи в базе стандартными значениями
-                 * @type {getGuideBook}
-
-                    var gb = (new guide.getGuideBook());
-                    //loggers.console.info(gb.getDomain());
-                    mysql.setStatusForLink(gb.getIdD(), 200, function() {
-                        gb.markLink();
-                    });
-                 */
-
-                guide.next();
-                while (!guide.isEmpty()) {
-
-                    var gb = (new guide.getGuideBook());
-                    queue.push(gb, function(err) {
-                        if (err) loggers.console.error(err);
-                    });
-                    guide.next();
-                }
-
-                self.run(guide);
-
-                return true;
-            //}
         } else {
 
             // Гид запустил процессы по всем адресам, что мы ему указали,
@@ -223,7 +187,7 @@ function linksManager() {
 
                         mysql.clearLinks(botPID, function() {});
 
-                        if (callbackOnIterateFin) callbackOnIterateFin();
+                        if (callbackOnIterateFin) callbackOnIterateFin(guide);
 
                         var delay = setTimeout(function() {
                             clearTimeout(delay);

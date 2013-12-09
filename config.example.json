@@ -2,7 +2,7 @@
     "name": "Crystal Interest",
     "version": "0.5",
     "path" : "/home/crystal-crawler/",
-    "maxYields" : 3,
+    "maxYields" : 2,
 
     "request" : {
         "redirectDeep" : 3,
@@ -25,31 +25,31 @@
     "mongo" : {
         "host" : "localhost",
         "port" : 27017,
-        "db" : "crawler",
+        "db" : "crawler-prototype",
         "password" : "",
         "username" : "",
         "reconnectTimeout" : 10000
     },
 
     "mysql" : {
-        "host" : "alpha.crystalteam.ru",
-        "user" : "test",
-        "password": "123456",
+        "host" : "localhost",
+        "user" : "root",
+        "password": "toor",
         "dbName" : "Crawler",
         "tableName" : "domain",
         "debug" : false,
         "options" : {
-            "maxProcessLimit" : 100,
+            "maxProcessLimit" : 5,
             "timeToReprocessInSec" : 86400,
             "timeOutForRetryInSec" : 60,
-            "reconnectAfterMS" : 2000
+            "reconnectAfterInSec" : 5
         }
     },
 
     "analyzer" : {
-        "path" : "/home/crystal-crawler/",
+        "path" : "analyzer/",
         "version" : "0.3",
-        "fileName" : "proj",
+        "fileName" : "analyzer",
         "maxInstances" : 100,
         "killSignal" : "SIGINT"
     },

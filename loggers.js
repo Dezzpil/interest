@@ -62,10 +62,10 @@ function forge(botPID) {
     });
 
     return {
-        //'file' : loggerFile,
-        //'console' : loggerConsole,
-        'file' : loggerConsole,
-        'console' : loggerFile,
+        'file' : loggerFile,
+        'console' : loggerConsole,
+//        'console' : loggerFile,
+//        'file' : loggerConsole,
         'mongo' : loggerMongo
     }
 

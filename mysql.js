@@ -29,7 +29,7 @@ function mysqlDriver() {
                         clearTimeout(t);
                         self.connect();
                     },
-                    config.options.reconnectAfterMS );       // We introduce a delay before attempting to reconnect,
+                    config.options.reconnectAfterInSec * 1000);       // We introduce a delay before attempting to reconnect,
             } else {
                 loggers.console.info('connection to MYSQL established');
                 loggers.file.info('MYSQL - connection established!');
@@ -53,7 +53,8 @@ function mysqlDriver() {
             'UPDATE ' + config.dbName + '.' + config.tableName + ' set idProcess=' + pid +
                 ' WHERE ' +
                     'idProcess=0 ' +
-                    '&& UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(lastTest) > ' + config.options.timeToReprocessInSec +
+                    '&& UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(lastTest) > ' + (config.options.timeToReprocessInSec * 100) +
+                    '&& lastTest <= lastRechange ' +
                 ' ORDER BY lastTest ASC' +
                 ' LIMIT ' + config.options.maxProcessLimit,
             function(err, rows) {
@@ -66,7 +67,8 @@ function mysqlDriver() {
 
                     mysqlConnection.query(
                         'SELECT * FROM ' + config.dbName + '.' + config.tableName +
-                            ' WHERE idProcess=' + pid,
+                            ' WHERE idProcess=' + pid +
+                            ' ORDER BY lastTest ASC',
                         function(err, rows) {
                             if (err) {
                                 if (errorCallback) errorCallback(err); else loggers.file.error(err);
@@ -79,8 +81,9 @@ function mysqlDriver() {
 
                     var d = setTimeout(function() {
                         clearTimeout(d);
+                        loggers.console.info('MYSQL get no item to process, idle...');
                         self.links(pid, callback, errorCallback);
-                    }, config.options.timeOutForRetryInSec)
+                    }, config.options.timeOutForRetryInSec * 100)
 
                 }
             }
@@ -97,8 +100,6 @@ function mysqlDriver() {
         );
     };
 
-
-    // @todo REFACTOR. DRY!
     this.setStatusForLink = function(idD, statusCode, callback) {
         self.setInfoForLink(idD, statusCode, 0, 0, callback);
     };

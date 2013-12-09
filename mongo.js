@@ -16,10 +16,32 @@ function mongoDriver() {
                 date : Date,
                 pid : Number,
                 url : String,
+                url_id : Number,
                 content : String,
-                length : Number
+                length : Number,
+                category : Number
             })
         ),
+        textModel = mongoose.model('text',
+            mongoose.Schema({
+                date : Date,
+                pid : Number,
+                url : String,
+                url_id : Number,
+                content : String,
+                length : Number,
+                category : Number
+            })
+        ),
+        batchInfoModel = mongoose.model('impress_complete_calendar',
+            mongoose.Schema({
+                date : Date,
+                pid : Number,
+                url_ids : Array
+            })
+        ),
+
+
         connection = null;
 
     self.setLoggers = function(object) {
@@ -57,23 +79,24 @@ function mongoDriver() {
             })
     }
 
-    self.findPrevData = function(link, callback) {
+    self.findPrevData = function(linkId, callback) {
         impressModel.find(
-            { url : link }, null, { sort : { date : -1}, limit : 1 },
+            { url_id : linkId }, null, { sort : { date : -1}, limit : 1 },
             function(err, result) {
-                if (err) loggers.file.log(err);
-                callback(result);
+                callback(err, result);
             }
         );
     };
 
-    self.saveNewData = function(link, pid, content, callback) {
+    self.saveNewData = function(guidebook, pid, content, callback) {
         var impress = new impressModel({
             date : new Date(),
             pid : pid,
-            url : link,
             content : content,
-            length : content.length
+            length : content.length,
+            url : guidebook.getDomain(),
+            url_id : guidebook.getIdD(),
+            category :guidebook.getCategory()
         });
 
         impress.save(function(error, impress) {
@@ -81,6 +104,18 @@ function mongoDriver() {
         });
 
 
+    };
+
+    self.saveBatchInfo = function(linkIdLst, pid, callback) {
+        var impressBatchInfo = new batchInfoModel({
+            date : new Date(),
+            pid : pid,
+            url_ids : linkIdLst
+        });
+
+        impressBatchInfo.save(function(error, batchInfo) {
+            if (callback) callback(error, batchInfo);
+        });
     };
 
 }
