@@ -26,7 +26,7 @@ function analyzeFactory() {
     this.setLoggers = function(object) {
         loggers = object;
         return self;
-    }
+    };
 
     this.getInstances = function() {
         return instances;
@@ -34,7 +34,11 @@ function analyzeFactory() {
 
     this.empty = function() {
         for (var i = 0; i < instances.length; i++) {
-            instances[i].kill(options.killSignal);
+            try {
+                instances[i].kill(options.killSignal);
+            } catch (e) {
+                // instances[i] is undefineed
+            }
         }
 
         instances = [];
@@ -73,18 +77,17 @@ function analyzeFactory() {
                 options.path + options.fileName,
                 function (error, stdout, stderr) {
 
-                    if (error) {
+                    if (error || stderr) {
 
-                        errorCallback(error);
-
-                    } else if (stderr) {
-
-                        errorCallback(stderr);
+                        errorCallback({ 'error' : error, 'stderr' : stderr });
+                        if (stderr) {
+                            self.killAnalyzer();
+                        }
 
                     } else {
 
                         var analyzeResult = parseAnalyzeResult(stdout);
-                        if (readyCallback) readyCallback(analyzeResult);
+                        readyCallback(analyzeResult);
 
                         if (completeCallback) {
                             self.killAnalyzer(completeCallback);
@@ -93,6 +96,7 @@ function analyzeFactory() {
                         }
 
                     }
+
                 }
             );
 
@@ -108,6 +112,10 @@ function analyzeFactory() {
                     //
                 });
 
+            process.stderr.on('data', function(err) {
+                //
+            });
+
             process.on('exit', function() {
                 //
             });
@@ -116,7 +124,8 @@ function analyzeFactory() {
             instances[num] = process;
             count++;
 
-            loggers.file.info("ANALYZER EXEC. COUNT: %d, %d", instances.length, count);
+//            loggers.file.info("# ANALYZER EXEC. COUNT: %d, %d", instances.length, count);
+            return false;
         };
 
         this.write = function(text) {
@@ -124,7 +133,7 @@ function analyzeFactory() {
                 queryString.escape(text) + '\n',
                 'utf8'
             );
-        }
+        };
 
         /**
          *
@@ -133,13 +142,32 @@ function analyzeFactory() {
          */
         function parseAnalyzeResult(outputString) {
 
-            var vals = outputString.split('|');
+            var vals = outputString.split('|'),
+                percent = 1000, badWord = '',
+                result;
 
-            return {
-                'percent' : parseInt(((1000 - vals[0]) / 1000) * 100),
-                'isBad' : false
-            }
+            if (vals[0].length <= 3) percent = parseInt(vals[0]);
+            if (vals[2]) badWord = vals[2].trim();
+
+            result = {
+                'percent' : parseInt(((1000 - percent) / 1000) * 100),
+                'isBad' : vals[1],
+                'badWord' : badWord
+            };
+
+//            loggers.file.info("# GET RAW FROM ANALYZER %s", vals);
+//            loggers.file.info("# GET RESULTS FROM ANALYZER ", result);
+
+            return result;
         }
+
+        this.getNoResult = function() {
+            return {
+                'percent' : 0,
+                'isBad' : false,
+                'badWord' : ''
+            }
+        };
 
         /**
          *

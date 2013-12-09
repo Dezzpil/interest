@@ -19,8 +19,8 @@ var now = new Date(),
     botName = config.name + ' v.' + config.version,
     botPID = parseInt(now.getTime()/1000),
 
-    botLoggers = loggers.forge(botPID),
-    main = null;
+    botLoggers = loggers.forge(botPID);//,
+    //main = null;
 
 function init() {
 
@@ -46,7 +46,7 @@ function init() {
         .setMysqlDriver(mysql.driver)
         .setLoggers(botLoggers)
         .setUserAgent(botName)
-        .setOptions(config.request)
+        .setOptions(config)
         .setModel(analyzeProcess.run);
 
     linkManager = (new links.manager())
@@ -61,7 +61,7 @@ function init() {
             requestManager.run(guideBook);
         })
         .setOnIterateFin(function(guide) {
-            mongo.driver.saveBatchInfo(guide.getIdList(), botPID, function(err) {
+            mongo.driver.saveFerryTask(guide.getIdList(), botPID, function(err) {
                 if (err) botLoggers.console.info('MongoDB error : ', err);
             });
             botLoggers.mongo.info(heapDiff.end());

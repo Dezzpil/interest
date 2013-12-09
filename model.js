@@ -5,14 +5,11 @@
 
 /**
  * Модель (суть работы тут)
- * @param response
- * @param guideBook
  * @returns {boolean}
- * @todo создавать анализатор только
- *      после того, как обнаружится что есть
- *      новые и предыдущие данные
  */
 
+
+// TODO todo создавать анализатор только после того, как обнаружится что есть новые и предыдущие данные
 function model() {
 
     var self = this,
@@ -67,95 +64,103 @@ function model() {
             idD = guideBook.getIdD(),
             responseBody = '';
 
-        // запускаем процесс анализатора, чтобы тот ждал данных для анализа
+        // анализатор
         analyzer = Analyzer.forge();
         analyzer.run(
             function(analyzeResult) { // readyCallback
 
                 loggers.file.info('%d DATA ANALYZED :', idD);
-                mysql.setInfoForLink(
-                    idD, statusCode, analyzeResult.percent, analyzeResult.isBad,
-                    function(err, rows) {
-                        loggers.file.info('%d MYSQL ROW UPDATED AFTER ANALYZING', idD);
-                        guideBook.markLink();
-                    }
-                );
+
+                mongo.saveNewImpress(guideBook, botPID, responseBody, analyzeResult, function(err, impress){
+                    if (err) loggers.file.info('%d MONGO ERROR (impress saving) : ', idD, err);
+                    else loggers.file.info('%d IMPRESS SAVED', idD);
+                });
+
+                guideBook.markLink(function() {
+                    mysql.setInfoForLink(
+                        idD, statusCode, analyzeResult.percent, analyzeResult.isBad,
+                        function(err, rows) {
+                            loggers.file.info('%d MYSQL ROW UPDATED AFTER ANALYZING', idD);
+                        }
+                    );
+                });
 
             },
             function(err) { // errorCallback
 
                 loggers.file.warn('%d ANALYZER ERROR ', idD, err);
 
+                guideBook.markLink(function() {
+                    mysql.setStatusForLink(idD, options.codes.htmlParseError, function(err, rows) {
+                        loggers.file.info('%d MYSQL ROW UPDATED WITH ANALYZER ERROR', idD);
+                    });
+                });
+
             },
             function(err) { // completeCallback
-
-                if (err) {
-                    loggers.file.warn('%d ANALYZER ALREADY KILLED (%s) [%s]', idD, link, err);
-                } else {
-                    loggers.file.info('%d KILL ANALYZER (%s)', idD, link);
-                }
+                loggers.file.warn('%d KILL ANALYZER  (%s)', idD, link, err);
             }
         );
 
+        // http ответ
+        response.on('data', function (content) {
 
-        // новые данные
-        response
-            .on('data', function (content) {
+            responseBody += content;
 
-                responseBody += content;
+        }).on('end', function() {
 
-            })
-            .on('end', function() {
+            loggers.file.info('%d CONTENT RECEIVED, %d length', idD, responseBody.length);
+            if (responseBody.length) {
 
-                loggers.file.info('%d CONTENT RECEIVED, %d length', idD, responseBody.length);
-                if (responseBody.length) {
+                try {
+                    analyzer.write(responseBody);
+                    loggers.file.info('%d ANALYZER WRITE NEW CONTENT', idD);
+                } catch (e) {
+                    loggers.file.info('%d ANALYZER PROCESS ALREADY CLOSED', idD, e);
 
-                    try {
-                        analyzer.write(responseBody);
-                        loggers.file.info('%d ANALYZER WRITE NEW CONTENT', idD);
-                    } catch (e) {
-                        loggers.file.info('%d ANALYZER PROCESS ALREADY CLOSED', idD, e);
-                        mysql.setStatusForLink(idD, statusCode, function(err, rows) {
-                                loggers.file.info('%d MYSQL ROW UPDATED NEW IMPRESS', idD);
-                                guideBook.markLink();
-                            }
-                        );
-                    }
-
-                    mongo.saveNewData(guideBook, botPID, responseBody, function(err, impress){
+                    mongo.saveNewImpress(guideBook, botPID, responseBody, analyzer.getNoResult(), function(err, impress){
                         if (err) loggers.file.info('%d MONGO ERROR (impress saving) : ', idD, err);
                         else loggers.file.info('%d IMPRESS SAVED', idD);
                     });
 
-                } else {
-
-                    mysql.setStatusForLink(idD, options.request.codes.empty, function(err, rows) {
-                        loggers.file.info('%d MYSQL ROW UPDATED WITH EMPTY RESPONSE', idD);
-                        guideBook.markLink();
+                    guideBook.markLink(function(){
+                        mysql.setStatusForLink(idD, statusCode, function(err, rows) {
+                                loggers.file.info('%d MYSQL ROW UPDATED NEW IMPRESS', idD);
+                            }
+                        );
                     });
-
                 }
 
+            } else {
 
-            })
-            .on('close', function() {
-                loggers.file.warn('%d RESPONSE HAVE BEEN CLOSED', idD);
-            })
-            .on('error', function(err) {
-                loggers.file.info('%d HTTP LONG RESPONSE', idD);
+                guideBook.markLink(function() {
+                    mysql.setStatusForLink(idD, options.codes.requestEmpty, function(err, rows) {
+                        loggers.file.info('%d MYSQL ROW UPDATED WITH EMPTY RESPONSE', idD);
+                    });
+                });
+            }
 
-                mysql.setStatusForLink(idD, options.request.codes.abbruptly,
+
+        }).on('close', function() {
+
+            loggers.file.warn('%d RESPONSE HAVE BEEN CLOSED', idD);
+
+        }).on('error', function(err) {
+
+            loggers.file.info('%d HTTP LONG RESPONSE', idD);
+            guideBook.markLink(function() {
+                mysql.setStatusForLink(idD, options.codes.requestAbbruptly,
                     function(err, rows) {
                         if (err) loggers.console.error(err);
                         loggers.file.info('%d MYSQL ROW UPDATED WITH HTTP LONG RESPONSE', idD);
-                        guideBook.markLink();
                     }
                 );
             });
+        });
 
 
         // предыдущие данные
-        mongo.findPrevData(idD, function(err, result) {
+        mongo.getImpress(idD, function(err, result) {
 
             if (err) loggers.file.info('%d MONGO ERROR (find prev data) : ', idD, err);
 
@@ -166,24 +171,25 @@ function model() {
                     loggers.file.info('%d GOT PREVIOUS DATA', idD);
                 } catch (e) {
                     loggers.file.error('%d PREVIOUS DATA IS BAD', idD, e);
-                    mysql.setStatusForLink(idD, statusCode, function(err, rows) {
-                        loggers.file.info('%d MYSQL ROW UPDATED WITHOUT ANALYZING', idD);
-                        guideBook.markLink();
+                    guideBook.markLink(function() {
+                        mysql.setStatusForLink(idD, statusCode, function(err, rows) {
+                            loggers.file.info('%d MYSQL ROW UPDATED WITHOUT ANALYZING (bad data)', idD);
+                        });
                     });
                 }
 
             } else {
 
-                // нет данных для сравнения, сохранаяем результат без них
+                // нет данных для сравнения, но нам нужно узнать о наличии мата все-равно
                 loggers.file.info('%d NO PREVIOUS DATA', idD);
-                analyzer.killAnalyzer(function(err) {
-                    loggers.file.info('%d NO PREVIOUS DATA - KILL ANALYZER MANUALLY', idD);
-                });
+                analyzer.write(responseBody);
 
-                mysql.setStatusForLink(idD, statusCode, function(err, rows) {
-                    loggers.file.info('%d MYSQL ROW UPDATED WITHOUT ANALYZING', idD);
-                    guideBook.markLink();
-                });
+                //guideBook.markLink(function() {
+                    mysql.setStatusForLink(idD, statusCode, function(err, rows) {
+                        loggers.file.info('%d MYSQL ROW UPDATED WITH STOP-LIST ANALYZE (no prev data)', idD);
+                    });
+                //})
+
             }
 
         });

@@ -14,14 +14,10 @@ function requestsManager() {
         mysql = null,
         modelCallback = null,
         stepToDeep = 0,
-        config = {
+        config = {},
+        reqConfig = {
             "redirectDeep" : 3,
-            "timeoutInMS" : 10000,
-            "codes" : {
-                "abbruptly" : "990",
-                "maxdeep" : "991",
-                "timeout" : "992"
-            }
+            "timeoutInMS" : 10000
         },
         reqOptions = {
             hostname: 'bash.im',
@@ -46,6 +42,7 @@ function requestsManager() {
 
     this.setOptions = function(options) {
         config = options;
+        reqConfig = config.request;
         return self;
     };
 
@@ -102,7 +99,7 @@ function requestsManager() {
             var reqOpts =  reqOptions,
                 redirectUrl = url.parse(response.headers.location);
 
-            // коды 300, пробуем перейти по редиректу config.redirectDeep раз
+            // коды 300, пробуем перейти по редиректу reqConfig.redirectDeep раз
             if (redirectUrl.protocol && redirectUrl.protocol == 'https:') {
                 reqOpts.port = 443;
             }
@@ -142,9 +139,9 @@ function requestsManager() {
 
         if (request) {
 
-            if (stepToDeep >= config.redirectDeep) {
+            if (stepToDeep >= reqConfig.redirectDeep) {
 
-                mysql.setStatusForLink(idD, config.codes.maxdeep,
+                mysql.setStatusForLink(idD, config.codes.requestMaxdeep,
                     function(err, rows) {
                         loggers.file.info('%d MYSQL ROW UPDATED WITH REACH MAX DEEP', idD);
                         guideBook.markLink();
@@ -176,14 +173,15 @@ function requestsManager() {
             loggers.file.info('%d REQUEST STATUS : %s', idD, statusCode);
             if (isBadStatusCode(statusCode)) {
 
-                // коды 400 и 500, закрываем лавочку
-                mysql.setStatusForLink(idD, statusCode,
-                    function(err, rows) {
-                        if (err) loggers.console.error(err);
-                        loggers.file.info('%d MYSQL ROW UPDATED WITH BAD STATUS', idD);
-                        guideBook.markLink();
-                    }
-                );
+                guideBook.markLink(function(){
+                    // коды 400 и 500, закрываем лавочку
+                    mysql.setStatusForLink(idD, statusCode,
+                        function(err, rows) {
+                            if (err) loggers.console.error(err);
+                            loggers.file.info('%d MYSQL ROW UPDATED WITH BAD STATUS', idD);
+                        }
+                    );
+                });
 
                 return false;
             }
@@ -203,17 +201,18 @@ function requestsManager() {
             }
 
             response.setTimeout(
-                config.timeoutInMS,
+                reqConfig.timeoutInMS,
                 function(err) {
-                    loggers.file.info('%d HTTP LONG RESPONSE (more %d msec)', idD, config.timeoutInMS);
+                    loggers.file.info('%d HTTP LONG RESPONSE (more %d msec)', idD, reqConfig.timeoutInMS);
 
-                    mysql.setStatusForLink(idD, config.codes.timeout,
-                        function(err, rows) {
-                            if (err) loggers.console.error(err);
-                            loggers.file.info('%d MYSQL ROW UPDATED WITH HTTP LONG RESPONSE', idD);
-                            guideBook.markLink();
-                        }
-                    );
+                    guideBook.markLink(function(){
+                        mysql.setStatusForLink(idD, config.codes.requestTimeout,
+                            function(err, rows) {
+                                if (err) loggers.console.error(err);
+                                loggers.file.info('%d MYSQL ROW UPDATED WITH HTTP LONG RESPONSE', idD);
+                            }
+                        );
+                    });
                 }
             );
 
@@ -227,10 +226,11 @@ function requestsManager() {
                 // @link http://nodejs.org/api/http.html#http_http_request_options_callback
 
                 loggers.file.warn('%d PROBLEM WITH REQUEST : %s ', guideBook.getIdD(), e.message, reqOpts);
-                mysql.setStatusForLink(idD, config.codes.abbruptly, function(err, rows) {
-                    if (err) loggers.console.error(err);
-                    loggers.file.info('%d MYSQL ROW UPDATED WITH ABRUPT HTTP ERROR', idD);
-                    guideBook.markLink();
+                guideBook.markLink(function() {
+                    mysql.setStatusForLink(idD, config.codes.requestAbbruptly, function(err, rows) {
+                        if (err) loggers.console.error(err);
+                        loggers.file.info('%d MYSQL ROW UPDATED WITH ABRUPT HTTP ERROR', idD);
+                    });
                 });
 
                 terminateRequest(req);
@@ -239,18 +239,19 @@ function requestsManager() {
 
 
         req.setTimeout(
-            config.timeoutInMS,
+            reqConfig.timeoutInMS,
             function() {
 
-                loggers.file.info('%d HTTP LONG REQUEST (more %d msec)', idD, config.timeoutInMS);
+                loggers.file.info('%d HTTP LONG REQUEST (more %d msec)', idD, reqConfig.timeoutInMS);
 
-                mysql.setStatusForLink(idD, config.codes.timeout,
-                    function(err, rows) {
-                        if (err) loggers.console.error(err);
-                        loggers.file.info('%d MYSQL ROW UPDATED WITH HTTP LONG RESPONSE', idD);
-                        guideBook.markLink();
-                    }
-                );
+                guideBook.markLink(function(){
+                    mysql.setStatusForLink(idD, config.codes.requestTimeout,
+                        function(err, rows) {
+                            if (err) loggers.console.error(err);
+                            loggers.file.info('%d MYSQL ROW UPDATED WITH HTTP LONG RESPONSE', idD);
+                        }
+                    );
+                });
 
                 terminateRequest(req);
 
@@ -258,6 +259,8 @@ function requestsManager() {
         );
 
         req.end();
+
+        return false;
     }
 
 }

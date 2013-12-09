@@ -1,27 +1,38 @@
 
 Crystal Interest Bot
-Бот обходит ссылки из белого списка сайтов и пытается обнаружить насколько изменились страницы
-с момента последнего прохода
 
+    Бот обходит ссылки из белого списка сайтов и пытается обнаружить насколько изменились страницы
+    с момента последнего прохода.
 
-Перенос Crystal Interest на сервер
+Деплой Crystal Interest Bot
 
-Подготовка
+    NodeJS
+    выбрать установку под систему
+    https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager
 
-NodeJS
-выбрать установку под систему
-https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager
+    MySQL
+    подключается к alpha.crystalteam.ru
+    использует бд Crawler
+    работает с таблицой domain
 
-MongoDB
-выбрать установку под систему
-http://www.mongodb.org/downloads
+    MongoDB
+    выбрать установку под систему
+    http://www.mongodb.org/downloads
+    использует 4 коллекции (все коллекции Mongo создает само (автоматически)):
+        log - для хранения снимков памяти
+        impresses - для хранения тела http ответов
+        impress_complete_calendar - для хранения ссылок проработанных http запросы
+        texts - для хранения текста, извлеченного из тела http запроса
 
-Настройка
+    После пула файлов из репозиторя, необходимо сделать:
 
-После пуша файлов в репозиторий, необходимо сделать:
+        npm install
+        mkdir logs
+        mkdir configs
+        cp config.example.json configs/config.json
+        # в configs/config.json прописать правильные пути для подключения и работы бота.
 
-npm install
-cp config.example.json configs/config.json
+    Бот может писать лог в stdout (значения [ 'modest' 'detail' 'none' ])
 
-и в onfigs/config.json прописать правильные пути для подключения и работы бота.
-
+    Запустить бота достаточно просто:
+        nodejs index.js

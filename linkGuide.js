@@ -15,8 +15,7 @@ function LinkGuide(rows, loggers) {
         linkList = [], // для сравнения (не должен изменяться)
         linkIds = [],
         readyList = [],
-        self = this,
-        loggers = loggers;
+        self = this;
 
     if (rows && rows.length) {
         for (i = 0; i < rows.length; i++) {
@@ -53,9 +52,11 @@ function LinkGuide(rows, loggers) {
     };
 
     this.markLink = function(idD) {
-        if (readyList.indexOf(idD) + 1 > 0) return ;
+        if (readyList.indexOf(idD) + 1 > 0)
+            return false;
 
         readyList.push(idD);
+        return true;
     };
 
     this.getGuideBook = function() {
@@ -76,12 +77,16 @@ function LinkGuide(rows, loggers) {
         /**
          *
          */
-        this.markLink = function() {
-            parent.markLink(this.getIdD());
+        this.markLink = function(callback) {
+            if (parent.markLink(this.getIdD())) {
 
-            finCallback();
-            loggers.console.info('%d ends %s', linkIds[i], linkList[i]);
-            loggers.console.profile(linkList[i]);
+                callback();
+
+                finCallback();
+                loggers.console.info('%d ends %s', linkIds[i], linkList[i]);
+                loggers.console.profile(linkList[i]);
+            }
+
         };
 
         /**
@@ -119,7 +124,7 @@ function LinkGuide(rows, loggers) {
             } else {
                 return 0;
             }
-        }
+        };
 
         return this;
     }
