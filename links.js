@@ -1,28 +1,26 @@
 /**
  * Created by dezzpil on 29.11.13.
- */
-var LinkGuide = require('./linkGuide'),
-    async = require('async');
-
-/**
+ *
  * Контроллер работ,
  * следит за общим ходом процесса, запрашивает
  * новые адреса для новой итерации проверки
  */
+
+var LinkGuide = require('./libs/linkGuide'),
+    async = require('async');
+
+
 function linksManager() {
 
     var loggers = null,
         botPID = null,
         mysql = null,
         self = this,
-//        intervalCount = 25,
-//        intervalPeriod = 1000,
         linkBrokenProcs = 0,
         callback = null,
         callbackOnIterateStart = null,
         callbackOnIterateFin = null,
         queue = null,
-        //isTerminated = false,
         config;
 
     this.setOptions = function(opts) {
@@ -50,11 +48,6 @@ function linksManager() {
         return self;
     };
 
-//    this.increaseBrokenCount = function() {
-//        linkBrokenProcs++;
-//        return linkBrokenProcs;
-//    };
-
     this.resetBrokenCount = function() {
         linkBrokenProcs = 0;
         return linkBrokenProcs;
@@ -70,18 +63,12 @@ function linksManager() {
         return self;
     };
 
-//    this.stop = function() {
-//        isTerminated = true;
-//    };
-
     /**
      * Запустить контроллер ссылок
      * @param guide
      * @returns {boolean}
      */
     this.run = function(guide) {
-
-//        if (isTerminated) return false;
 
         if ( ! loggers) throw new Error('readLinkList : no loggers list setted!');
         if ( ! mysql) throw new Error('readLinkList : no mysql driver setted!');
@@ -105,34 +92,9 @@ function linksManager() {
                     callback(guidebook);
                 }, config.maxYields);
 
-
-                // callback that is called when the last item from
-                // the queue has returned from the worker
-
                 // @notice использование callback в drain() быстро привело к
                 // RangeError: Maximum call stack size exceeded
-                queue.drain = function() {
-                    // Гид запустил процессы по всем адресам, что мы ему указали,
-                    // и хочет попить пивка с друзьями в баре Heap'е пока не настал gc(),
-                    // когда ему придется возвратиться к жене и детям...
-
-                    // А мы будем ждать пока все процессы освободяться, чтобы отправить их по
-                    // новым адресам с новым гидом :)
-
-//                    loggers.console.info('all items have been processed');
-//
-//                    //clearInterval(interval);
-//                    self.resetBrokenCount();
-//
-//                    //mysql.clearLinks(botPID, function() {});
-//
-//                    if (callbackOnIterateFin) callbackOnIterateFin(guide);
-//
-//                    var delay = setTimeout(function() {
-//                        clearTimeout(delay);
-//                        self.run();
-//                    }, config.eachIterationDelay);
-                };
+                queue.drain = function() {};
 
                 self.run(guide);
 

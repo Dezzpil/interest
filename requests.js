@@ -2,7 +2,6 @@
  * Created by dezzpil on 29.11.13.
  */
 
-
 var http = require('http'),
     https = require('https'),
     url = require('url');
@@ -107,7 +106,7 @@ function requestsManager() {
             reqOpts.hostname = redirectUrl.hostname;
             reqOpts.path = redirectUrl.path;
 
-            self.run(guideBook, reqOpts, stepToDeep+1);
+            self.run(guideBook, reqOpts, (stepToDeep+1));
             return true;
         }
         return false;
@@ -134,19 +133,23 @@ function requestsManager() {
         var reqOpts = {},
             idD = guideBook.getIdD(),
             link = guideBook.getDomain(),
-            stepToDeep = deep ? deep : 0,
             req = null;
+
+        stepToDeep = deep ? deep : 0;
 
         if (request) {
 
             if (stepToDeep >= reqConfig.redirectDeep) {
 
-                mysql.setStatusForLink(idD, config.codes.requestMaxdeep,
-                    function(err, rows) {
-                        loggers.file.info('%d MYSQL ROW UPDATED WITH REACH MAX DEEP', idD);
-                        guideBook.markLink();
-                    }
-                );
+                guideBook.markLink(function() {
+                    mysql.setStatusForLink(
+                        idD, config.codes.requestMaxdeep,
+                        function(err, rows) {
+                            loggers.file.info('%d MYSQL ROW UPDATED WITH REACH MAX DEEP', idD);
+
+                        }
+                    )
+                });
 
                 return false;
             }
@@ -173,7 +176,7 @@ function requestsManager() {
             loggers.file.info('%d REQUEST STATUS : %s', idD, statusCode);
             if (isBadStatusCode(statusCode)) {
 
-                guideBook.markLink(function(){
+                guideBook.markLink(function() {
                     // коды 400 и 500, закрываем лавочку
                     mysql.setStatusForLink(idD, statusCode,
                         function(err, rows) {

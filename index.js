@@ -8,13 +8,13 @@ var now = new Date(),
     fs = require('fs'),
     configJSON = fs.readFileSync('./configs/config.json'),
     config = JSON.parse(configJSON),
-    loggers = require('./loggers'),
-    mongo = require('./mongo'),
-    mysql = require('./mysql'),
+    loggers = require('./drivers/loggers'),
+    mongo = require('./drivers/mongo'),
+    mysql = require('./drivers/mysql'),
     links = require('./links'),
     requests = require('./requests'),
     model = require('./model'),
-    analyzer = require('./analyzer'),
+    analyzer = require('./drivers/analyzer'),
 
     botName = config.name + ' v.' + config.version,
     botPID = parseInt(now.getTime()/1000),
@@ -78,5 +78,6 @@ process.on('uncaughtException', function(err) {
     // если что-то отвалилось внезапно
     // бот тихо продолжает работать дальше
     botLoggers.file.info('Caught exception: ' + err);
+    console.log(err);
 
 });

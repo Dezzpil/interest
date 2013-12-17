@@ -4,14 +4,25 @@ Crystal Interest Bot
     Бот обходит ссылки из белого списка сайтов и пытается обнаружить насколько изменились страницы
     с момента последнего прохода.
 
-Деплой Crystal Interest Bot
+Crystal Interest Bot Helper
+
+    Вспомогательный бот для трансформации слепков (impress документы из MongoDB)
+    в простой текст и сохранения этого текста в text документы в MongoDB с
+    дополнительными данными, необходимыми для передачи их в Sphinx через xmlpipe2
+
+Деплой
 
     NodeJS
     выбрать установку под систему
     https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager
 
+    Python3
+    http://www.python.org/download/releases/3.3.3/
+    или
+    $ sudo apt-get install python3
+
     MySQL
-    подключается к alpha.crystalteam.ru
+    подключается к alpha.crystalteam.ru (по умолчанию)
     использует бд Crawler
     работает с таблицой domain
 
@@ -21,18 +32,33 @@ Crystal Interest Bot
     использует 4 коллекции (все коллекции Mongo создает само (автоматически)):
         log - для хранения снимков памяти
         impresses - для хранения тела http ответов
-        impress_complete_calendar - для хранения ссылок проработанных http запросы
+        ferry_tasks - для хранения ссылок проработанных http запросы
         texts - для хранения текста, извлеченного из тела http запроса
 
     После пула файлов из репозиторя, необходимо сделать:
 
-        npm install
-        mkdir logs
-        mkdir configs
-        cp config.example.json configs/config.json
+        $ npm install
+        $ mkdir configs
+        $ cp config.example.json configs/config.json
         # в configs/config.json прописать правильные пути для подключения и работы бота.
 
-    Бот может писать лог в stdout (значения [ 'modest' 'detail' 'none' ])
+    Боты могут писать лог в stdout (значения [ 'modest' 'detail' 'none' ])
 
     Запустить бота достаточно просто:
-        nodejs index.js
+        $ nodejs index.js
+
+    Также надо запуситить помощника:
+        $ nodejs helper.js
+
+Sphinx
+
+    ПЕРЕПИСАТЬ ПУТИ СФИНКСА!
+
+    Файл конфигурации sphinx-mongo.conf настроен на работу через xmlpipe2 и содержит 1 индекс crystalkids_sites_mongo.
+    Xmlpipe2 вызывает исполнение xmltexts.py, который формирует xml с 1000 документов, которые еще не были
+    проиндексированы ранее.
+
+    Секции source & index надо включить в боевой конфиг sphinx'a можно включить в существующий
+    конфиг сфинкса или запускать прямо так с предустановленными настройками:
+
+    $ indexer --config sphinx-mongo.conf --all --verbose --rotate

@@ -3,7 +3,7 @@
  * 2013-12-09
  * dezzpil
  * Вспомогательный бот для трансформации слепков (impress документы из MongoDB)
- * в простой текст и сохранения этогот текста в text документы в MongoDB с
+ * в простой текст и сохранения этого текста в text документы в MongoDB с
  * дополнительными данными, необходимыми для передачи их в Sphinx через xmlpipe2
  *
  */
@@ -12,12 +12,16 @@ var memwatch = require('memwatch'),
     async = require('async'),
     htmlparser = require("htmlparser2"),
     fs = require('fs'),
+    queryString = require('querystring'),
+    Buffer = require('buffer').Buffer,
+    Iconv  = require('iconv').Iconv,
 
     configJSON = fs.readFileSync('./configs/config.json'),
     config = JSON.parse(configJSON),
 
-    loggers = require('./loggers'),
-    mongo = require('./mongo'),
+    loggers = require('./drivers/loggers'),
+    fnstore = require('./libs/functionStore'),
+    mongo = require('./drivers/mongo'),
 
     // now = new Date(),
     botPID = '1997',
@@ -69,10 +73,22 @@ function ferryHelper() {
         };
     }
 
+
     self.process = function (task, callback) {
 
         var textInParser = '',
-            parser = null;
+            content,
+            storage = fnstore.forge(),
+            parser = null,
+            eventFnName = 'ontext';
+
+        storage.store('ontext', function(text) {
+            textInParser += text;
+        });
+
+        storage.store('oncode', function(text) {
+            //;
+        });
 
         // model work here
         mongo.driver.getImpress(task.id, function(err, impress) {
@@ -88,56 +104,105 @@ function ferryHelper() {
 
                     callback('impress contain bad word', task.id);
 
+                } else if (mongo.driver.isBadCharset(impress[0])) {
+
+                    // TODO fix charset problems
+                    callback('impress has non utf-8 charset', task.id);
+
                 } else {
 
-                    var impress = impress[0];//,
-                        //i = 0, htmlChunk = '';
+                    var impress = impress[0];
 
                     parser = new htmlparser.Parser({
+                        onopentag: function(tagname, attribs) {
+
+                            if (tagname == 'script' || tagname == 'style') {
+                                botLoggers.file.info(tagname.toUpperCase() + ' open tag');
+                                eventFnName = 'oncode';
+                            } else {
+                                eventFnName = 'ontext';
+                            }
+
+                        },
+                        onclosetag: function(tagname){
+                            if (tagname === "script" || tagname == 'style') {
+                                botLoggers.file.info(tagname.toUpperCase() + ' close tag');
+                                eventFnName = 'ontext';
+                            }
+
+                            // add space after each close tag (then we normalize num of they)
+                            textInParser+=' ';
+                        },
                         ontext: function(text) {
-                            textInParser += text;
+
+                            (storage.obtain(eventFnName))(text);
+
                         },
                         onerror: function(err) {
+
                             botLoggers.file.warn('htmlparser err', err);
                             textInParser = '';
                             callback(impress.url_id);
+
                         },
                         onend: function() {
 
-                            //botLoggers.file.error('%s parsed text from html ', textInParser);
-
-                            var textFromCurrentHtml = textInParser;
+                            var textFromCurrentHtml = textInParser,
+                                iconv, charset = impress.charset;
 
                             textInParser = '';
 
-                            mongo.driver.makeTextFromImpress(impress, textFromCurrentHtml, function(err, text) {
+                            iconv = new Iconv('UTF-8', charset.toUpperCase());
+                            try {
+                                textFromCurrentHtml = iconv.convert(textFromCurrentHtml).toString();
+                            } catch (e) {
+                                callback('charset : ' + charset + ', bad symbols in text ' + e.toString(), impress.url_id);
+                                return ;
+                            }
 
-                                if (err) {
-                                    botLoggers.file.warn('text from impress err', err);
-                                    callback(err, impress.url_id);
-                                } else {
-                                    mongo.driver.setImpressFerried(impress, function(err, impress) {
-                                        if (err) {
-                                            botLoggers.file.warn('ferrying impress err', err);
-                                        }
-                                        callback('text created', impress.url_id);
-                                    });
-                                }
+                            // TODO optimize OPTIMIZE OPTIMIIIIIIIIZE!
+                            // TODO replace with correspond symbols
+                            textFromCurrentHtml = textFromCurrentHtml.replace(/(&#{1,6})/g, ' ');
+
+                            // replace html entities to ''
+                            textFromCurrentHtml = textFromCurrentHtml.replace(/(&.{1,6};)/g, ' ');
+
+                            // any instances of <, >, & (except for normal element usage) needing to be replaced with
+                            // &lt;, &gt; and &amp; respectively
+                            textFromCurrentHtml = textFromCurrentHtml.replace(/\</g, '&lt;');
+                            textFromCurrentHtml = textFromCurrentHtml.replace(/\>/g, '&gt;');
+                            textFromCurrentHtml = textFromCurrentHtml.replace(/\&/g, '&amp;');
+
+                            // replace many \s to one ' '
+                            textFromCurrentHtml = textFromCurrentHtml.replace(/\s+/g, ' ');
+
+                            mongo.driver.makeTextFromImpress(
+                                impress, textFromCurrentHtml, function(err, text) {
+
+                                    if (err) {
+                                        botLoggers.file.warn('text from impress err', err);
+                                        callback(err, impress.url_id);
+                                    } else {
+                                        mongo.driver.setImpressFerried(impress, function(err) {
+                                            if (err) {
+                                                botLoggers.file.warn('ferrying impress err', err);
+                                            }
+                                            callback('text created', impress.url_id);
+                                        });
+                                    }
 
                             });
 
-
                         }
+
                     });
 
                     // @todo парсим html в простой текст без тегов.
                     botLoggers.file.info('%s give content from impress to parser (length %d)', impress.url_id, impress.length);
-//                    for (i = 0; i < impress.content.length; i+=2001) {
-//                        htmlChunk = impress.content.substr(i, i+2000);
-//                        parser.write(htmlChunk);
-//                    }
 
-                    parser.write(impress.content);
+                    content = impress.content;
+
+                    parser.write(content);
                     parser.done();
 
                 }

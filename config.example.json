@@ -2,7 +2,7 @@
     "name": "Crystal Interest",
     "version": "0.7",
     "path" : "/home/crystal-crawler/",
-    "maxYields" : 2,
+    "maxYields" : 5,
     "readyCheckPeriodInSec" : 6,
     "readyCheckMaxTryCount" : 10,
 
@@ -49,7 +49,7 @@
 
     "analyzer" : {
         "path" : "analyzer/",
-        "fileName" : "proj1",
+        "fileName" : "analyzer",
         "maxInstances" : 100,
         "killSignal" : "SIGINT"
     },

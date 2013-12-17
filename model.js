@@ -1,15 +1,11 @@
 /**
  * Created by dezzpil on 18.11.13.
  *
- */
-
-/**
  * Модель (суть работы тут)
  * @returns {boolean}
  */
 
 
-// TODO todo создавать анализатор только после того, как обнаружится что есть новые и предыдущие данные
 function model() {
 
     var self = this,
@@ -62,16 +58,19 @@ function model() {
             statusCode = response.statusCode + '',
             link = guideBook.getDomain(),
             idD = guideBook.getIdD(),
-            responseBody = '';
+            responseBody = '',
+            charset = 'utf8';
 
         // анализатор
+        // TODO todo создавать анализатор только после того,
+        // TODO как обнаружится что есть новые и предыдущие данные
         analyzer = Analyzer.forge();
         analyzer.run(
             function(analyzeResult) { // readyCallback
 
                 loggers.file.info('%d DATA ANALYZED :', idD);
 
-                mongo.saveNewImpress(guideBook, botPID, responseBody, analyzeResult, function(err, impress){
+                mongo.saveNewImpress(guideBook, botPID, charset, responseBody, analyzeResult, function(err, impress){
                     if (err) loggers.file.info('%d MONGO ERROR (impress saving) : ', idD, err);
                     else loggers.file.info('%d IMPRESS SAVED', idD);
                 });
@@ -109,6 +108,17 @@ function model() {
 
         }).on('end', function() {
 
+            // save encoding, for further processes
+            if ('content-type' in response.headers) {
+                try {
+                    charset = response.headers['content-type'].split(';')[1];
+                    charset = charset.split('=')[1].trim();
+                } catch (e) {
+                    charset = 'utf8';
+                }
+                charset = charset.toUpperCase();
+            }
+
             loggers.file.info('%d CONTENT RECEIVED, %d length', idD, responseBody.length);
             if (responseBody.length) {
 
@@ -118,7 +128,7 @@ function model() {
                 } catch (e) {
                     loggers.file.info('%d ANALYZER PROCESS ALREADY CLOSED', idD, e);
 
-                    mongo.saveNewImpress(guideBook, botPID, responseBody, analyzer.getNoResult(), function(err, impress){
+                    mongo.saveNewImpress(guideBook, botPID, charset, responseBody, analyzer.getNoResult(), function(err, impress){
                         if (err) loggers.file.info('%d MONGO ERROR (impress saving) : ', idD, err);
                         else loggers.file.info('%d IMPRESS SAVED', idD);
                     });
