@@ -3,7 +3,7 @@
  */
 
 var mysql = require('mysql'),
-    systemCfg = require('./configs/config.json');
+    systemCfg = require('./../configs/config.json');
 
 function mysqlDriver() {
 

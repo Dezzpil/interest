@@ -2,16 +2,13 @@
  * Created by dezzpil on 21.11.13.
  */
 
-var systemCfg = require('./configs/config.json'),
-    mongoose = require('mongoose'),
+var mongoose = require('mongoose'),
     schemas = require('./schemas');
-
 
 function mongoDriver() {
 
     var self = this,
         loggers = null,
-        options = systemCfg.mongo,
 
         impressSchema = mongoose.Schema(schemas.impress),
         textSchema = mongoose.Schema(schemas.text),
@@ -21,7 +18,15 @@ function mongoDriver() {
         textModel = mongoose.model('text', textSchema),
         ferryTaskModel = mongoose.model('ferry_task', ferryTaskSchema),
 
-        connection = null;
+        connection = null,
+        options = {
+            "host" : "localhost",
+            "port" : 27017,
+            "db" : "crawler-prototype",
+            "password" : "",
+            "username" : "",
+            "reconnectTimeout" : 10000
+        }; 
 
     /**
      * @link http://mongoosejs.com/docs/guide.html Indexes
@@ -33,6 +38,11 @@ function mongoDriver() {
 
     self.setLoggers = function(object) {
         loggers = object;
+        return self;
+    };
+    
+    self.setConfig = function(cfg) {
+        options = cfg;
         return self;
     };
 
@@ -75,7 +85,7 @@ function mongoDriver() {
         );
     };
 
-    self.saveNewImpress = function(guidebook, pid, html, analyzeResult, callback) {
+    self.saveNewImpress = function(guidebook, pid, charset, html, analyzeResult, callback) {
         impressModel.create({
             date : new Date(),
             pid : pid,
@@ -84,6 +94,7 @@ function mongoDriver() {
             url : guidebook.getDomain(),
             url_id : guidebook.getIdD(),
             category :guidebook.getCategory(),
+            charset : charset,
             changePercent : analyzeResult.percent,
             containBadWord : analyzeResult.isBad,
             badWord : analyzeResult.badWord,
@@ -95,7 +106,10 @@ function mongoDriver() {
 
     self.isContainBadWord = function(impress) {
         return impress.containBadWord;
+    };
 
+    self.isBadCharset = function(impress) {
+        return impress.charset.toLowerCase() != 'utf-8';
     };
 
     self.saveFerryTask = function(linkIdLst, pid, callback) {
@@ -111,8 +125,8 @@ function mongoDriver() {
     };
 
     self.getFerryTask = function(callback) {
-//        ferryTaskModel.findOneAndRemove( null, { sort : { 'date' : -1}}, function(err, result) {
-        ferryTaskModel.findOne({}, {}, {sort : { 'date' : -1}}, function(err, result) {
+        ferryTaskModel.findOneAndRemove( null, { sort : { 'date' : -1}}, function(err, result) {
+        //ferryTaskModel.findOne({}, {}, {sort : { 'date' : -1}}, function(err, result) {
             if ( ! result) return callback('MongoDB : No ferry tasks!');
             return callback(err, result);
         });
@@ -142,7 +156,8 @@ function mongoDriver() {
                     url : impress.url,
                     content : content,
                     length : content.length,
-                    category : impress.category
+                    category : impress.category,
+                    is_indexed : false
                 }, function(err, text) {
                     loggers.file.info('%s updating success', impress.url_id, err);
                     callback(err, text);
@@ -165,7 +180,9 @@ function mongoDriver() {
                 url_id : impress.url_id,
                 content : content,
                 length : content.length,
-                category : impress.category
+                category : impress.category,
+                is_indexed : false,
+                index_date : new Date()
             });
 
             text.save(function(err, text) {

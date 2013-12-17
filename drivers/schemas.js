@@ -6,6 +6,7 @@ exports.impress = {
     content : String,
     length : Number,
     category : Number,          // [] => 0, [2-7] => 1, (7-12] => 2
+    charset : String,
     changePercent : Number,     // ...
     containBadWord : Boolean,   // if impress contain a word from stop-list
     badWord : String,           // if containBadWord == true, there would be stop-word
@@ -19,7 +20,9 @@ exports.text = {
     url_id : Number,
     content : String,
     length : Number,
-    category : Number
+    category : Number,
+    is_indexed : Boolean,
+    index_date : Date
 };
 
 exports.ferry_task = {

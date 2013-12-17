@@ -1,7 +1,7 @@
 /**
  * Created by dezzpil on 28.11.13.
  */
-var config = require('./configs/config.json'),
+var config = require('./../configs/config.json'),
     winston = require('winston'),
     mongoLog = require('winston-mongodb').MongoDB;
 
