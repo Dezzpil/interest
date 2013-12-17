@@ -63,8 +63,7 @@ def main():
 
     ## 'mongodb://localhost:27017/'
     client = MongoClient('localhost', 27017)
-    db = client['crawler-prototype']
-
+    db = client['crawler']
 
     if category:
         texts = db.texts.find({'category': category, 'is_indexed': False}).sort('date', ASCENDING).limit(1000)

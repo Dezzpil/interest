@@ -28,7 +28,7 @@ function init() {
         heapDiff, analyzeProcess, analyzeFactory;
 
     mysql.driver.setLoggers(botLoggers).connect();
-    mongo.driver.setLoggers(botLoggers).connect();
+    mongo.driver.setLoggers(botLoggers).setOptions(config.mongo).connect();
 
     analyzeFactory = (new analyzer.factory())
         .setOptions(config.analyzer)

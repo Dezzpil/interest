@@ -22,7 +22,7 @@ function mongoDriver() {
         options = {
             "host" : "localhost",
             "port" : 27017,
-            "db" : "crawler-prototype",
+            "db" : "crawler",
             "password" : "",
             "username" : "",
             "reconnectTimeout" : 10000
