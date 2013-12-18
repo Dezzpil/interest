@@ -103,7 +103,9 @@ function requestsManager() {
                 reqOpts.port = 443;
             }
 
-            reqOpts.hostname = redirectUrl.hostname;
+            if (redirectUrl.hostname)
+                reqOpts.hostname = redirectUrl.hostname;
+
             reqOpts.path = redirectUrl.path;
 
             self.run(guideBook, reqOpts, (stepToDeep+1));

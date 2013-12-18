@@ -4,6 +4,7 @@ __author__ = 'dezzpil'
 
 import sys
 import datetime
+import json
 from pymongo import MongoClient
 from pymongo import ASCENDING
 
@@ -30,7 +31,7 @@ def xml_start():
 
 
 def xml_end():
-    sys.stdout.write('</sphinx:docset>')
+    sys.stdout.write('</sphinx:docset>\r\n')
 
 
 def xml_document(text):
@@ -43,11 +44,20 @@ def xml_document(text):
         <misc>some undeclared element</misc>
     </sphinx:document>
     """
-    sys.stdout.write('<sphinx:document id="' + str(text['url_id']) + '">\n')
-    sys.stdout.write('\t<url>' + str(text['url']) + '</url>\n')
-    sys.stdout.write('\t<content>' + text['content'] + '</content>\n')
-    sys.stdout.write('\t<date>' + str(text['date']) + '</date>\n')
-    sys.stdout.write('</sphinx:document>\n\n')
+
+    doc = unicode(text['content'])
+
+    try:
+        sys.stdout.write('\t<sphinx:document id="' + str(text['url_id']) + '">\n\
+        <url>' + str(text['url']) + '</url>\n\
+        <content>' + doc.encode('utf-8') + '</content>\n\
+        <date>' + str(text['date']) + '</date>\n\
+    </sphinx:document>\n\n'.encode('utf-8'))
+    except UnicodeError as e:
+        sys.stderr.write("Unicode error " + str(e) + "\n")
+        return False
+
+    return True
 
 
 def main():
@@ -61,28 +71,40 @@ def main():
     if len(sys.argv) >= 2:
         category = sys.argv[1]
 
-    ## 'mongodb://localhost:27017/'
-    client = MongoClient('localhost', 27017)
-    db = client['crawler']
+    # get data from config
+    cfg_file = open('./configs/config.json')
+    config = json.load(cfg_file, 'utf-8')
+
+    docs_num_each = config['xmlpipe2']['documentsNumEachExec']
+    docs_mark_as_ready = config['xmlpipe2']['documentsMarkOnReady']
+
+    mongo_host = config['mongo']['host']
+    mongo_db = config['mongo']['db']
+    mongo_port = config['mongo']['port']
+
+    # TODO add username and pass for connect to mongoDB
+    # http://api.mongodb.org/python/current/api/pymongo/mongo_client.html#pymongo.mongo_client.MongoClient
+
+    client = MongoClient(mongo_host, mongo_port)
+    db = client[mongo_db]
 
     if category:
-        texts = db.texts.find({'category': category, 'is_indexed': False}).sort('date', ASCENDING).limit(1000)
+        texts = db.texts.find({'category': category, 'is_indexed': False})\
+            .sort('date', ASCENDING)\
+            .limit(docs_num_each)
     else:
-        texts = db.texts.find({'is_indexed': False}).sort('date', ASCENDING).limit(1000)
+        texts = db.texts.find({'is_indexed': False})\
+            .sort('date', ASCENDING)\
+            .limit(docs_num_each)
 
     xml_start()
     for text in texts:
-        try:
-            xml_document(text)
-        except UnicodeDecodeError:
-            continue
-
-        text['index_date'] = datetime.datetime.today()
-        text['is_indexed'] = True
-        db.texts.save(text)
+        if xml_document(text) & docs_mark_as_ready:
+            text['index_date'] = datetime.datetime.today()
+            text['is_indexed'] = True
+            db.texts.save(text)
 
     xml_end()
-    quit()
 
 
 if __name__ == '__main__':
