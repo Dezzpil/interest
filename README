@@ -16,10 +16,8 @@ Crystal Interest Bot Helper
     выбрать установку под систему
     https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager
 
-    Python3
-    http://www.python.org/download/releases/3.3.3/
-    или
-    $ sudo apt-get install python3
+    Python2
+    lxml & pymongo
 
     MySQL
     подключается к alpha.crystalteam.ru (по умолчанию)

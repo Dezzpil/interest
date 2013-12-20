@@ -5,6 +5,8 @@ __author__ = 'dezzpil'
 import sys
 import datetime
 import json
+import os
+from lxml import etree
 from pymongo import MongoClient
 from pymongo import ASCENDING
 
@@ -48,9 +50,15 @@ def xml_document(text):
     doc = unicode(text['content'])
 
     try:
+        etree.Element('content').text = etree.CDATA(doc)
+    except ValueError as e:
+        sys.stderr.write("Value error :" + str(e) + "\n")
+        return False
+
+    try:
         sys.stdout.write('\t<sphinx:document id="' + str(text['url_id']) + '">\n\
         <url>' + str(text['url']) + '</url>\n\
-        <content>' + doc.encode('utf-8') + '</content>\n\
+        <content><![CDATA[' + doc.encode('utf-8') + ']]></content>\n\
         <date>' + str(text['date']) + '</date>\n\
     </sphinx:document>\n\n'.encode('utf-8'))
     except UnicodeError as e:
@@ -72,7 +80,7 @@ def main():
         category = sys.argv[1]
 
     # get data from config
-    cfg_file = open('./configs/config.json')
+    cfg_file = open(os.path.join(os.path.dirname(__file__), 'configs/config.json'))
     config = json.load(cfg_file, 'utf-8')
 
     docs_num_each = config['xmlpipe2']['documentsNumEachExec']
