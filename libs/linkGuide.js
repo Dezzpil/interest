@@ -6,7 +6,110 @@ function forge(rows, loggers) {
     return new LinkGuide(rows, loggers);
 }
 
-function LinkGuide(rows, loggers) {
+
+/**
+ * Instance of guidebook pulled to link processing for data presentation about link and
+ * avail mark end of process for the loop on the top of process.
+ * @example link.js:71
+ * @param guide {LinkGuide}
+ * @param index {number}
+ * @returns {LinkGuideBook}
+ * @constructor
+ */
+function LinkGuideBook(guide, index) {
+
+    var i = index,
+        parent = guide,
+        linkIds = parent.getIdList(),
+        linkMap = parent.getIdMap(),
+        linkList = parent.getList(),
+        finCallback = null;
+
+    if (parent.loggers && 'console' in parent.loggers) {
+        parent.loggers.console.info('%d starts %s', linkIds[i], linkList[i]);
+        parent.loggers.console.profile(linkList[i]);
+    }
+
+    this.isEmpty = parent.isEmpty;
+
+    this.setCallback = function(callback) {
+        finCallback = callback;
+    };
+
+    /**
+     *
+     */
+    this.markLink = function(callback) {
+        if (parent.markLink(this.getIdD())) {
+
+            callback();
+
+            finCallback();
+            if (parent.loggers && 'console' in parent.loggers) {
+                parent.loggers.console.info('%d ends %s', linkIds[i], linkList[i]);
+                parent.loggers.console.profile(linkList[i]);
+            }
+        }
+
+    };
+
+    /**
+     *
+     * @returns {number}
+     */
+    this.getIndex = function() {
+        return i;
+    };
+
+    /**
+     *
+     * @returns {number}
+     */
+    this.getIdD = function() {
+        return linkIds[i];
+    };
+
+    /**
+     *
+     * @returns {object}
+     */
+    this.getLinkData = function() {
+        return linkMap[linkIds[i]];
+    };
+
+    /**
+     *
+     * @returns {string}
+     */
+    this.getDomain = function() {
+        return linkList[i];
+    };
+
+    /**
+     *
+     * @returns {Array}
+     */
+    this.getGroups = function() {
+
+        if ('groups' in linkMap[linkIds[i]]) {
+            return linkMap[linkIds[i]]['groups'].split(',');
+        } else {
+            return [];
+        }
+    };
+
+    return this;
+
+}
+
+
+/**
+ *
+ * @param rows
+ * @param loggersObject
+ * @constructor
+ */
+function LinkGuide(rows, loggersObject) {
 
     var i,
         index = 0,
@@ -30,6 +133,8 @@ function LinkGuide(rows, loggers) {
 
     delete(i);
 
+    this.loggers = loggersObject;
+
     this.next = function() {
         index++;
         return linkListTmp.shift();
@@ -37,6 +142,10 @@ function LinkGuide(rows, loggers) {
 
     this.isEmpty = function() {
         return (linkListTmp.length == 0);
+    };
+
+    this.getIdMap = function() {
+        return linkMap;
     };
 
     this.getIdList = function() {
@@ -59,74 +168,12 @@ function LinkGuide(rows, loggers) {
         return true;
     };
 
+    /**
+     *
+     * @returns {LinkGuideBook}
+     */
     this.getGuideBook = function() {
-
-        var i = index,
-            parent = self,
-            finCallback = null;
-
-        loggers.console.info('%d starts %s', linkIds[i], linkList[i]);
-        loggers.console.profile(linkList[i]);
-
-        this.isEmpty = parent.isEmpty;
-
-        this.setCallback = function(callback) {
-            finCallback = callback;
-        };
-
-        /**
-         *
-         */
-        this.markLink = function(callback) {
-            if (parent.markLink(this.getIdD())) {
-
-                callback();
-
-                finCallback();
-                loggers.console.info('%d ends %s', linkIds[i], linkList[i]);
-                loggers.console.profile(linkList[i]);
-            }
-
-        };
-
-        /**
-         *
-         * @returns {number}
-         */
-        this.getIndex = function() {
-            return i;
-        };
-
-        /**
-         *
-         * @returns {number}
-         */
-        this.getIdD = function() {
-            return linkIds[i];
-        };
-
-        this.getLinkData = function() {
-            return linkMap[linkIds[i]];
-        };
-
-        /**
-         *
-         * @returns {string}
-         */
-        this.getDomain = function() {
-            return linkList[i];
-        };
-
-        this.getCategory = function() {
-            // до времени пока нет поля для категории в данных
-            if ('category' in linkMap[linkIds[i]]) {
-                return linkMap[linkIds[i]]['category'];
-            } else {
-                return 0;
-            }
-        };
-
-        return this;
+        return (new LinkGuideBook(self, index));
     }
 
 }

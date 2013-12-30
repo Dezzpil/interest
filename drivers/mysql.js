@@ -2,18 +2,21 @@
  * Created by dezzpil on 21.11.13.
  */
 
-var mysql = require('mysql'),
-    systemCfg = require('./../configs/config.json');
+var mysql = require('mysql');
 
 function mysqlDriver() {
 
     var mysqlConnection,
         self = this,
-        config = systemCfg.mysql,
         loggers = null;
 
     this.setLoggers = function(object) {
         loggers = object;
+        return self;
+    };
+
+    this.setConfig = function(cfg) {
+        config = cfg;
         return self;
     };
 
@@ -35,7 +38,7 @@ function mysqlDriver() {
                 loggers.file.info('MYSQL - connection established!');
             }
 
-        });                                     // process asynchronous requests in the meantime.
+        });                                     // process asynchronous request in the meantime.
         // If you're also serving http, display a 503 error.
         mysqlConnection.on('error', function(err) {
             loggers.file.error(err);
@@ -102,8 +105,33 @@ function mysqlDriver() {
         );
     };
 
-    this.setStatusForLink = function(idD, statusCode, callback) {
-        self.setInfoForLink(idD, statusCode, 0, 0, callback);
+    /**
+     * Обнулить все собранные ботом данные
+     * Данные восстановить не удасться !!!
+     */
+    this.resetLinks = function(callback) {
+        mysqlConnection.query(
+            'UPDATE ' + config.dbName + '.' + config.tableName + ' SET ? ',
+            {
+                lastTest : '2012-01-01 00:00:00',
+                lastRechange : '2022-01-01 00:00:00',
+                idProcess : 0,
+                statusCode : 0,
+                persent: 0,
+                bad: 0,
+                statusRecovery: 0
+            },
+            function(err, rows) {
+                if (callback) callback(err, rows);
+            }
+        );
+    };
+
+    // TODO programm dataStorage and drivers for it
+
+    // TODO fix signature
+    this.setStatusForLink = function(idD, statusCode, callback, ip4) {
+        self.setInfoForLink(idD, statusCode, 0, 0, callback, ip4);
     };
 
     this.setLinkRecovered = function(idD, statusCode, callback) {
@@ -114,9 +142,10 @@ function mysqlDriver() {
                 if (callback) callback(err, rows);
             }
         );
-    }
+    };
 
-    this.setInfoForLink = function(idD, statusCode, percent, isBad, callback) {
+    // TODO fix signature
+    this.setInfoForLink = function(idD, statusCode, percent, isBad, callback, ip4) {
         mysqlConnection.query(
             'UPDATE '+ (config.dbName + '.' + config.tableName) +' SET ? WHERE idD="' + idD + '"',
             {
@@ -124,12 +153,84 @@ function mysqlDriver() {
                 lastTest : new Date(),
                 statusCode : statusCode,
                 persent : (percent ? percent : 0),
-                bad : (isBad ? isBad : 0)
+                bad : (isBad ? isBad : 0),
+                ip : (ip4 ? ip4 : 0)
             },
             function(err, rows) {
                 if (callback) callback(err, rows);
             }
         );
+    };
+
+    /**
+     * @todo refactoring
+     * @param dateStart {string}
+     * @param callback {fn}
+     */
+    this.getStats = function(dateStart, callback) {
+
+        var results = {},
+            wait = setInterval(function() {
+
+                var resultsCount = 0,
+                    i = 0, prop,
+                    list = ['fullNum', 'processedNum', 'startTime', 'endTime', 'statusCode'];
+
+                for (prop in list) {
+                    resultsCount++;
+                    if (list[prop] in results) {
+                        i++;
+                    }
+                }
+
+                if (i == resultsCount) {
+                    clearInterval(wait);
+                    callback(results);
+                }
+
+            }, 1000);
+
+
+        mysqlConnection.query(
+            'select count(*) from ' + config.dbName + '.' + config.tableName,
+            function(err, result) {
+                if (err) return results.fullNum = err;
+                results.fullNum = result;
+            }
+        );
+
+        mysqlConnection.query(
+            'select count(*) from ' + config.dbName + '.' + config.tableName + ' where lastTest > "' + dateStart + '"',
+            function(err, result) {
+                if (err) return results.processedNum = err;
+                results.processedNum = result;
+            }
+        );
+
+        mysqlConnection.query(
+            'select lastTest from ' + config.dbName + '.' + config.tableName + ' order by lastTest ASC limit 1',
+            function(err, result) {
+                if (err) return results.startTime = err;
+                results.startTime = result;
+            }
+        );
+
+        mysqlConnection.query(
+            'select lastTest from ' + config.dbName + '.' + config.tableName + ' order by lastTest DESC limit 1',
+            function(err, result) {
+                if (err) return results.endTime = err;
+                results.endTime = result;
+            }
+        );
+
+        mysqlConnection.query(
+            'select statusCode, count(*) from ' + config.dbName + '.' + config.tableName + ' where lastTest > "' + dateStart + '" group by statusCode',
+            function(err, result) {
+                if (err) return results.statusCode = err;
+                results.statusCode = result;
+            }
+        );
+
     }
 
 };

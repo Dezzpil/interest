@@ -19,14 +19,7 @@ function mongoDriver() {
         ferryTaskModel = mongoose.model('ferry_task', ferryTaskSchema),
 
         connection = null,
-        options = {
-            "host" : "localhost",
-            "port" : 27017,
-            "db" : "crawler",
-            "password" : "",
-            "username" : "",
-            "reconnectTimeout" : 10000
-        }; 
+        options = {};
 
     /**
      * @link http://mongoosejs.com/docs/guide.html Indexes
@@ -46,7 +39,7 @@ function mongoDriver() {
         return self;
     };
 
-    self.connect = function() {
+    self.connect = function(callback) {
 
         // mongoose.connect('mongodb://username:password@host:port/database?options...');
         var path = 'mongodb://' +
@@ -61,6 +54,7 @@ function mongoDriver() {
             .on('error', function(err) {
                 loggers.file.info(err);
                 loggers.console.info('connection to MongoDB error:', err);
+                if (callback) callback(err);
                 var delay = setTimeout(function() {
                     clearTimeout(delay);
                     self.connect();
@@ -74,6 +68,25 @@ function mongoDriver() {
                 loggers.file.info('MONGODB - connection REestablished!');
                 loggers.console.info('connection to MongoDB REestablished');
             })
+    };
+
+    /**
+     * Обнулить все собранные ботом данные
+     * Данные восстановить не удасться !!!
+     */
+    self.removeAllDocs = function(callback) {
+
+        impressModel.remove({}, function(err) {
+            if (err) callback(err);
+            else textModel.remove({}, function(err) {
+                if (err) callback(err);
+                else ferryTaskModel.remove({}, function(err) {
+                    callback(err);
+                });
+            });
+
+        });
+
     };
 
     self.getImpress = function(linkId, callback) {
@@ -93,7 +106,7 @@ function mongoDriver() {
             length : html.length,
             url : guidebook.getDomain(),
             url_id : guidebook.getIdD(),
-            category :guidebook.getCategory(),
+            category :guidebook.getGroups(),
             charset : charset,
             changePercent : analyzeResult.percent,
             containBadWord : analyzeResult.isBad,
@@ -140,6 +153,12 @@ function mongoDriver() {
         //
     };
 
+    /**
+     *
+     * @param impress {object}
+     * @param content {string}
+     * @param callback {function}
+     */
     self.makeTextFromImpress = function(impress, content, callback) {
 
         textModel.find({'url_id' : impress.url_id }, function(result) {
@@ -148,7 +167,7 @@ function mongoDriver() {
 
             loggers.file.info('%s making text from impress : count of text documents - ', impress.url_id, count);
 
-            if (count == 1) {
+            if (count == 1) { // update and return
 
                 return result.update({
                     date : impress.date,
@@ -164,13 +183,12 @@ function mongoDriver() {
                 });
             }
 
-            if (count > 1) {
+            if (count > 1) { // remove all prev texts and going on
 
                 textModel.remove({ url_id : impress.url_id }, function(err) {
                     loggers.file.info('%s removing success', impress.url_id, err);
                     callback(err);
                 });
-
             }
 
             text = new textModel({
@@ -193,6 +211,21 @@ function mongoDriver() {
         })
     };
 
+    /**
+     * Remove excess of impress.
+     * We need to keep one impress document (the last one) after text complete
+     * @param impress {object}
+     * @param callback {function}
+     */
+    self.removeExcessImpresses = function(impress, callback) {
+        impressModel.remove({_id : { $ne : impress._id}, url_id : impress.url_id}, callback);
+    };
+
+    /**
+     * Mark that we done text document from impress document
+     * @param impress {object}
+     * @param callback {function}
+     */
     self.setImpressFerried = function(impress, callback) {
 
         impressModel.findById(impress._id, function(err, impressDoc) {
@@ -201,7 +234,7 @@ function mongoDriver() {
             });
         });
 
-    }
+    };
 
 }
 

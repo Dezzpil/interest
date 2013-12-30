@@ -16,9 +16,7 @@
     "mongoose": "~3.8.1",
     "mysql": "~2.0.0-rc2",
     "winston": "~0.7.2",
-    "winston-mongodb": "~0.4.3",
-    "longjohn": "~0.2.2",
-    "simplecrawler": "~0.3.6"
+    "winston-mongodb": "~0.4.3"
   },
   "devDependencies": {},
   "scripts": {

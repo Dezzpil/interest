@@ -40,6 +40,11 @@ Crystal Interest Bot Helper
         $ cp config.example.json configs/config.json
         # в configs/config.json прописать правильные пути для подключения и работы бота.
 
+        # создать time to live (TTL) индекс для логов потребления памяти
+        $ mongo
+        use %database_name%;
+        db.log.ensureIndex({ 'timestamp' : 1 }, { expireAfterSeconds: 3600 * 24 })
+
     Боты могут писать лог в stdout (значения [ 'modest' 'detail' 'none' ])
 
     Запустить бота достаточно просто:

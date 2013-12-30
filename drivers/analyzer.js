@@ -100,25 +100,7 @@ function analyzeFactory() {
                 }
             );
 
-            process.stdin.setEncoding = 'utf-8';
-            process.stdin
-                .once('drain', function() {
-                    //
-                }).on('finish', function() {
-                    //
-                }).on('pipe', function(src) {
-                    //
-                }).on('unpipe', function(src) {
-                    //
-                });
-
-            process.stderr.on('data', function(err) {
-                //
-            });
-
-            process.on('exit', function() {
-                //
-            });
+            process.stdin.setEncoding('binary');
 
             num = count;
             instances[num] = process;

@@ -6,12 +6,12 @@ var http = require('http'),
     https = require('https'),
     url = require('url');
 
-function requestsManager() {
+function requestManager() {
 
     var self = this,
         loggers = null,
         mysql = null,
-        modelCallback = null,
+        responseProcessor = null,
         stepToDeep = 0,
         config = {},
         reqConfig = {
@@ -51,7 +51,7 @@ function requestsManager() {
     };
 
     this.setModel = function(fn) {
-        modelCallback = fn;
+        responseProcessor = fn;
         return self;
     };
 
@@ -119,7 +119,6 @@ function requestsManager() {
     }
 
 
-
     /**
      * Контроллер запросов,
      * следит за процессами обращения по адресам,
@@ -172,7 +171,7 @@ function requestsManager() {
 
         req = makeRequest(reqOpts, function(response) {
 
-            response.setEncoding('utf8');
+            response.setEncoding('binary');
 
             var statusCode = response.statusCode + '';
             loggers.file.info('%d REQUEST STATUS : %s', idD, statusCode);
@@ -221,26 +220,27 @@ function requestsManager() {
                 }
             );
 
-            modelCallback(response, guideBook);
-            return false;
+
+            return (new responseProcessor()).run(response, guideBook);
+
 
         }).on('error', function(e) {
 
-                // If any error is encountered during the request (be that with DNS resolution, TCP level errors, or
-                // actual HTTP parse errors) an 'error' event is emitted on the returned request object.
-                // @link http://nodejs.org/api/http.html#http_http_request_options_callback
+            // If any error is encountered during the request (be that with DNS resolution, TCP level errors, or
+            // actual HTTP parse errors) an 'error' event is emitted on the returned request object.
+            // @link http://nodejs.org/api/http.html#http_http_request_options_callback
 
-                loggers.file.warn('%d PROBLEM WITH REQUEST : %s ', guideBook.getIdD(), e.message, reqOpts);
-                guideBook.markLink(function() {
-                    mysql.setStatusForLink(idD, config.codes.requestAbbruptly, function(err, rows) {
-                        if (err) loggers.console.error(err);
-                        loggers.file.info('%d MYSQL ROW UPDATED WITH ABRUPT HTTP ERROR', idD);
-                    });
+            loggers.file.warn('%d PROBLEM WITH REQUEST : %s ', guideBook.getIdD(), e.message, reqOpts);
+            guideBook.markLink(function() {
+                mysql.setStatusForLink(idD, config.codes.requestAbbruptly, function(err, rows) {
+                    if (err) loggers.console.error(err);
+                    loggers.file.info('%d MYSQL ROW UPDATED WITH ABRUPT HTTP ERROR', idD);
                 });
-
-                terminateRequest(req);
-
             });
+
+            terminateRequest(req);
+
+        });
 
 
         req.setTimeout(
@@ -270,4 +270,4 @@ function requestsManager() {
 
 }
 
-exports.manager = requestsManager;
+exports.manager = requestManager;

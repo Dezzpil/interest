@@ -10,7 +10,7 @@ var LinkGuide = require('./libs/linkGuide'),
     async = require('async');
 
 
-function linksManager() {
+function linkManager() {
 
     var loggers = null,
         botPID = null,
@@ -104,7 +104,7 @@ function linksManager() {
         }
 
 
-        if (!guide.isEmpty()) {
+        if ( ! guide.isEmpty()) {
 
             // Упреждающая проверка адресов на корректность.
             // На те случаи, когда адреса кончились или
@@ -128,11 +128,11 @@ function linksManager() {
              *  с некоторой задержкой
              */
 
-            //guide.next();
             while (!guide.isEmpty()) {
 
-                var gb = (new guide.getGuideBook());
-                queue.push(gb, function(err) {
+                var guidebook = guide.getGuideBook();
+
+                queue.push(guidebook, function(err) {
                     if (err) {
                         loggers.file.error(err);
                         loggers.console.error(err);
@@ -194,4 +194,4 @@ function linksManager() {
     }
 }
 
-exports.manager = linksManager;
+exports.manager = linkManager;
