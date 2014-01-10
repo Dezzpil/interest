@@ -79,7 +79,9 @@ function model() {
          * @param charset {string}
          */
         function analyzerInit(responseEncodedBody, charset) {
+
             analyzer = Analyzer.forge();
+
             analyzer.run(
                 function(analyzeResult) { // readyCallback
 
@@ -263,50 +265,39 @@ function model() {
                     cwd: options.charsetProcessing.cwd,
                     env: options.charsetProcessing.env
                 },
-                chardet = exec('chardet', execOptions,
-                    function(err, stdout, stderr) {
+                    chardet = exec(
+                        options.path + options.charsetProcessing.detectionName,
+                        execOptions,
+                        function(err, stdout, stderr) {
 
-                        if (catchExecErrors(err, stderr,
-                            options.codes.errorWhenChardet)) return ;
+                            if (catchExecErrors(err, stderr,
+                                options.codes.errorWhenChardet)) return ;
 
-                        var encodeCommand,
-                            charset = stdout.match(/:(.*)\(/)[1].trim().toLowerCase();
+                            var encodeCommand,
+                                charset = stdout.match(/:(.*)\(/)[1].trim().toLowerCase();
 
-                        switch (charset) {
-                            // remarks for charset names
-                            case 'koi8-r' : charset = 'koi8-ru';
-                                break;
+                            switch (charset) {
+                                // remarks for charset names
+                                case 'koi8-r' : charset = 'koi8-ru';
+                                    break;
+                            }
+
+                            setCharset(charset);
+                            loggers.file.info('%s CHARSET -> %s', idD, charset);
+
+                            // using only recode
+                            encodeCommand = exec(
+                                options.charsetProcessing.recodeName + ' ' + charset + '..utf-8',
+                                execOptions,
+                                handleEncoding
+                            );
+
+                            // pull data to chosen encoder
+                            encodeCommand.stdout.setEncoding('utf8');
+                            encodeCommand.stdin.end(responseBody, 'binary');
+
                         }
-
-                        setCharset(charset);
-                        loggers.file.info('%s CHARSET -> %s', idD, charset);
-
-                        // set handlers for response from encoders
-                        switch (options.charsetProcessing.command) {
-
-                            case 'recode' :
-                                encodeCommand = exec(
-                                    'recode ' + charset + '..utf-8',
-                                    execOptions,
-                                    handleEncoding
-                                );
-                                break;
-
-                            case 'iconv' :
-                                encodeCommand = exec(
-                                    'iconv -f ' + charset + ' -t utf-8 -c',
-                                    execOptions,
-                                    handleEncoding
-                                );
-                                break;
-                        }
-
-                        // pull data to chosen encoder
-                        encodeCommand.stdout.setEncoding('utf8');
-                        encodeCommand.stdin.end(responseBody, 'binary');
-
-                    }
-                );
+                    );
 
                 // run response body processing
                 loggers.file.info('%d CONTENT RECEIVED, %d length', idD, responseBody.length);

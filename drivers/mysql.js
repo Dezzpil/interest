@@ -8,6 +8,7 @@ function mysqlDriver() {
 
     var mysqlConnection,
         self = this,
+        config = {},
         loggers = null;
 
     this.setLoggers = function(object) {

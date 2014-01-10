@@ -86,7 +86,7 @@ function analyzeFactory() {
 
                     } else {
 
-                        var analyzeResult = parseAnalyzeResult(stdout);
+                        var analyzeResult = self.parseAnalyzeResult(stdout);
                         readyCallback(analyzeResult);
 
                         if (completeCallback) {
@@ -122,7 +122,7 @@ function analyzeFactory() {
          * @param outputString
          * @returns {{percent: number, isBad: boolean}}
          */
-        function parseAnalyzeResult(outputString) {
+        this.parseAnalyzeResult = function (outputString) {
 
             var vals = outputString.split('|'),
                 percent = 1000, badWord = '',
@@ -136,9 +136,6 @@ function analyzeFactory() {
                 'isBad' : vals[1],
                 'badWord' : badWord
             };
-
-//            loggers.file.info("# GET RAW FROM ANALYZER %s", vals);
-//            loggers.file.info("# GET RESULTS FROM ANALYZER ", result);
 
             return result;
         }

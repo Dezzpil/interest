@@ -83,18 +83,21 @@ function linkManager() {
             mysql.links(botPID, function(rows) {
 
                 var guide = LinkGuide.forge(rows, loggers);
-                //loggers.file.info(guide.getList());
-                if (callbackOnIterateStart) callbackOnIterateStart();
 
-                queue = async.queue(function (guidebook, afterReady) {
-                    loggers.console.info('start %s', guidebook.getDomain());
-                    guidebook.setCallback(afterReady);
-                    callback(guidebook);
-                }, config.maxYields);
+                if (callbackOnIterateStart) {
+                    callbackOnIterateStart(guide);
+                }
 
-                // @notice использование callback в drain() быстро привело к
-                // RangeError: Maximum call stack size exceeded
-                queue.drain = function() {};
+                queue = async.queue(
+
+                    function (guidebook, afterReady) {
+                        loggers.console.info('start %s', guidebook.getDomain());
+                        guidebook.setCallback(afterReady);
+                        callback(guidebook); },
+
+                    config.maxYields
+
+                );
 
                 self.run(guide);
 

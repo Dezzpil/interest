@@ -147,7 +147,6 @@ function requestManager() {
                         idD, config.codes.requestMaxdeep,
                         function(err, rows) {
                             loggers.file.info('%d MYSQL ROW UPDATED WITH REACH MAX DEEP', idD);
-
                         }
                     )
                 });
@@ -221,7 +220,7 @@ function requestManager() {
             );
 
 
-            return (new responseProcessor()).run(response, guideBook);
+            return responseProcessor(response, guideBook);
 
 
         }).on('error', function(e) {

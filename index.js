@@ -45,25 +45,51 @@ function init() {
         .setLoggers(botLoggers)
         .setUserAgent(botName)
         .setOptions(config)
-        .setModel(responseProcessor.create);
+        .setModel(function(response, guideBook) {
+
+            /**
+             * we get response here, may do what we want
+             */
+
+            var processor = new responseProcessor.create();
+            processor.run(response, guideBook);
+
+        });
 
     linkManager = (new link.manager())
         .setLoggers(botLoggers)
         .setOptions(config)
         .setMysqlDriver(mysql.driver)
         .setBotPID(botPID)
-        .setOnIterateStart(function() {
+        .setOnIterateStart(function(guide) {
+
+            /**
+             * On link iteration start
+             * @type {HeapDiff}
+             */
             heapDiff = new memwatch.HeapDiff();
+
         })
         .setRequestManager(function(guideBook) {
-            // for each link we run requestManager's method
+
+            /**
+             * we get link here, may do what we want
+             */
+
             requestManager.run(guideBook);
         })
         .setOnIterateFin(function(guide) {
+
+            /**
+             * On link iteration end
+             */
             mongo.driver.saveFerryTask(guide.getIdList(), botPID, function(err) {
                 if (err) botLoggers.console.info('MongoDB error : ', err);
             });
             botLoggers.mongo.info(heapDiff.end());
+
+            process.exit();
+
         });
 
     return linkManager;
@@ -71,7 +97,6 @@ function init() {
 
 // TODO check charsetProcessing.command is recode || iconv and
 // TODO selected option is availiable
-
 // TODO check if analyzer dir is availiable and analyzer exists
 
 try {

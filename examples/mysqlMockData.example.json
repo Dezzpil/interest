@@ -1,0 +1,17 @@
+{
+    "0" : {
+        "idD" : -100,
+        "domain" : "osu.ru",
+        "charset" : "koi8-r"
+    },
+    "1" : {
+        "idD" : -101,
+        "domain" : "mgsu.ru",
+        "charset" : "windows-1251"
+    },
+    "2" : {
+        "idD" : -102,
+        "domain" : "eltech.ru",
+        "charset" : "utf-8"
+    }
+}
