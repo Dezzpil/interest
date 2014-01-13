@@ -58,10 +58,10 @@ Crystal Interest Bot Helper
         $ node maketests.js
 
     Запустить бота достаточно просто:
-        $ node run.js
+        $ node index.js
 
     Также надо запуситить помощника:
-        $ node help.js
+        $ node helper.js
 
 Sphinx
 
