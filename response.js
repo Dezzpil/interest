@@ -15,6 +15,7 @@ function model() {
         mongo = null,
         botPID = 0,
         options = {},
+        hooks = {},
         Analyzer;
 
     this.setAnalyzerFactory = function(analyzerFactory) {
@@ -44,6 +45,16 @@ function model() {
 
     this.setBotPID = function(pid) {
         botPID = pid;
+        return self;
+    };
+
+
+    this.on = function(eventName, fn) {
+        if ( ! (eventName in hooks)) {
+            hooks[eventName] = [];
+        }
+
+        hooks[eventName].push(fn);
         return self;
     };
 
@@ -212,6 +223,10 @@ function model() {
             if (catchExecErrors(err, stderr,
                 options.codes.errorWhenEncode)) return ;
 
+            for (i in hooks.recodeEnd) {
+                hooks.recodeEnd[i](stdout);
+            }
+
             analyzerInit(stdout, charset);
             pullDataToAnalyzer(stdout);
 
@@ -221,6 +236,7 @@ function model() {
         /**
          * Methods
          */
+
 
         /**
          *
@@ -256,6 +272,10 @@ function model() {
                 }
 
                 responseEncodedBody = responseBody;
+
+                for (i in hooks.responseEnd) {
+                    hooks.responseEnd[i](responseBody);
+                }
 
                 var execOptions = {
                     encoding : 'binary',

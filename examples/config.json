@@ -1,0 +1,77 @@
+{
+    "name": "Crystal Interest Bot",
+    "version": "1.0",
+    "path" : "/home/crystal-interest/",
+    "maxYields" : 3,
+    "readyCheckPeriodInSec" : 6,
+    "readyCheckMaxTryCount" : 10,
+
+    "request" : {
+        "redirectDeep" : 3,
+        "timeoutInMS" : 30000
+    },
+
+    "charsetProcessing" : {
+        "detectionName" : "encoding/chardet",
+        "recodeName" : "recode",
+        "timeoutInSec": 5,
+        "maxBufferInKb": 200,
+        "killSignal": "SIGTERM",
+        "cwd": null,
+        "env": null
+    },
+
+    "debug" : 1,
+    "eachLinkDelay" : 500,
+    "eachIterationDelay" : 10000,
+    "codes" : {
+        "htmlParseError" : "970",
+        "errorWhenChardet" : "975",
+        "errorWhenEncode" : "976",
+        "badDomain" : "980",
+        "requestAbbruptly" : "990",
+        "requestMaxdeep" : "991",
+        "requestTtimeout" : "992",
+        "requestEmpty" : "993"
+    },
+
+    "mongo" : {
+        "host" : "localhost",
+        "port" : 27017,
+        "db" : "crawler-prototype",
+        "password" : "",
+        "username" : "",
+        "reconnectTimeout" : 10000
+    },
+
+    "xmlpipe2" : {
+        "documentsNumEachExec" : 1000
+    },
+
+    "mysql" : {
+        "host" : "localhost",
+        "user" : "root",
+        "password": "toor",
+        "dbName" : "Crawler",
+        "tableName" : "domain",
+        "debug" : false,
+        "options" : {
+            "maxProcessLimit" : 10,
+            "timeToReprocessInSec" : 86400,
+            "timeOutForRetryInSec" : 60,
+            "reconnectAfterInSec" : 5
+        }
+    },
+
+    "analyzer" : {
+        "path" : "analyzer/",
+        "fileName" : "analyzer",
+        "maxInstances" : 100,
+        "killSignal" : "SIGKILL"
+    },
+
+    "logs" : {
+        "mode" : "detail",
+        "memoryLogTable" : "log"
+    }
+}

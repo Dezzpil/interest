@@ -1,4 +1,3 @@
-
 Crystal Interest Bot
 
     Бот обходит ссылки из белого списка сайтов и пытается обнаружить насколько изменились страницы
@@ -12,20 +11,30 @@ Crystal Interest Bot Helper
 
 Деплой
 
-    NodeJS
-    выбрать установку под систему
-    https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager
+    NodeJS ( >=v0.10.23 )
+        выбрать установку под систему
+        https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager
 
+        CentOS 6 - need to add EPEL repo
+        https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager#rhelcentosscientific-linux-6
+
+    recode ( >= v3.6 )
+
+        $ sudo yum install recode.i686
+    
     Python2
-    lxml & pymongo
+
+        $ sudo pip install chardet
+
+        $ sudo yum install gcc python-devel
+        $ sudo yum install pymongo
+        $ sudo yum install python-lxml.i686
 
     MySQL
     подключается к alpha.crystalteam.ru (по умолчанию)
-    использует бд Crawler
-    работает с таблицой domain
+    работает с таблицой Crawler.domain
 
     MongoDB
-    выбрать установку под систему
     http://www.mongodb.org/downloads
     использует 4 коллекции (все коллекции Mongo создает само (автоматически)):
         log - для хранения снимков памяти
@@ -37,21 +46,22 @@ Crystal Interest Bot Helper
 
         $ npm install
         $ mkdir configs
-        $ cp config.example.json configs/config.json
-        # в configs/config.json прописать правильные пути для подключения и работы бота.
+        $ cp examples/config.json configs/config.json
+        $ cp examples/mysqlMockData.json configs/mysqlMockData.json
 
-        # создать time to live (TTL) индекс для логов потребления памяти
-        $ mongo
-        use %database_name%;
-        db.log.ensureIndex({ 'timestamp' : 1 }, { expireAfterSeconds: 3600 * 24 })
+        # в configs/config.json прописать правильные пути до директории бота,
+          для подключения к базам данных, анализатору.
 
     Боты могут писать лог в stdout (значения [ 'modest' 'detail' 'none' ])
 
+    Проверка работы:
+        $ node maketests.js
+
     Запустить бота достаточно просто:
-        $ nodejs index.js
+        $ node run.js
 
     Также надо запуситить помощника:
-        $ nodejs helper.js
+        $ node help.js
 
 Sphinx
 
