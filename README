@@ -45,6 +45,10 @@ Crystal Interest Bot Helper
     После пула файлов из репозиторя, необходимо сделать:
 
         $ npm install
+        $ git submodule init
+        $ cd analyzer/
+        $ git pull
+        $ cd ../
         $ mkdir configs
         $ cp examples/config.json configs/config.json
         $ cp examples/mysqlMockData.json configs/mysqlMockData.json
@@ -55,7 +59,8 @@ Crystal Interest Bot Helper
     Боты могут писать лог в stdout (значения [ 'modest' 'detail' 'none' ])
 
     Проверка работы:
-        $ node maketests.js
+        $ node tests/depending.js
+        $ node tests/encoding.js
 
     Запустить бота достаточно просто:
         $ node index.js
