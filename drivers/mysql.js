@@ -21,24 +21,20 @@ function mysqlDriver() {
         return self;
     };
 
-    this.connect = function() {
+    this.connect = function(callback) {
         mysqlConnection = mysql.createConnection(config);   // Recreate the connection, since
                                                             // the old one cannot be reused.
         mysqlConnection.connect(function(err) {
-            loggers.console.info('connection to MYSQL...');    // The server is either down
             if (err) {
-                loggers.console.info('connection to MYSQL error : %s',err.code);
-                loggers.file.error(err);                       // or restarting (takes a while sometimes).
+                if (callback) callback(err);
                 var t = setTimeout( function() {
                         clearTimeout(t);
                         self.connect();
                     },
                     config.options.reconnectAfterInSec * 1000);       // We introduce a delay before attempting to reconnect,
             } else {
-                loggers.console.info('connection to MYSQL established');
-                loggers.file.info('MYSQL - connection established!');
+                if (callback) callback();
             }
-
         });                                     // process asynchronous request in the meantime.
         // If you're also serving http, display a 503 error.
         mysqlConnection.on('error', function(err) {

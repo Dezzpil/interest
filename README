@@ -31,10 +31,12 @@ Crystal Interest Bot Helper
         $ sudo yum install python-lxml.i686
 
     MySQL
+
     подключается к alpha.crystalteam.ru (по умолчанию)
     работает с таблицой Crawler.domain
 
     MongoDB
+
     http://www.mongodb.org/downloads
     использует 4 коллекции (все коллекции Mongo создает само (автоматически)):
         log - для хранения снимков памяти
@@ -44,39 +46,42 @@ Crystal Interest Bot Helper
 
     После пула файлов из репозиторя, необходимо сделать:
 
-        $ npm install
-        $ git submodule init
-        $ cd analyzer/
         $ git pull
-        $ cd ../
+        $ git submodule init
+        $ git submodule update
         $ mkdir configs
         $ cp examples/config.json configs/config.json
         $ cp examples/mysqlMockData.json configs/mysqlMockData.json
 
         # в configs/config.json прописать правильные пути до директории бота,
           для подключения к базам данных, анализатору.
+          Боты могут писать лог в stdout (значения [ 'modest' 'detail' 'none' ])
 
-    Боты могут писать лог в stdout (значения [ 'modest' 'detail' 'none' ])
+        $ npm install
+        $ npm test
 
-    Проверка работы:
+    Проверка работы (npm test вызывает эти скрипты, см. package.json):
+
         $ node tests/depending.js
         $ node tests/encoding.js
 
     Запустить бота достаточно просто:
+
         $ node index.js
 
     Также надо запуситить помощника:
+
         $ node helper.js
 
 Sphinx
 
-    ПЕРЕПИСАТЬ ПУТИ СФИНКСА!
-
-    Файл конфигурации sphinx-mongo.conf настроен на работу через xmlpipe2 и содержит 1 индекс crystalkids_sites_mongo.
+    Файл конфигурации examples/sphinx-mongo.conf настроен на работу через xmlpipe2 и содержит 2 индекса.
     Xmlpipe2 вызывает исполнение xmltexts.py, который формирует xml с 1000 документов, которые еще не были
     проиндексированы ранее.
 
-    Секции source & index надо включить в боевой конфиг sphinx'a можно включить в существующий
-    конфиг сфинкса или запускать прямо так с предустановленными настройками:
+    Секции source & index надо включить в боевой конфиг sphinx'a.
+    Для локальных проверок можно запускать прямо так с
+    предустановленными настройками, но ПЕРЕПИСАТЬ ПУТИ СФИНКСА!:
 
-    $ indexer --config sphinx-mongo.conf --all --verbose --rotate
+    $ indexer --config %YOURCONFIGNAME% --all --verbose --rotate
+    $ sudo service sphinxsearch restart

@@ -15,29 +15,11 @@ function forge(botPID) {
     }
 
     var glue = '-',
-//        writterToFile = null,
         writterToStdout = null,
         writterToMongo = null,
         now = new Date(),
         loggersBuild = {},
         nowDate = now.getFullYear() + glue + (now.getMonth() + 1) + glue + now.getDate();
-
-//    writterToFile = new (winston.Logger)({
-//        transports: [new (winston.transports.File)({
-//            filename : config.logs.path +  botPID + glue + nowDate + config.logs.fileExt,
-//            silent : false,
-//            level : 'debug',
-//            colorize : false,
-//            timestamp : true,
-//            maxFiles : 5,
-//            json : false
-//        })],
-//        exitOnError: true
-//    });
-
-//    writterToFile.on('error', function(err) {
-//        writterToStdout.error(err);
-//    });
 
 
     writterToMongo = new (winston.Logger)({
@@ -49,8 +31,6 @@ function forge(botPID) {
             db : config.mongo.db,
             level : 'debug',
             collection : config.logs.memoryLogTable
-            // safe : true,
-            // silent : false,
         })],
         exitOnError: false
     });

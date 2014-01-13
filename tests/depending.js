@@ -7,79 +7,116 @@ var exec = require('child_process').exec,
     async = require('async'),
     config = require('./../configs/config.json'),
     mongoNative = require('./../drivers/mongo-native').driver,
+    mysqlDriver = require('./../drivers/mysql').driver,
+    stdoutLoggers = require('./../drivers/mocks/loggers').forge(),
     successNum = 0,
     scriptName = 'dependings';
 
 console.log('%s : start checking', scriptName);
 
+function error(key, err) {
+    console.error('%s : %s ', scriptName, key + ' error', err);
+    process.exit(1);
+}
+
+function success(key, callback) {
+    successNum++;
+    console.log('%s : %s', scriptName, key + ' ok');
+    callback(null, key);
+}
+
 async.parallel({
+
     'chardet' : function(callback) { // if chardet exists
-        exec(
+        var key = 'chardet',
+            chardet = exec(
             config.path + config.charsetProcessing.detectionName + ' ' + scriptName,
             function(err, stdout) {
-                if (err) console.error('%s : chardet error ', scriptName, err.message);
-                else { console.log('%s : chardet exists', scriptName); successNum++; }
-                callback(null, 'chardet');
+                if (err) error(key, err);
+                success(key, callback);
             }
         );
     },
+
     'recode' : function(callback) { // if recode exists
-        var recode = exec(
-            config.charsetProcessing.recodeName + ' ascii..latin1',
-            function(err, stdout) {
-                if (err) console.error('%s : recode error ', scriptName, err);
-                else { console.log('%s : recode exists', scriptName); successNum++;}
-                callback(null, 'recode');
-            }
-        );
-        recode.stdin.end('foobar');
+        var key = config.charsetProcessing.recodeName,
+            recode = exec(
+                key + ' ascii..latin1',
+                function(err, stdout) {
+                    if (err) error(key, err);
+                    success(key, callback);
+                }
+            );
+
+        recode.stdin.on('error', function(err) {
+            if (err) error(key, err);
+        });
+
+        recode.stdin.end('foo bar');
     },
+
     'analyzer' : function(callback) { // if analyzer exists
         console.log('%s : analyzer path: %s', scriptName, config.path + config.analyzer.path + config.analyzer.fileName);
+        var key = 'analyzer',
+            analyzer = execFile(config.path + config.analyzer.path + config.analyzer.fileName, function(err, stdout) {
+                if (err) error(key, err);
+                success(key, callback);
+            }
+        );
 
-        analyzer = execFile(config.path + config.analyzer.path + config.analyzer.fileName, function(err, stdout) {
-            if (err) console.error('%s : analyzer error ', scriptName, err);
-            else { console.log('%s : analyzer exists', scriptName); successNum++; }
-            callback(null, 'analyzer');
+        analyzer.stdin.on('error', function(err) {
+            if (err) error(key, err);
         });
+
         analyzer.stdin.write('foobar');
         analyzer.stdin.end('foobar1');
     },
-    'mongo' : function(callback) { // if mongodb collections exists
-        mongoNative.setConfig(config.mongo).connect(
-            function(err, db) {
 
-                if (err) console.log('%s : mongo connect err', scriptName, err);
-                else {
-                    console.log('%s : mongo connect successful', scriptName);
-                    successNum++;
-                }
-
-                callback(null, 'mongo');
+    'mysql' : function(callback) {
+        var key = 'mysql';
+        mysqlDriver
+            .setLoggers(stdoutLoggers)
+            .setConfig(config.mysql)
+            .connect(function(err){
+                if (err) error(key, err);
+                success(key, callback);
             }
         );
     },
-    'mongoсollections' : function(callback) {
+
+    'mongo connection' : function(callback) { // if mongodb collections exists
+        var key = 'mongo connection';
+        mongoNative
+            .setConfig(config.mongo)
+            .connect(function(err, db) {
+                if (err) error(key, err);
+                success(key, callback);
+            }
+        );
+    },
+
+    'mongo сollections' : function(callback) {
         mongoNative.onConnection(function() {
             mongoNative.checkCollections(function(info) {
                 console.log(info);
                 successNum++;
-                callback(null, 'mongoCollections');
+                callback(null, 'mongo collections');
             });
         });
     },
-    'mongottl' : function(callback) {
+
+    'mongo ttl index' : function(callback) {
+        var key = 'mongo ttl index';
         mongoNative.onConnection(function() {
             mongoNative.ensureTTL(function(err) {
-                if (err) console.error('%s mongo ttl error %s', scriptName, err);
-                else { console.log('%s mongo ttl ok', scriptName); successNum++; }
-                callback(null, 'mongottl');
+                if (err) error(key, err);
+                success(key, callback);
             })
         });
     }
 }, function(err, results) {
         console.log('%s : all checks was complete', scriptName);
-        console.log('%s : success %d from 6', scriptName, successNum);
+        console.log('%s : success %d from 7', scriptName, successNum);
         process.exit();
     }
 );

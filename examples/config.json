@@ -38,7 +38,7 @@
     "mongo" : {
         "host" : "localhost",
         "port" : 27017,
-        "db" : "crawler-prototype",
+        "db" : "crawler",
         "password" : "",
         "username" : "",
         "reconnectTimeout" : 10000
@@ -49,9 +49,9 @@
     },
 
     "mysql" : {
-        "host" : "localhost",
-        "user" : "root",
-        "password": "toor",
+        "host" : "alpha.crystalteam.ru",
+        "user" : "test",
+        "password": "123456",
         "dbName" : "Crawler",
         "tableName" : "domain",
         "debug" : false,

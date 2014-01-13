@@ -54,7 +54,14 @@ def main():
     """
     category = -1
     if len(sys.argv) >= 2:
-        category = sys.argv[1]
+        category = {
+            '2-7': 1,
+            '7-12': 2,
+            'school': 3,
+            'religion': 4
+        }.get(sys.argv[1], -1)
+
+	print(category)
 
     # get data from config
     cfg_file = open(os.path.join(os.path.dirname(__file__), 'configs/config.json'))
