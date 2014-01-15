@@ -88,16 +88,10 @@ function init() {
             });
             botLoggers.mongo.info(heapDiff.end());
 
-            process.exit();
-
         });
 
     return linkManager;
 }
-
-// TODO check charsetProcessing.command is recode || iconv and
-// TODO selected option is availiable
-// TODO check if analyzer dir is availiable and analyzer exists
 
 try {
     process.stdout.setEncoding('binary');

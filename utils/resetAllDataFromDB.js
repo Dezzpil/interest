@@ -57,12 +57,16 @@ function main() {
         console.info('mongo - all documents has been removed');
         success.mongo = true;
 
-        mongoNative.ensureTTL(function(err) {
-            if (err) console.error(err);
-            else {
-                success.mongoNative = true;
-                console.info('TTL for log collection created');
-            }
+        mongoNative.onConnection(function() {
+
+            mongoNative.ensureTTL(function(err) {
+                if (err) console.error(err);
+                else {
+                    success.mongoNative = true;
+                    console.info('TTL for log collection created');
+                }
+            });
+
         });
     });
 

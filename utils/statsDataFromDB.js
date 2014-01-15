@@ -9,16 +9,28 @@
 
 var config = require('./../configs/config.json'),
     loggers = require('./../drivers/loggers'),
-    mongoNative = require('./../drivers/mongo-native'),
-    mysql = require('./../drivers/mysql'),
+    mongoNative = require('./../drivers/mongo-native').driver,
+    mysqlDriver = require('./../drivers/mysql').driver,
     botLoggers = loggers.forge(0);
+
+function error(err) {
+    if (err) {
+        console.error(err);
+        process.exit(15);
+    }
+}
 
 function main() {
 
-    mysql.driver.setLoggers(botLoggers).setConfig(config.mysql).connect();
-    mongoNative.driver.setLoggers(botLoggers).setConfig(config.mongo).connect();
+    mysqlDriver
+        .setLoggers(botLoggers)
+        .setConfig(config.mysql)
+        .connect(error);
 
-    // todo refactor to async.parallel()
+    mongoNative
+        .setLoggers(botLoggers)
+        .setConfig(config.mongo)
+        .connect(error);
 
     var success = { 'mysql' : false, 'mongo' : false },
         wait = setInterval(function() {
@@ -37,7 +49,7 @@ function main() {
         }, 1000);
 
 
-    mysql.driver.getStats('2013-12-27 00:00:00', function(results) {
+    mysqlDriver.getStats('2013-12-27 00:00:00', function(results) {
 
         success.mysql = true;
         var propPadded, prop, subprop;
@@ -64,9 +76,11 @@ function main() {
 
     });
 
-    mongoNative.driver.stats(null, function(err, stats) {
-        success.mongo = true;
-        console.log(stats);
+    mongoNative.onConnection(function() {
+        mongoNative.stats(null, function(err, stats) {
+            success.mongo = true;
+            console.log(stats);
+        });
     });
 
 }
