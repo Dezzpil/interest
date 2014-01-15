@@ -87,7 +87,7 @@ function mongoNativeDriver() {
      * Make TTL index for log collection
      * @param callback
      */
-    self.ensureTTL = function(callback) {
+    self.ensureLogTTL = function(callback) {
         var logColl = connection.collection('log');
         logColl.ensureIndex({ 'timestamp' : 1 }, { expireAfterSeconds: 3600 * 24 }, function(err, index) {
             callback(err);
@@ -95,12 +95,24 @@ function mongoNativeDriver() {
     };
 
     /**
-     * If collections doesnt exist - create them
+     * Make TTL index for tmp_text collection
+     * @param callback
+     */
+//    self.ensureTmpTextTTL = function(callback) {
+//        var tmpTextColl = connection.collection('tmp_texts');
+//        tmpTextColl.ensureIndex({ 'date' : 1 }, { expireAfterSeconds: 3600 * 24 }, function(err, index) {
+//            callback(err);
+//        });
+//    };
+
+    /**
+     * If collections doesn't exist - create them
      * @param callback
      */
     self.checkCollections = function(callback) {
 
         var name,
+            //collections = ['impresses', 'texts', 'log', 'ferry_tasks', 'tmp_texts'],
             collections = ['impresses', 'texts', 'log', 'ferry_tasks'],
             info = '';
 

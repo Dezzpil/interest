@@ -23,8 +23,7 @@ function ferryHelper() {
     var queue = null,
         urlIdList = [],
         urlIdReadyList = [],
-        self = this,
-        storage = fnstore.forge();
+        self = this;
 
     mongo.driver.setLoggers(botLoggers).setConfig(config.mongo).connect();
 
@@ -103,8 +102,8 @@ function ferryHelper() {
 
         var textInParser = '',
             content,
-            parser = null,
-            eventFnName = 'ontext';
+            eventFnName = 'ontext',
+            storage = fnstore.forge();
 
         // set behavior to mediator
         storage.store('oncode', function(text) {});
@@ -117,7 +116,8 @@ function ferryHelper() {
 
             if (filter(impress, task, callback)) {
 
-                var impress = impress[0];
+                var impress = impress[0],
+                    parser;
 
                 parser = new htmlparser.Parser({
 
@@ -127,7 +127,7 @@ function ferryHelper() {
                     },
 
                     onclosetag: function(tagname) {
-                        if (tagname === "script" || tagname == 'style') eventFnName = 'ontext';
+                        if (tagname == "script" || tagname == 'style') eventFnName = 'ontext';
                         // add space after each close tag (then we normalize num of they)
                         textInParser += ' ';
                     },

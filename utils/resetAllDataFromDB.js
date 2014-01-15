@@ -15,14 +15,13 @@ function main() {
 
     mysql.setLoggers(botLoggers).setConfig(config.mysql).connect();
     mongo.setLoggers(botLoggers).setConfig(config.mongo).connect();
-    mongoNative.setLoggers(botLoggers).setConfig(config.mongo).connect(function(err) {
-        if (err) {
-            console.error(err);
-            process.exit(4);
-        }
-    });
 
-    var success = { 'mysql' : false, 'mongo' : false, 'mongoNative' : false },
+    var success = {
+            'mysql' : false,
+            'mongo' : false,
+            'mongoLogTTL' : false,
+            'mongoTmpTextTTL' : false
+        },
         wait = setInterval(function() {
             var successCount = 0, successExpectCount = 0, db;
 
@@ -57,15 +56,35 @@ function main() {
         console.info('mongo - all documents has been removed');
         success.mongo = true;
 
+        mongoNative
+            .setLoggers(botLoggers)
+            .setConfig(config.mongo)
+            .connect(function(err) {
+                if (err) {
+                    console.error(err);
+                    process.exit(4);
+                }
+            });
+
         mongoNative.onConnection(function() {
 
-            mongoNative.ensureTTL(function(err) {
+            mongoNative.ensureLogTTL(function(err) {
                 if (err) console.error(err);
                 else {
-                    success.mongoNative = true;
+                    success.mongoLogTTL = true;
                     console.info('TTL for log collection created');
                 }
             });
+
+            if (config.debug) {
+                mongoNative.ensureTmpTextTTL(function(err) {
+                    if (err) console.error(err);
+                    else {
+                        success.mongoTmpTextTTL = true;
+                        console.info('TTL for tmp_text collection created');
+                    }
+                });
+            }
 
         });
     });

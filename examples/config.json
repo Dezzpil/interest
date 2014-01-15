@@ -21,7 +21,7 @@
         "env": null
     },
 
-    "debug" : 1,
+    "debug" : 0,
     "eachLinkDelay" : 500,
     "eachIterationDelay" : 10000,
     "codes" : {

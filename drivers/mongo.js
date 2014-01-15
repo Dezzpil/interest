@@ -13,10 +13,12 @@ function mongoDriver() {
         impressSchema = mongoose.Schema(schemas.impress),
         textSchema = mongoose.Schema(schemas.text),
         ferryTaskSchema = mongoose.Schema(schemas.ferry_task),
+        //tmpTextSchema = mongoose.Schema(schemas.tmp_text),
 
         impressModel = mongoose.model('impress',impressSchema),
         textModel = mongoose.model('text', textSchema),
         ferryTaskModel = mongoose.model('ferry_task', ferryTaskSchema),
+        //tmpTextModel = mongoose.model('tmp_text', tmpTextSchema),
 
         connection = null,
         options = {};
@@ -235,6 +237,23 @@ function mongoDriver() {
         });
 
     };
+
+/*    self.saveTmpText = function(impress, tmpText, callback) {
+
+        var tmpText = new tmpTextModel({
+            date : new Date(),
+            url_id : impress.url_id,
+            url : impress.url,
+            impress_content : impress.content,
+            content_length : impress.length,
+            charset : impress.charset,
+            parsed_text : tmpText
+        });
+
+        tmpText.save(function(error, result) {
+            callback(error);
+        });
+    }*/
 
 }
 

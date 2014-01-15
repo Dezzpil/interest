@@ -108,7 +108,7 @@ async.parallel({
     'mongo ttl index' : function(callback) {
         var key = 'mongo ttl index';
         mongoNative.onConnection(function() {
-            mongoNative.ensureTTL(function(err) {
+            mongoNative.ensureLogTTL(function(err) {
                 if (err) error(key, err);
                 success(key, callback);
             })

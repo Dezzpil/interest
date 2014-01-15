@@ -30,3 +30,13 @@ exports.ferry_task = {
     pid : Number,
     url_ids : Array
 };
+
+//exports.tmp_text = {
+//    date : Date,
+//    url_id : Number,
+//    url : String,
+//    impress_content : String,
+//    content_length : Number,
+//    charset : String,
+//    parsed_text : String
+//};
