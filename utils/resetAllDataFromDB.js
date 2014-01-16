@@ -19,8 +19,7 @@ function main() {
     var success = {
             'mysql' : false,
             'mongo' : false,
-            'mongoLogTTL' : false,
-            'mongoTmpTextTTL' : false
+            'mongoLogTTL' : false
         },
         wait = setInterval(function() {
             var successCount = 0, successExpectCount = 0, db;
@@ -75,16 +74,6 @@ function main() {
                     console.info('TTL for log collection created');
                 }
             });
-
-            if (config.debug) {
-                mongoNative.ensureTmpTextTTL(function(err) {
-                    if (err) console.error(err);
-                    else {
-                        success.mongoTmpTextTTL = true;
-                        console.info('TTL for tmp_text collection created');
-                    }
-                });
-            }
 
         });
     });

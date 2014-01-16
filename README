@@ -24,6 +24,7 @@ Crystal Interest Bot Helper
     
     Python2
 
+        $ sudo yum install python-pip
         $ sudo pip install chardet
 
         $ sudo yum install gcc python-devel
@@ -32,17 +33,17 @@ Crystal Interest Bot Helper
 
     MySQL
 
-    подключается к alpha.crystalteam.ru (по умолчанию)
-    работает с таблицой Crawler.domain
+        подключается к alpha.crystalteam.ru (по умолчанию)
+        работает с таблицой Crawler.domain
 
-    MongoDB
+    MongoDB :
 
-    http://www.mongodb.org/downloads
-    использует 4 коллекции (все коллекции Mongo создает само (автоматически)):
-        log - для хранения снимков памяти
-        impresses - для хранения тела http ответов
-        ferry_tasks - для хранения ссылок проработанных http запросы
-        texts - для хранения текста, извлеченного из тела http запроса
+        http://www.mongodb.org/downloads
+        использует 4 коллекции (все коллекции Mongo создает само (автоматически)):
+            log - для хранения снимков памяти
+            impresses - для хранения тела http ответов
+            ferry_tasks - для хранения ссылок проработанных http запросы
+            texts - для хранения текста, извлеченного из тела http запроса
 
     После пула файлов из репозиторя, необходимо сделать:
 
@@ -73,15 +74,36 @@ Crystal Interest Bot Helper
 
         $ node helper.js
 
-Sphinx
+    Сводку о результатах работы бота можно увидеть:
 
-    Файл конфигурации examples/sphinx-mongo.conf настроен на работу через xmlpipe2 и содержит 2 индекса.
-    Xmlpipe2 вызывает исполнение xmltexts.py, который формирует xml с 1000 документов, которые еще не были
-    проиндексированы ранее.
+        $ node utils/statsDataFromDB.js
 
-    Секции source & index надо включить в боевой конфиг sphinx'a.
-    Для локальных проверок можно запускать прямо так с
-    предустановленными настройками, но ПЕРЕПИСАТЬ ПУТИ СФИНКСА!:
+    Sphinx
 
-    $ indexer --config %YOURCONFIGNAME% --all --verbose --rotate
-    $ sudo service sphinxsearch restart
+        Файл конфигурации examples/sphinx-mongo.conf настроен на работу через xmlpipe2 и содержит 2 индекса.
+        Xmlpipe2 вызывает исполнение xmltexts.py, который формирует xml с
+        config.json:xmlpipe2.documentsNumEachExec документов, которые еще не были
+        проиндексированы ранее.
+
+        Секции source & index надо включить в боевой конфиг sphinx'a.
+        Для локальных проверок можно запускать прямо так с
+        предустановленными настройками, но ПЕРЕПИСАТЬ ПУТИ СФИНКСА!
+
+        После включения секций, описывающих новые индексы надо подхватить новые конфиги:
+            $ sudo searchd --stop
+            $ sudo searchd
+
+        Скрипт индексации, вероятно, останется прежним, на всякий случай:
+        $ indexer --all --verbose --rotate
+
+        Для проверки подключаемся к sphinx'y:
+        $ mysql -h 127.0.0.1 -P 3312
+        $ show tables;
+
+        В списке должны быть:
+        | crystalkids27_sites_mongo  | local |
+        | crystalkids712_sites_mongo | local |
+
+
+
+

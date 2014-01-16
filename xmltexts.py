@@ -61,8 +61,6 @@ def main():
             'religion': 4
         }.get(sys.argv[1], -1)
 
-	print(category)
-
     # get data from config
     cfg_file = open(os.path.join(os.path.dirname(__file__), 'configs/config.json'))
     config = json.load(cfg_file, 'utf-8')
