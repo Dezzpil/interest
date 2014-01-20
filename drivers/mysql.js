@@ -11,13 +11,28 @@ function mysqlDriver() {
         config = {},
         loggers = null;
 
+    /**
+     *
+     * @param object {Object}
+     * @returns {mysqlDriver}
+     */
     this.setLoggers = function(object) {
         loggers = object;
         return self;
     };
 
+    /**
+     *
+     * @param cfg {Object}
+     * @returns {mysqlDriver}
+     */
     this.setConfig = function(cfg) {
-        config = cfg;
+        if ('mysql' in cfg) {
+            config = cfg.mysql;
+        } else {
+            config = cfg;
+        }
+
         return self;
     };
 
@@ -47,16 +62,26 @@ function mysqlDriver() {
         });
     };
 
-    this.links = function(pid, callback, errorCallback) {
+    /**
+     * Get links data from config.dbName + '.' + config.tableName
+     * where now() - lastRechange > config.options.timeToReprocessInSec
+     * and were tested before lastRechange
+     *
+     * @param string pid
+     * @param function callback
+     * @param function errorCallback
+     */
+    this.getLinks = function(pid, callback, errorCallback) {
 
-        loggers.file.info('MYSQL - getting links...');
+        loggers.file.info('MYSQL - getting getLinks...');
 
         mysqlConnection.query(
             'UPDATE ' + config.dbName + '.' + config.tableName + ' set idProcess=' + pid +
                 ' WHERE ' +
                     'idProcess=0 ' +
-                    '&& UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(lastTest) > ' + (config.options.timeToReprocessInSec) +
-                    '&& UNIX_TIMESTAMP(lastTest) <= UNIX_TIMESTAMP(lastRechange) ' +
+                    '&& UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(lastRechange) > ' +
+                        config.options.timeToReprocessInSec +
+                    '&& UNIX_TIMESTAMP(lastTest) > UNIX_TIMESTAMP(lastRechange)' +
                 ' ORDER BY lastTest ASC' +
                 ' LIMIT ' + config.options.maxProcessLimit,
             function(err, rows) {
@@ -84,7 +109,7 @@ function mysqlDriver() {
                     var d = setTimeout(function() {
                         clearTimeout(d);
                         loggers.console.info('MYSQL get no item to process, idle...');
-                        self.links(pid, callback, errorCallback);
+                        self.getLinks(pid, callback, errorCallback);
                     }, config.options.timeOutForRetryInSec * 100)
 
                 }
@@ -105,6 +130,7 @@ function mysqlDriver() {
     /**
      * Обнулить все собранные ботом данные
      * Данные восстановить не удасться !!!
+     * @param callback {Function}
      */
     this.resetLinks = function(callback) {
         mysqlConnection.query(
@@ -124,13 +150,22 @@ function mysqlDriver() {
         );
     };
 
-    // TODO programm dataStorage and drivers for it
-
-    // TODO fix signature
-    this.setStatusForLink = function(idD, statusCode, callback, ip4) {
-        self.setInfoForLink(idD, statusCode, 0, 0, callback, ip4);
+    /**
+     *
+     * @param idD {Integer}
+     * @param statusCode {Integer}
+     * @param callback {Function}
+     */
+    this.setStatusForLink = function(idD, statusCode, callback) {
+        self.setInfoForLink(idD, statusCode, 0, 0, callback);
     };
 
+    /**
+     *
+     * @param idD {Integer}
+     * @param statusCode {Integer}
+     * @param callback {Function}
+     */
     this.setLinkRecovered = function(idD, statusCode, callback) {
         mysqlConnection.query(
             'UPDATE '+ (config.dbName + '.' + config.tableName) +' SET ? WHERE idD="' + idD + '"',
@@ -141,8 +176,15 @@ function mysqlDriver() {
         );
     };
 
-    // TODO fix signature
-    this.setInfoForLink = function(idD, statusCode, percent, isBad, callback, ip4) {
+    /**
+     *
+     * @param idD {Integer}
+     * @param statusCode {Integer}
+     * @param percent {Integer}
+     * @param isBad {Boolean}
+     * @param callback {Function}
+     */
+    this.setInfoForLink = function(idD, statusCode, percent, isBad, callback) {
         mysqlConnection.query(
             'UPDATE '+ (config.dbName + '.' + config.tableName) +' SET ? WHERE idD="' + idD + '"',
             {
@@ -150,8 +192,7 @@ function mysqlDriver() {
                 lastTest : new Date(),
                 statusCode : statusCode,
                 persent : (percent ? percent : 0),
-                bad : (isBad ? isBad : 0),
-                ip : (ip4 ? ip4 : 0)
+                bad : (isBad ? isBad : 0)
             },
             function(err, rows) {
                 if (callback) callback(err, rows);
@@ -160,9 +201,9 @@ function mysqlDriver() {
     };
 
     /**
-     * @todo refactoring
-     * @param dateStart {string}
-     * @param callback {fn}
+     * @todo HOWTO ?
+     * @param dateStart {String}
+     * @param callback {Function}
      */
     this.getStats = function(dateStart, callback) {
 

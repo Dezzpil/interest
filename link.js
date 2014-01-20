@@ -80,7 +80,7 @@ function linkManager() {
             // Инициализация, если гид не указан.
             // Получаем список адресов, создаем гида для их обхода,
             // и вызываем сами себя, но уже с гидом
-            mysql.links(botPID, function(rows) {
+            mysql.getLinks(botPID, function(rows) {
 
                 var guide = LinkGuide.forge(rows, loggers);
 

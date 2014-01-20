@@ -95,17 +95,6 @@ function mongoNativeDriver() {
     };
 
     /**
-     * Make TTL index for tmp_text collection
-     * @param callback
-     */
-//    self.ensureTmpTextTTL = function(callback) {
-//        var tmpTextColl = connection.collection('tmp_texts');
-//        tmpTextColl.ensureIndex({ 'date' : 1 }, { expireAfterSeconds: 3600 * 24 }, function(err, index) {
-//            callback(err);
-//        });
-//    };
-
-    /**
      * If collections doesn't exist - create them
      * @param callback
      */

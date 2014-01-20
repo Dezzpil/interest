@@ -25,9 +25,6 @@ function init() {
     var linkManager, requestManager,
         heapDiff, responseProcessor, analyzeFactory;
 
-    mysql.driver.setLoggers(botLoggers).setConfig(config.mysql).connect();
-    mongo.driver.setLoggers(botLoggers).setConfig(config.mongo).connect();
-
     analyzeFactory = (new analyzer.factory())
         .setOptions(config.analyzer)
         .setLoggers(botLoggers);
@@ -99,13 +96,15 @@ try {
     // may be log into file
 }
 
+process.on('uncaughtException', function(err) {
+    // silent is golden ?
+    botLoggers.file.info('Caught exception: ' + err);
+});
+
+// prepare db drives
+mysql.driver.setLoggers(botLoggers).setConfig(config.mysql).connect();
+mongo.driver.setLoggers(botLoggers).setConfig(config.mongo).connect();
+
+// go go go
 main = init();
 main.run();
-
-process.on('uncaughtException', function(err) {
-
-    // если что-то отвалилось внезапно
-    // бот тихо продолжает работать дальше
-    botLoggers.file.info('Caught exception: ' + err);
-
-});

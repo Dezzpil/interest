@@ -26,9 +26,9 @@ function mysqlMockDriver() {
         loggers.console.info('MYSQL - connection established!');
     };
 
-    this.links = function(pid, callback, errorCallback) {
-        loggers.file.info('MYSQL - getting links...');
-        loggers.console.info('MYSQL - getting links...');
+    this.getLinks = function(pid, callback, errorCallback) {
+        loggers.file.info('MYSQL - getting getLinks...');
+        loggers.console.info('MYSQL - getting getLinks...');
 
         var i, testData = [];
 

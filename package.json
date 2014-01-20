@@ -1,7 +1,7 @@
 {
   "name": "crystal-interest",
   "version": "0.1.0",
-  "description": "bot for detour links from crawler db in mysql and checks its content",
+  "description": "bot for detour links from Crawler db in mysql and checks content and collect data for sphinx",
   "main": "index.js",
   "directories": {
     "test": "tests/"
