@@ -17,7 +17,7 @@ function mongoNativeDriver() {
             'connected' : []
         }
 
-    self.setLoggers = function(object) {
+    self.setLogger = function(object) {
         loggers = object;
         return self;
     };

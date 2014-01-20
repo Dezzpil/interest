@@ -11,7 +11,7 @@ function mysqlMockDriver() {
         config = {},
         loggers = null;
 
-    this.setLoggers = function(object) {
+    this.setLogger = function(object) {
         loggers = object;
         return self;
     };
@@ -23,12 +23,10 @@ function mysqlMockDriver() {
 
     this.connect = function() {
         loggers.file.info('MYSQL - connection established!');
-        loggers.console.info('MYSQL - connection established!');
     };
 
     this.getLinks = function(pid, callback, errorCallback) {
-        loggers.file.info('MYSQL - getting getLinks...');
-        loggers.console.info('MYSQL - getting getLinks...');
+        loggers.file.info('MYSQL - getting links...');
 
         var i, testData = [];
 

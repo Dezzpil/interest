@@ -1,80 +1,59 @@
 /**
- * Created by dezzpil on 28.11.13.
+ * Created by dezzpil on 20.01.14.
+ *
+ * Простейший способ определять логгеры для бота:
+ * заходим по ссылке, смотрим список параметров и название
+ * транспорта - прописываем их для соотв. логгера
+ *
  */
-var config = require('./../configs/config.json'),
-    winston = require('winston'),
-    mongoLog = require('winston-mongodb').MongoDB;
 
-function forge(botPID) {
+var winston = require('winston');
 
-    function stub() {
-        this.info = function() {};
-        this.log = function() {};
-        this.error = function() {};
-        this.profile = function() {};
+/**
+ * @link https://github.com/flatiron/winston/blob/master/docs/transports.md
+ *
+ * Supports now : Console, File, MongoDB
+ *
+ * @param type {string}
+ * @param options {object}
+ * @returns winston.Logger
+ */
+function forge(type, options) {
+
+    winston.addColors({
+        'info' : 'cyan'
+    });
+
+    var logger = new winston.Logger({
+        transports: [
+            new (winston.transports.Console)()
+        ]
+    });
+
+    if (type) switch (type.toLowerCase()) {
+
+        case "file" :
+            logger.add(winston.transports.File, options);
+            logger.remove(winston.transports.Console);
+            break;
+
+        /**
+         * @link https://github.com/indexzero/winston-mongodb
+         */
+        case "mongodb" :
+            require('winston-mongodb').MongoDB;
+            logger.add(winston.transports.MongoDB, options);
+            logger.remove(winston.transports.Console);
+            break;
+
+        case "console" :
+            logger.remove(winston.transports.Console);
+            logger.add(winston.transports.Console, options);
+            break;
     }
 
-    var glue = '-',
-        writterToStdout = null,
-        writterToMongo = null,
-        now = new Date(),
-        loggersBuild = {},
-        nowDate = now.getFullYear() + glue + (now.getMonth() + 1) + glue + now.getDate();
+    return logger;
 
-
-    writterToMongo = new (winston.Logger)({
-        transports: [new (mongoLog)({
-            host : config.mongo.host,
-            port : config.mongo.port,
-            username : config.mongo.username,
-            password : config.mongo.password,
-            db : config.mongo.db,
-            level : 'debug',
-            collection : config.logs.memoryLogTable
-        })],
-        exitOnError: false
-    });
-
-    writterToStdout = new (winston.Logger)({
-        transports : [new (winston.transports.Console)({
-            timestamp : true,
-            colorize : true,
-            silent : false,
-            level : 'debug'
-        })]
-    });
-
-    writterToMongo.on('error', function(err) {
-        writterToStdout.error(err);
-        writterToFile.error(err);
-    });
-
-    loggersBuild = {
-        'file' : {},
-        'console' : {},
-        'mongo' : writterToMongo
-    };
-
-    // конфигурируем сборку логгеров
-    // после коммита бот не умеет писать в файл самостоятельно, только
-    // в stdout, ключи file и console означают скорее detail и modest соответственно,
-    // если кто хочет может сделать @todo привести ключи логгеров в соответсвие с режимом логирования
-    switch (config.logs.mode) {
-        case "modest" :
-            loggersBuild.file = new stub();
-            loggersBuild.console = writterToStdout;
-            break;
-        case "detail" :
-            loggersBuild.file = writterToStdout;
-            loggersBuild.console = new stub();
-            break;
-        case "none" :
-        default :
-            loggersBuild.file = new stub();
-            loggersBuild.console = new stub();
-    }
-
-    return loggersBuild;
 }
 
 exports.forge = forge;

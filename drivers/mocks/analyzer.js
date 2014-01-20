@@ -17,12 +17,12 @@ function analyzeMockFactory() {
             "killSignal" : 'SIGINT'
         };
 
-    this.setOptions = function(cfg) {
+    this.setConfig = function(cfg) {
         options = cfg;
         return factory;
     };
 
-    this.setLoggers = function(object) {
+    this.setLogger = function(object) {
         loggers = object;
         return factory;
     };

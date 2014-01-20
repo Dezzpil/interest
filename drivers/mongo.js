@@ -8,17 +8,15 @@ var mongoose = require('mongoose'),
 function mongoDriver() {
 
     var self = this,
-        loggers = null,
+        logger = null,
 
         impressSchema = mongoose.Schema(schemas.impress),
         textSchema = mongoose.Schema(schemas.text),
         ferryTaskSchema = mongoose.Schema(schemas.ferry_task),
-        //tmpTextSchema = mongoose.Schema(schemas.tmp_text),
 
         impressModel = mongoose.model('impress',impressSchema),
         textModel = mongoose.model('text', textSchema),
         ferryTaskModel = mongoose.model('ferry_task', ferryTaskSchema),
-        //tmpTextModel = mongoose.model('tmp_text', tmpTextSchema),
 
         connection = null,
         options = {};
@@ -31,8 +29,8 @@ function mongoDriver() {
     ferryTaskSchema.set('autoIndex', false);
 
 
-    self.setLoggers = function(object) {
-        loggers = object;
+    self.setLogger = function(object) {
+        logger = object;
         return self;
     };
     
@@ -54,21 +52,19 @@ function mongoDriver() {
 
         connection = mongoose.connection
             .on('error', function(err) {
-                loggers.file.info(err);
-                loggers.console.info('connection to MongoDB error:', err);
-                if (callback) callback(err);
+                callback(err);
                 var delay = setTimeout(function() {
                     clearTimeout(delay);
                     self.connect();
                 }, options.reconnectTimeout);
+                throw err;
             })
             .on('connected', function() {
-                loggers.file.info('MONGODB - connection established!');
-                loggers.console.info('connection to MongoDB established');
+                logger.info('MONGODB - connection established');
+                callback();
             })
             .on('reconnected', function() {
-                loggers.file.info('MONGODB - connection REestablished!');
-                loggers.console.info('connection to MongoDB REestablished');
+                logger.info('MONGODB - connection reestablished');
             })
     };
 
@@ -167,7 +163,7 @@ function mongoDriver() {
 
             var count = result ? result.length : 0, text;
 
-            loggers.file.info('%s making text from impress : count of text documents - ', impress.url_id, count);
+            logger.info('%s making text from impress : count of text documents - ', impress.url_id, count);
 
             if (count == 1) { // update and return
 
@@ -180,7 +176,7 @@ function mongoDriver() {
                     category : impress.category,
                     is_indexed : false
                 }, function(err, text) {
-                    loggers.file.info('%s updating success', impress.url_id, err);
+                    logger.info('%s updating success', impress.url_id, err);
                     callback(err, text);
                 });
             }
@@ -188,7 +184,7 @@ function mongoDriver() {
             if (count > 1) { // remove all prev texts and going on
 
                 textModel.remove({ url_id : impress.url_id }, function(err) {
-                    loggers.file.info('%s removing success', impress.url_id, err);
+                    logger.info('%s removing success', impress.url_id, err);
                     callback(err);
                 });
             }
@@ -206,7 +202,7 @@ function mongoDriver() {
             });
 
             text.save(function(err, text) {
-                loggers.file.info('%s text inserting success', impress.url_id, err);
+                logger.info('%s text inserting success', impress.url_id, err);
                 callback(err, text);
             });
 
@@ -237,24 +233,6 @@ function mongoDriver() {
         });
 
     };
-
-/*    self.saveTmpText = function(impress, tmpText, callback) {
-
-        var tmpText = new tmpTextModel({
-            date : new Date(),
-            url_id : impress.url_id,
-            url : impress.url,
-            impress_content : impress.content,
-            content_length : impress.length,
-            charset : impress.charset,
-            parsed_text : tmpText
-        });
-
-        tmpText.save(function(error, result) {
-            callback(error);
-        });
-    }*/
-
 }
 
 exports.driver = new mongoDriver();

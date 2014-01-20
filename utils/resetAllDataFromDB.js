@@ -13,8 +13,8 @@ var config = require('./../configs/config.json'),
 
 function main() {
 
-    mysql.setLoggers(botLoggers).setConfig(config.mysql).connect();
-    mongo.setLoggers(botLoggers).setConfig(config.mongo).connect();
+    mysql.setLogger(botLoggers).setConfig(config.mysql).connect();
+    mongo.setLogger(botLoggers).setConfig(config.mongo).connect();
 
     var success = {
             'mysql' : false,
@@ -56,7 +56,7 @@ function main() {
         success.mongo = true;
 
         mongoNative
-            .setLoggers(botLoggers)
+            .setLogger(botLoggers)
             .setConfig(config.mongo)
             .connect(function(err) {
                 if (err) {

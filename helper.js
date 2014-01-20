@@ -10,33 +10,31 @@
 
 var async = require('async'),
     htmlparser = require("htmlparser2"),
-    config = require('./configs/config.json')
-    loggers = require('./drivers/loggers'),
+    config = require('./configs/config.json'),
     fnstore = require('./libs/functionStore'),
     mongo = require('./drivers/mongo'),
-    botPID = '1997',
-    botLoggers = loggers.forge(botPID);
+
+    loggers = require('./drivers/loggers'),
+    loggerProcess = loggers.forge(
+        config.loggers.process.type,
+        config.loggers.process.options
+    ),
+    loggerErrors = loggers.forge(
+        config.loggers.errors.type,
+        config.loggers.errors.options
+    );
 
 
 function ferryHelper() {
 
-    var queue = null,
-        urlIdList = [],
-        urlIdReadyList = [],
-        self = this;
-
-    mongo.driver.setLoggers(botLoggers).setConfig(config.mongo).connect();
+    var urlIdList = [], urlIdReadyList = [],
+        queue = null, self = this;
 
     function initQueue() {
 
         urlIdReadyList = [];
+        loggerProcess.info('note : queue initialized');
 
-        botLoggers.file.info('note : queue initialized');
-
-        /**
-         * @link 'https://github.com/caolan/async#queueworker-concurrency'
-         * @type {*}
-         */
         queue = async.queue(function (task, callback) {
             self.process(task, callback);
         }, 2);
@@ -46,7 +44,7 @@ function ferryHelper() {
          * callback that is called when the last item from the queue has returned from the worker
          */
         queue.drain = function() {
-            botLoggers.file.info('note : all items have been started, waiting ...');
+            loggerProcess.info('note : all items have been started, waiting ...');
             var intervalCount = 0,
                 delay = setInterval(function() {
 
@@ -137,21 +135,21 @@ function ferryHelper() {
                     },
 
                     onerror: function(err) {
-                        botLoggers.file.warn('htmlparser err', err);
+                        loggerProcess.warn('htmlparser err', err);
                         callback(impress.url_id);
                     },
 
                     onend: function() {
 
                         var text = prepareText(textInParser);
-                        botLoggers.file.info('%s text from impress complete (length - %d)', task.id, text.length);
+                        loggerProcess.info('%s text from impress complete (length - %d)', task.id, text.length);
 
                         mongo.driver.makeTextFromImpress(
                             impress, text, function(err, textDoc) {
 
                                 if (err) {
 
-                                    botLoggers.file.warn('text from impress err', err);
+                                    loggerProcess.warn('text from impress err', err);
                                     callback(err, impress.url_id);
 
                                 } else {
@@ -160,25 +158,25 @@ function ferryHelper() {
                                     async.parallel({
                                         'removeExcess' : function(afterReadyFn) {
 
-                                            botLoggers.file.info('%s removing all impress except _id :', task.id, impress._id.toString());
+                                            loggerProcess.info('%s removing all impress except _id :', task.id, impress._id.toString());
                                             mongo.driver.removeExcessImpresses(impress, function(err) {
-                                                if (err) botLoggers.file.error('removing impress excess err', err);
+                                                if (err) loggerProcess.error('removing impress excess err', err);
                                                 afterReadyFn(err, true);
                                             });
 
                                         },
                                         'setBatched' : function(afterReadyFn) {
 
-                                            botLoggers.file.info('%s mark impress as batched :', task.id);
+                                            loggerProcess.info('%s mark impress as batched :', task.id);
                                             mongo.driver.setImpressFerried(impress, function(err) {
-                                                if (err) botLoggers.file.error('set impress batch flag err', err);
+                                                if (err) loggerProcess.error('set impress batch flag err', err);
                                                 afterReadyFn(err, true);
                                             });
 
                                         }},
                                         function(err, results) { // after ready handler
 
-                                            botLoggers.file.info('%s complete', task.id);
+                                            loggerProcess.info('%s complete', task.id);
                                             callback('text created', impress.url_id);
 
                                         }
@@ -193,7 +191,7 @@ function ferryHelper() {
                 });
 
                 // @todo парсим html в простой текст без тегов.
-                botLoggers.file.info(
+                loggerProcess.info(
                     '%s give content from impress to parser (length %d)',
                     impress.url_id, impress.length
                 );
@@ -209,7 +207,7 @@ function ferryHelper() {
     };
 
     function iterate(interval) {
-        botLoggers.file.info('note : starting new iteration ...');
+        loggerProcess.info('note : starting new iteration ...');
 
         if (interval) clearInterval(interval);
 
@@ -219,7 +217,7 @@ function ferryHelper() {
 
             if (error) {
 
-                botLoggers.file.info('MONGO error (getting ferryTasks) : ', error);
+                loggerProcess.info('MONGO error (getting ferryTasks) : ', error);
                 var interval = setInterval(function() {
                     iterate(interval);
                 }, 10000);
@@ -227,7 +225,7 @@ function ferryHelper() {
             } else {
 
                 if ('url_ids' in task) {
-                    botLoggers.file.info(task.url_ids);
+                    loggerProcess.info(task.url_ids);
 
                     // save to function scope for checking in interval
                     urlIdList = task.url_ids;
@@ -240,10 +238,10 @@ function ferryHelper() {
 
                     while(urlId !== undefined) {
 
-                        botLoggers.file.info('note : push to queue item', {id: urlId});
+                        loggerProcess.info('note : push to queue item', {id: urlId});
 
                         queue.push({id: urlId}, function (err, id) {
-                            botLoggers.file.info('%s processed', id, err);
+                            loggerProcess.info('%s processed', id, err);
                             if (urlIdReadyList.indexOf(id) + 1 == 0) {
                                 urlIdReadyList.push(id);
                             }
@@ -254,7 +252,7 @@ function ferryHelper() {
 
                 } else {
 
-                    botLoggers.file.info('error : no url_id in ferryTasks', task);
+                    loggerProcess.info('error : no url_id in ferryTasks', task);
 
                 }
 
@@ -268,5 +266,18 @@ function ferryHelper() {
     }
 }
 
+process.on('uncaughtException', function(err) {
+    // silent is golden ?
+    loggerErrors.info(err);
+});
 
-(new ferryHelper).init();
+mongo.driver
+    .setConfig(config.mongo)
+    .setLogger(loggerProcess)
+    .connect(function(err) {
+
+        if (err) throw err;
+        (new ferryHelper).init();
+
+    }
+);

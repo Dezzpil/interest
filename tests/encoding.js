@@ -26,15 +26,15 @@ var config = require('./../configs/config.json'),
 // inject
 mongoMockDriver
     .setConfig(config.mongo)
-    .setLoggers(loggers);
+    .setLogger(loggers);
 
 mysqlMockDriver
     .setConfig(config.mysql)
-    .setLoggers(loggers);
+    .setLogger(loggers);
 
 responseFactory
-    .setOptions(config)
-    .setLoggers(loggers)
+    .setConfig(config)
+    .setLogger(loggers)
     .setBotPID('mock')
     .setMysqlDriver(mysqlMockDriver)
     .setMongoDriver(mongoMockDriver)
@@ -51,8 +51,8 @@ responseFactory
     });
 
 requestManager
-    .setOptions(config)
-    .setLoggers(loggers)
+    .setConfig(config)
+    .setLogger(loggers)
     .setMysqlDriver(mysqlMockDriver)
     .setUserAgent(config.name + ' v.' + config.version)
     .setModel(function(response, guideBook) {
@@ -63,8 +63,8 @@ requestManager
     });
 
 linksManager
-    .setLoggers(loggers)
-    .setOptions(config)
+    .setLogger(loggers)
+    .setConfig(config)
     .setMysqlDriver(mysqlMockDriver)
     .setBotPID('mock')
     .setOnIterateStart(function(guide) {

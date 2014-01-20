@@ -13,12 +13,38 @@ var memwatch = require('memwatch'),
     request = require('./request'),
     response = require('./response'),
     analyzer = require('./drivers/analyzer'),
+    async = require('async'),
 
     botName = config.name + ' v.' + config.version,
     now = new Date(),
     botPID = parseInt(now.getTime()/1000),
 
-    botLoggers = loggers.forge(botPID);
+    loggerProcess = loggers.forge(
+        config.loggers.process.type,
+        config.loggers.process.options
+    ),
+
+    loggerErrors = loggers.forge(
+        config.loggers.errors.type,
+        config.loggers.errors.options
+    ),
+
+    loggerMemory = loggers.forge(
+        "mongodb",
+        {
+            "db" : config.mongo.db,
+            "host" : config.mongo.host,
+            "port" : config.mongo.port,
+            "username" : config.mongo.username,
+            "password" : config.mongo.password,
+            "timeout" : config.mongo.reconnectTimeout,
+            "collection" : "logs",
+            "level" : "info",
+            "silent" : false,
+            "safe" : false
+        }
+    );
+
 
 function init() {
 
@@ -26,22 +52,22 @@ function init() {
         heapDiff, responseProcessor, analyzeFactory;
 
     analyzeFactory = (new analyzer.factory())
-        .setOptions(config.analyzer)
-        .setLoggers(botLoggers);
+        .setConfig(config.analyzer)
+        .setLogger(loggerProcess);
 
     responseProcessor = (new response.factory())
-        .setLoggers(botLoggers)
+        .setLogger(loggerProcess)
         .setMysqlDriver(mysql.driver)
         .setBotPID(botPID)
         .setMongoDriver(mongo.driver)
-        .setOptions(config)
+        .setConfig(config)
         .setAnalyzerFactory(analyzeFactory);
 
     requestManager = (new request.manager())
         .setMysqlDriver(mysql.driver)
-        .setLoggers(botLoggers)
+        .setLogger(loggerProcess)
         .setUserAgent(botName)
-        .setOptions(config)
+        .setConfig(config)
         .setModel(function(response, guideBook) {
 
             /**
@@ -54,8 +80,8 @@ function init() {
         });
 
     linkManager = (new link.manager())
-        .setLoggers(botLoggers)
-        .setOptions(config)
+        .setLogger(loggerProcess)
+        .setConfig(config)
         .setMysqlDriver(mysql.driver)
         .setBotPID(botPID)
         .setOnIterateStart(function(guide) {
@@ -81,14 +107,16 @@ function init() {
              * On link iteration end
              */
             mongo.driver.saveFerryTask(guide.getIdList(), botPID, function(err) {
-                if (err) botLoggers.console.info('MongoDB error : ', err);
+                if (err) throw err;
             });
-            botLoggers.mongo.info(heapDiff.end());
+
+            loggerMemory.info(heapDiff.end());
 
         });
 
     return linkManager;
 }
+
 
 try {
     process.stdout.setEncoding('binary');
@@ -98,13 +126,36 @@ try {
 
 process.on('uncaughtException', function(err) {
     // silent is golden ?
-    botLoggers.file.info('Caught exception: ' + err);
+    loggerErrors.info(err);
 });
 
-// prepare db drives
-mysql.driver.setLoggers(botLoggers).setConfig(config.mysql).connect();
-mongo.driver.setLoggers(botLoggers).setConfig(config.mongo).connect();
+// prerequisites
+async.parallel({
+    'mysql' : function(callback) {
+        mysql.driver
+            .setLogger(loggerProcess)
+            .setConfig(config.mysql)
+            .connect(function(err) {
+                loggerProcess.info('MYSQL - Connecting ...');
+                callback(err, true);
+            }
+        );
+    },
+    'mongo' : function(callback) {
+        mongo.driver
+            .setLogger(loggerProcess)
+            .setConfig(config.mongo)
+            .connect(function(err) {
+                loggerProcess.info('MONGODB - Connecting ...');
+                callback(err, true);
+            }
+        );
+    }
+}, function(error, result) {
 
-// go go go
-main = init();
-main.run();
+    loggerProcess.info(result);
+
+    if (error) throw error;
+
+    init().run();
+});

@@ -12,24 +12,20 @@ var LinkGuide = require('./libs/linkGuide'),
 
 function linkManager() {
 
-    var loggers = null,
-        botPID = null,
-        mysql = null,
+    var logger, botPID, mysql,
         self = this,
-        linkBrokenProcs = 0,
         callback = null,
         callbackOnIterateStart = null,
         callbackOnIterateFin = null,
-        queue = null,
-        config;
+        queue, config, linkBrokenProcs = 0;
 
-    this.setOptions = function(opts) {
+    this.setConfig = function(opts) {
         config = opts;
         return self;
     };
 
-    this.setLoggers = function(object) {
-        loggers = object;
+    this.setLogger = function(object) {
+        logger = object;
         return self;
     };
 
@@ -48,11 +44,6 @@ function linkManager() {
         return self;
     };
 
-    this.resetBrokenCount = function() {
-        linkBrokenProcs = 0;
-        return linkBrokenProcs;
-    };
-
     this.setOnIterateStart = function(fn) {
         callbackOnIterateStart = fn;
         return self;
@@ -65,15 +56,15 @@ function linkManager() {
 
     /**
      * Запустить контроллер ссылок
-     * @param guide
+     * @param guide {LinkGuide}
      * @returns {boolean}
      */
     this.run = function(guide) {
 
-        if ( ! loggers) throw new Error('readLinkList : no loggers list setted!');
-        if ( ! mysql) throw new Error('readLinkList : no mysql driver setted!');
-        if ( ! botPID) throw new Error('readLinkList : no botPID setted!');
-        if ( ! callback) throw new Error('readLinkList : no callback setted!');
+        if ( ! logger) throw new Error('linkManager : no logger setted!');
+        if ( ! mysql) throw new Error('linkManager : no mysql driver setted!');
+        if ( ! botPID) throw new Error('linkManager : no botPID setted!');
+        if ( ! callback) throw new Error('linkManager : no callback setted!');
 
         if ( ! guide) {
 
@@ -82,21 +73,18 @@ function linkManager() {
             // и вызываем сами себя, но уже с гидом
             mysql.getLinks(botPID, function(rows) {
 
-                var guide = LinkGuide.forge(rows, loggers);
+                var guide = LinkGuide.forge(rows);
 
                 if (callbackOnIterateStart) {
                     callbackOnIterateStart(guide);
                 }
 
                 queue = async.queue(
-
                     function (guidebook, afterReady) {
-                        loggers.console.info('start %s', guidebook.getDomain());
                         guidebook.setCallback(afterReady);
-                        callback(guidebook); },
-
+                        callback(guidebook);
+                    },
                     config.maxYields
-
                 );
 
                 self.run(guide);
@@ -136,10 +124,7 @@ function linkManager() {
                 var guidebook = guide.getGuideBook();
 
                 queue.push(guidebook, function(err) {
-                    if (err) {
-                        loggers.file.error(err);
-                        loggers.console.error(err);
-                    }
+                    if (err) throw err;
                 });
                 guide.next();
             }
@@ -161,13 +146,6 @@ function linkManager() {
                 interval = setInterval(function() {
 
                     count++;
-
-                    loggers.console.info(
-                        'complete %d ( + %d exceptions) from %d',
-                        guide.getReadyList().length,
-                        linkBrokenProcs,
-                        guide.getList().length
-                    );
 
                     if (
                         config.readyCheckMaxTryCount <= count ||
@@ -195,6 +173,11 @@ function linkManager() {
         return false;
 
     }
+
+    this.resetBrokenCount = function() {
+        linkBrokenProcs = 0;
+        return linkBrokenProcs;
+    };
 }
 
 exports.manager = linkManager;

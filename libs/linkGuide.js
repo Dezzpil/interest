@@ -2,8 +2,8 @@
  * Created by dezzpil on 22.11.13.
  */
 
-function forge(rows, loggers) {
-    return new LinkGuide(rows, loggers);
+function forge(rows) {
+    return new LinkGuide(rows);
 }
 
 
@@ -25,11 +25,6 @@ function LinkGuideBook(guide, index) {
         linkList = parent.getList(),
         finCallback = null;
 
-    if (parent.loggers && 'console' in parent.loggers) {
-        parent.loggers.console.info('%d starts %s', linkIds[i], linkList[i]);
-        parent.loggers.console.profile(linkList[i]);
-    }
-
     this.isEmpty = parent.isEmpty;
 
     this.setCallback = function(callback) {
@@ -41,14 +36,8 @@ function LinkGuideBook(guide, index) {
      */
     this.markLink = function(callback) {
         if (parent.markLink(this.getIdD())) {
-
             callback();
-
             finCallback();
-            if (parent.loggers && 'console' in parent.loggers) {
-                parent.loggers.console.info('%d ends %s', linkIds[i], linkList[i]);
-                parent.loggers.console.profile(linkList[i]);
-            }
         }
 
     };
@@ -105,11 +94,10 @@ function LinkGuideBook(guide, index) {
 
 /**
  *
- * @param rows
- * @param loggersObject
+ * @param rows {Array}
  * @constructor
  */
-function LinkGuide(rows, loggersObject) {
+function LinkGuide(rows) {
 
     var i,
         index = 0,
@@ -132,8 +120,6 @@ function LinkGuide(rows, loggersObject) {
     }
 
     delete(i);
-
-    this.loggers = loggersObject;
 
     this.next = function() {
         index++;

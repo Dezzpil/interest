@@ -10,12 +10,8 @@ var exec = require('child_process').exec;
 function model() {
 
     var self = this,
-        loggers = null,
-        mysql = null,
-        mongo = null,
-        botPID = 0,
-        options = {},
-        hooks = {},
+        logger = null, mysql = null, mongo = null,
+        botPID = 0, options = {}, hooks = {}, 
         Analyzer;
 
     this.setAnalyzerFactory = function(analyzerFactory) {
@@ -23,13 +19,13 @@ function model() {
         return self;
     };
 
-    this.setOptions = function(opts) {
+    this.setConfig = function(opts) {
         options = opts;
         return self;
     };
 
-    this.setLoggers = function(object) {
-        loggers = object;
+    this.setLogger = function(object) {
+        logger = object;
         return self;
     };
 
@@ -96,7 +92,7 @@ function model() {
             analyzer.run(
                 function(analyzeResult) { // readyCallback
 
-                    loggers.file.info('%d DATA ANALYZED :', idD);
+                    logger.info('%d DATA ANALYZED :', idD);
 
                     saveDataToMongo(responseEncodedBody, getCharset(), '', analyzeResult);
 
@@ -104,7 +100,7 @@ function model() {
                         mysql.setInfoForLink(
                             idD, statusCode, analyzeResult.percent, analyzeResult.isBad,
                             function(err, rows) {
-                                loggers.file.info('%d MYSQL ROW UPDATED AFTER ANALYZING', idD);
+                                logger.info('%d MYSQL ROW UPDATED AFTER ANALYZING', idD);
                             }
                         );
                     });
@@ -112,17 +108,17 @@ function model() {
                 },
                 function(err) { // errorCallback
 
-                    loggers.file.warn('%d ANALYZER ERROR ', idD, err);
+                    logger.info('%d ANALYZER ERROR ', idD, err);
 
                     guideBook.markLink(function() {
                         mysql.setStatusForLink(idD, options.codes.htmlParseError, function(err, rows) {
-                            loggers.file.info('%d MYSQL ROW UPDATED WITH ANALYZER ERROR', idD);
+                            logger.info('%d MYSQL ROW UPDATED WITH ANALYZER ERROR', idD);
                         });
                     });
 
                 },
                 function(errKilling) { // completeCallback
-                    loggers.file.warn('%d KILL ANALYZER  (%s)', idD, link, errKilling);
+                    logger.info('%d KILL ANALYZER  (%s)', idD, link, errKilling);
                 }
             );
         }
@@ -144,7 +140,7 @@ function model() {
                     mysql.setStatusForLink(
                         guideBook.getIdD(), code,
                         function(err, rows) {
-                            loggers.file.info('%d MYSQL ROW UPDATED WITH EXEC ERROR', guideBook.getIdD(), (err || stderr));
+                            logger.info('%d MYSQL ROW UPDATED WITH EXEC ERROR', guideBook.getIdD(), (err || stderr));
                         }
                     );
                 });
@@ -169,8 +165,8 @@ function model() {
             mongo.saveNewImpress(
                 guideBook, botPID, charset, encodedResponseBody, analyzeResult,
                 function(err, impress) {
-                    if (err) loggers.file.info('%d MONGO ERROR (impress saving) : ', idD, err);
-                    else loggers.file.info('%d IMPRESS SAVED : %s', idD, desc);
+                    if (err) logger.info('%d MONGO ERROR (impress saving) : ', idD, err);
+                    else logger.info('%d IMPRESS SAVED : %s', idD, desc);
                 }
             );
 
@@ -185,22 +181,22 @@ function model() {
 
             // new data
             analyzer.write(encodedResponseBody);
-            loggers.file.info('%d ANALYZER WRITE NEW CONTENT', idD);
+            logger.info('%d ANALYZER WRITE NEW CONTENT', idD);
 
             // предыдущие данные
             mongo.getImpress(idD, function(err, result) {
 
-                if (err) loggers.file.info('%d MONGO ERROR (find prev data) : ', idD, err);
+                if (err) logger.info('%d MONGO ERROR (find prev data) : ', idD, err);
 
                 if (result && result.length) {
 
                     analyzer.write(result[0].content);
-                    loggers.file.info('%d GOT PREVIOUS DATA', idD);
+                    logger.info('%d GOT PREVIOUS DATA', idD);
 
                 } else {
 
                     // нет данных для сравнения, но нам нужно узнать о наличии мата все-равно
-                    loggers.file.info('%d NO PREVIOUS DATA', idD);
+                    logger.info('%d NO PREVIOUS DATA', idD);
                     analyzer.write(encodedResponseBody);
 
                 }
@@ -266,7 +262,7 @@ function model() {
                 if ( ! responseBody || ! responseBody.length) {
                     return guideBook.markLink(function() {
                         mysql.setStatusForLink(idD, options.codes.requestEmpty, function(err, rows) {
-                            loggers.file.info('%d MYSQL ROW UPDATED WITH EMPTY RESPONSE', idD);
+                            logger.info('%d MYSQL ROW UPDATED WITH EMPTY RESPONSE', idD);
                         });
                     });
                 }
@@ -303,7 +299,7 @@ function model() {
                             }
 
                             setCharset(charset);
-                            loggers.file.info('%s CHARSET -> %s', idD, charset);
+                            logger.info('%s CHARSET -> %s', idD, charset);
 
                             // using only recode
                             encodeCommand = exec(
@@ -320,19 +316,19 @@ function model() {
                     );
 
                 // run response body processing
-                loggers.file.info('%d CONTENT RECEIVED, %d length', idD, responseBody.length);
+                logger.info('%d CONTENT RECEIVED, %d length', idD, responseBody.length);
                 chardet.stdin.end(responseBody, 'binary');
 
 
             }).on('error', function(err) {
 
 
-                loggers.file.info('%d HTTP ', idD, err);
+                logger.info('%d HTTP ', idD, err);
                 guideBook.markLink(function() {
                     mysql.setStatusForLink(idD, options.codes.requestAbbruptly,
                         function(err, rows) {
-                            if (err) loggers.console.error(err);
-                            loggers.file.info('%d MYSQL ROW UPDATED WITH HTTP ERROR', idD);
+                            if (err) logger.console.error(err);
+                            logger.info('%d MYSQL ROW UPDATED WITH HTTP ERROR', idD);
                         }
                     );
                 });

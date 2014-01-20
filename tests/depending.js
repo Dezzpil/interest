@@ -75,7 +75,7 @@ async.parallel({
     'mysql' : function(callback) {
         var key = 'mysql';
         mysqlDriver
-            .setLoggers(stdoutLoggers)
+            .setLogger(stdoutLoggers)
             .setConfig(config.mysql)
             .connect(function(err){
                 if (err) error(key, err);

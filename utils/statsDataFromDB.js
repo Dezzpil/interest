@@ -23,12 +23,12 @@ function error(err) {
 function main() {
 
     mysqlDriver
-        .setLoggers(botLoggers)
+        .setLogger(botLoggers)
         .setConfig(config.mysql)
         .connect(error);
 
     mongoNative
-        .setLoggers(botLoggers)
+        .setLogger(botLoggers)
         .setConfig(config.mongo)
         .connect(error);
 

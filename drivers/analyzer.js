@@ -8,23 +8,16 @@ var execFile = require('child_process').execFile,
 function analyzeFactory() {
 
     var instances = [],
-        count = 0,
-        self = this,
-        loggers,
-        options = {
-            "path" : "/home/crystal-crawler/",
-            "fileName" : "proj",
-            "maxInstances" : 100,
-            "killSignal" : 'SIGINT'
-        };
+        count = 0, self = this,
+        logger, options;
 
-    this.setOptions = function(cfg) {
+    this.setConfig = function(cfg) {
         options = cfg;
         return self;
     };
 
-    this.setLoggers = function(object) {
-        loggers = object;
+    this.setLogger = function(object) {
+        logger = object;
         return self;
     };
 
@@ -51,7 +44,7 @@ function analyzeFactory() {
          * (Количество я вычислил эмпирически, и, имхо, кол-во зависит от конфига компа,
          * так что я предпочитаю очень маленькие возможности)
          *
-         * Сами они иногда не закрываются, по разным причинам.
+         * Сами они иногда не закрываются, по ?разным причинам.
          * Мы просто чистим список включенных файлов, если их становится много
          */
 
@@ -106,7 +99,6 @@ function analyzeFactory() {
             instances[num] = process;
             count++;
 
-//            loggers.file.info("# ANALYZER EXEC. COUNT: %d, %d", instances.length, count);
             return false;
         };
 

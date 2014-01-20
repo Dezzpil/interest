@@ -4,14 +4,11 @@
 
 function mongoMockDriver() {
 
-    var self = this,
-        loggers = null,
+    var self = this, config = {},
+        logger = null, connection = null;
 
-        connection = null,
-        config = {};
-
-    self.setLoggers = function(object) {
-        loggers = object;
+    self.setLogger = function(object) {
+        logger = object;
         return self;
     };
     
@@ -21,9 +18,7 @@ function mongoMockDriver() {
     };
 
     self.connect = function(callback) {
-
-        loggers.file.info('MONGODB - connection established!');
-        loggers.console.info('connection to MongoDB established');
+        logger.info('MONGODB - connection established!');
     };
 
     /**
