@@ -24,7 +24,6 @@ var memwatch = require('memwatch'),
     util = require('util'),
 
     botName = config.name + ' v.' + config.version,
-    now = new Date(),
     botPID = parseInt(process.pid),
 
     loggers = require('./drivers/loggers'),
