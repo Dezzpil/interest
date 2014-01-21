@@ -10,6 +10,7 @@
 
 var async = require('async'),
     htmlparser = require("htmlparser2"),
+
     config = require('./configs/config.json'),
     fnstore = require('./libs/functionStore'),
     mongo = require('./drivers/mongo'),
@@ -27,7 +28,7 @@ var async = require('async'),
 
 process.on('uncaughtException', function(err) {
     // silent is golden ?
-    loggerErrors.info(err);
+    loggerErrors.info(err, err.stack);
 });
 
 
@@ -50,7 +51,7 @@ function ferryHelper() {
          * callback that is called when the last item from the queue has returned from the worker
          */
         queue.drain = function() {
-            loggerProcess.info('note : all items have been started, waiting ...');
+            loggerProcess.info('note : all items ready');
             var intervalCount = 0,
                 delay = setInterval(function() {
 
@@ -63,7 +64,7 @@ function ferryHelper() {
                         }
                     }
 
-                }, 5000);
+                }, 1000);
         };
     }
 
@@ -240,8 +241,11 @@ function ferryHelper() {
                     // add urls id from task to queue
                     // callback for each must be called on link complete !
                     urlId = task.url_ids.shift();
-                    initQueue();
+                    if ( ! urlId) {
+                        return iterate();
+                    }
 
+                    initQueue();
                     while(urlId !== undefined) {
 
                         loggerProcess.info('note : push to queue item', {id: urlId});

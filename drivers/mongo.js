@@ -60,11 +60,11 @@ function mongoDriver() {
                 throw err;
             })
             .on('connected', function() {
-                logger.info('MONGODB - connection established');
+                logger.info('MONGODB : connection established');
                 callback();
             })
             .on('reconnected', function() {
-                logger.info('MONGODB - connection reestablished');
+                logger.info('MONGODB : connection reestablished');
             })
     };
 

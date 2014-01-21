@@ -135,9 +135,14 @@ function init() {
             /**
              * On link iteration end
              */
-            mongo.driver.saveFerryTask(guide.getIdList(), botPID, function(err) {
-                if (err) throw err;
-            });
+                
+            // save ferry tasks, only if guide guided something )
+            var idList = guide.getIdList();
+            if (idList.length) {
+                mongo.driver.saveFerryTask(idList, botPID, function(err) {
+                    if (err) throw err;
+                });
+            }
 
             loggerMemory.info(heapDiff.end());
 
