@@ -150,21 +150,21 @@ function init() {
 // prerequisites
 async.parallel({
     'mysql' : function(callback) {
+        loggerProcess.info('MYSQL - Connecting ...');
         mysql.driver
             .setLogger(loggerProcess)
             .setConfig(config.mysql)
             .connect(function(err) {
-                loggerProcess.info('MYSQL - Connecting ...');
                 callback(err, true);
             }
         );
     },
     'mongo' : function(callback) {
+        loggerProcess.info('MONGODB - Connecting ...');
         mongo.driver
             .setLogger(loggerProcess)
             .setConfig(config.mongo)
             .connect(function(err) {
-                loggerProcess.info('MONGODB - Connecting ...');
                 callback(err, true);
             }
         );

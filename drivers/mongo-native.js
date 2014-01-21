@@ -8,10 +8,8 @@ var Collection = require('mongodb').Collection,
 function mongoNativeDriver() {
 
     var self = this,
-        logger = null,
-        connection = null,
-        options = {},
-        hooks = {
+        logger = null,connection = null,
+        options = {}, hooks = {
             'connected' : []
         }
 
@@ -36,14 +34,15 @@ function mongoNativeDriver() {
         path += options.host + ':' +
             options.port + '/' + options.db;
 
-        MongoClient.connect(path, function(err, db) {
+        MongoClient.connect(path, function(err, db) { //noinspection JSCheckFunctionSignatures
+
             connection = db;
-            callback(err, db);
+            callback(err);
 
             if ( ! err) {
-                for (i in hooks.connected) {
-                    fn = hooks.connected[i];
-                    fn(db);
+                while (hooks.connected.length > 0) {
+                    var fn = hooks.connected.shift();
+                    if (fn) fn();
                 }
             }
 
@@ -53,7 +52,11 @@ function mongoNativeDriver() {
 
     self.onConnection = function(callback) {
         if (typeof callback == 'function') {
-            hooks.connected.push(callback);
+            if (connection) {
+                callback(null);
+            } else {
+                hooks.connected.push(callback);
+            }
         }
     };
 

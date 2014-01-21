@@ -75,24 +75,34 @@ function mysqlDriver() {
      */
     this.getLinks = function(pid, callback) {
 
+        var queryUp, queryGet,
+            diff = config.options.timeToReprocessInSec,
+            table = config.dbName + '.' + config.tableName;
+
+        queryUp = 'UPDATE ' + table + ' set idProcess=' + pid +
+            ' WHERE ' +
+                'idProcess=0' +
+                ' && UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(lastRechange) > ' + diff +
+                ' && UNIX_TIMESTAMP(lastTest) < UNIX_TIMESTAMP(lastRechange)' +
+            ' ORDER BY lastTest ASC' +
+            ' LIMIT ' + config.options.maxProcessLimit;
+
+        queryGet =  'SELECT * FROM ' + table +
+            ' WHERE idProcess=' + pid +
+            ' ORDER BY lastTest ASC';
+
+        // console.log(queryUp); console.log(queryGet); process.exit();
+
+        logger.info('MYSQL : getting links...');
         mysqlConnection.query(
-            'UPDATE ' + config.dbName + '.' + config.tableName + ' set idProcess=' + pid +
-                ' WHERE ' +
-                    'idProcess=0 ' +
-                    '&& UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(lastRechange) > ' +
-                        config.options.timeToReprocessInSec +
-                    '&& UNIX_TIMESTAMP(lastTest) < UNIX_TIMESTAMP(lastRechange)' +
-                ' ORDER BY lastTest ASC' +
-                ' LIMIT ' + config.options.maxProcessLimit,
+            queryUp,
             function(err, rows) {
-                logger.info('MYSQL : getting links...');
+
                 if (err) callback(err, null);
                 else if (rows && ('changedRows' in rows) && rows.changedRows > 0) {
 
                     mysqlConnection.query(
-                        'SELECT * FROM ' + config.dbName + '.' + config.tableName +
-                            ' WHERE idProcess=' + pid +
-                            ' ORDER BY lastTest ASC',
+                        queryGet,
                         function(err, rows) {
                             callback(err, rows);
                         }
@@ -134,7 +144,7 @@ function mysqlDriver() {
             'UPDATE ' + config.dbName + '.' + config.tableName + ' SET ? ',
             {
                 lastTest : '2012-01-01 00:00:00',
-                lastRechange : '2022-01-01 00:00:00',
+                lastRechange : '2012-01-02 00:00:00',
                 idProcess : 0,
                 statusCode : 0,
                 persent: 0,
