@@ -135,7 +135,7 @@ function init() {
             /**
              * On link iteration end
              */
-                
+
             // save ferry tasks, only if guide guided something )
             var idList = guide.getIdList();
             if (idList.length) {
