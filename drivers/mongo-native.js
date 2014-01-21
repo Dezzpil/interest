@@ -1,16 +1,14 @@
 /**
  * Created by dezzpil on 27.12.13.
- * @todo try to implement like mongo.js
  */
-var Db = require('mongodb').Db,
-    Server = require('mongodb').Server,
-    Collection = require('mongodb').Collection,
+
+var Collection = require('mongodb').Collection,
     MongoClient = require('mongodb').MongoClient;
 
 function mongoNativeDriver() {
 
     var self = this,
-        loggers = null,
+        logger = null,
         connection = null,
         options = {},
         hooks = {
@@ -18,7 +16,7 @@ function mongoNativeDriver() {
         }
 
     self.setLogger = function(object) {
-        loggers = object;
+        logger = object;
         return self;
     };
 
@@ -28,17 +26,6 @@ function mongoNativeDriver() {
     };
 
     self.connect = function(callback) {
-
-//        db = new Db(
-//            options.db,
-//            new Server(options.host, options.port),
-//            {safe:true}
-//        );
-//
-//        db.open(function(err, db) {
-//            console.log('EEEEEEEEeaaa');
-//            if (callback) callback(err, db);
-//        });
 
         var path = 'mongodb://';
         if (options.username) {
@@ -108,10 +95,10 @@ function mongoNativeDriver() {
         for (name in collections) {
             try {
                 connection.collection(name);
-                info += 'mongo: Collection ' + collections[name] + ' exists\n';
+                info += collections[name] + ' exists; ';
             } catch (e) {
                 new Collection(db, name);
-                info += 'mongo: Create collection' + collections[name] + '\n';
+                info += collections[name] + ' created; ';
             }
         }
 

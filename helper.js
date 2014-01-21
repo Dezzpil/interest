@@ -25,6 +25,12 @@ var async = require('async'),
     );
 
 
+process.on('uncaughtException', function(err) {
+    // silent is golden ?
+    loggerErrors.info(err);
+});
+
+
 function ferryHelper() {
 
     var urlIdList = [], urlIdReadyList = [],
@@ -265,11 +271,6 @@ function ferryHelper() {
         iterate();
     }
 }
-
-process.on('uncaughtException', function(err) {
-    // silent is golden ?
-    loggerErrors.info(err);
-});
 
 mongo.driver
     .setConfig(config.mongo)

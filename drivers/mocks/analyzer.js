@@ -9,13 +9,7 @@ function analyzeMockFactory() {
 
     var instances = [],
         factory = this,
-        loggers,
-        options = {
-            "path" : "/home/crystal-crawler/",
-            "fileName" : "proj",
-            "maxInstances" : 100,
-            "killSignal" : 'SIGINT'
-        };
+        logger, options = {};
 
     this.setConfig = function(cfg) {
         options = cfg;
@@ -23,7 +17,7 @@ function analyzeMockFactory() {
     };
 
     this.setLogger = function(object) {
-        loggers = object;
+        logger = object;
         return factory;
     };
 

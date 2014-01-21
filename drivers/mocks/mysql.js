@@ -9,10 +9,10 @@ function mysqlMockDriver() {
     var mysqlConnection = null,
         self = this,
         config = {},
-        loggers = null;
+        logger = null;
 
     this.setLogger = function(object) {
-        loggers = object;
+        logger = object;
         return self;
     };
 
@@ -22,11 +22,11 @@ function mysqlMockDriver() {
     };
 
     this.connect = function() {
-        loggers.file.info('MYSQL - connection established!');
+        logger.info('MYSQL - connection established!');
     };
 
     this.getLinks = function(pid, callback, errorCallback) {
-        loggers.file.info('MYSQL - getting links...');
+        logger.info('MYSQL - getting links...');
 
         var i, testData = [];
 

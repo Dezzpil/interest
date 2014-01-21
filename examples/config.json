@@ -70,8 +70,23 @@
         "killSignal" : "SIGKILL"
     },
 
-    "logs" : {
-        "mode" : "detail",
-        "memoryLogTable" : "log"
+    "loggers" : {
+        "process" : {
+            "type" : "file",
+            "options" : {
+                "filename" : "./logs/process.log",
+                "maxsize" : 10485760,
+                "maxFiles" : 5,
+                "json" : false
+
+            }
+        },
+        "errors" : {
+            "type" : "console",
+            "options" : {
+                "colorize" : true
+            }
+        }
+
     }
 }

@@ -54,17 +54,22 @@ Crystal Interest Bot Helper
         $ cp examples/config.json configs/config.json
         $ cp examples/mysqlMockData.json configs/mysqlMockData.json
 
-        # в configs/config.json прописать правильные пути до директории бота,
+        # В configs/config.json прописать правильные пути до директории бота,
           для подключения к базам данных, анализатору.
-          Боты могут писать лог в stdout (значения [ 'modest' 'detail' 'none' ])
+          Можно настроить логирование в секции loggers. Секция поделена на 2 подсекции,
+          process - логирует последовательность выполнения, а errors - ошибки выполнения.
+          Для каждой из этих подсекций можно выбрать транспорт модуля winston и определить
+          настройки самостоятельно.
+          См. https://github.com/flatiron/winston/blob/master/docs/transports.md#http-transport
+          Сейчас поддерживаются транспорты из Winston Core
+
 
         $ npm install
         $ npm test
 
-    Проверка работы (npm test вызывает эти скрипты, см. package.json):
+    Проверка работы (npm test вызывает этот скрипт, см. package.json):
 
-        $ node tests/depending.js
-        $ node tests/encoding.js
+        $ node tests/runner.js
 
     Запустить бота достаточно просто:
 

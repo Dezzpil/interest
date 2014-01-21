@@ -19,7 +19,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "test": "node tests/depending.js; node tests/encoding.js"
+    "test": "node tests/runner.js"
   },
   "repository": {
     "type": "git",

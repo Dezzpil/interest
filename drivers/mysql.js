@@ -42,22 +42,25 @@ function mysqlDriver() {
             var t;
 
             if (err) { // use for reconnect
-                if (callback) callback(err);
                 t = setTimeout( function() {
                     clearTimeout(t);
                     self.connect();
                 }, config.options.reconnectAfterInSec * 1000);
             } else {
-                logger.info('MYSQL - connection established');
+                logger.info('MYSQL : connection established');
                 if (callback) callback(null);
             }
         });
 
+        /**
+         * Connection to the MySQL server is usually lost due to either server restart,
+         * or a connnection idle timeout (the wait_timeout server variable configures this)
+         */
         mysqlConnection.on('error', function(err) {
-            if(err.code === 'PROTOCOL_CONNECTION_LOST') {   // Connection to the MySQL server is usually
-                self.connect();                             // lost due to either server restart, or a
-            } else {                                        // connnection idle timeout (the wait_timeout
-                throw err;                                  // server variable configures this)
+            if(err.code === 'PROTOCOL_CONNECTION_LOST') {
+                self.connect();
+            } else {
+                if (callback) callback(err);
             }
         });
     };
@@ -69,11 +72,8 @@ function mysqlDriver() {
      *
      * @param string pid
      * @param function callback
-     * @param function errorCallback
      */
-    this.getLinks = function(pid, callback, errorCallback) {
-
-        logger.info('MYSQL - getting links...');
+    this.getLinks = function(pid, callback) {
 
         mysqlConnection.query(
             'UPDATE ' + config.dbName + '.' + config.tableName + ' set idProcess=' + pid +
@@ -85,24 +85,16 @@ function mysqlDriver() {
                 ' ORDER BY lastTest ASC' +
                 ' LIMIT ' + config.options.maxProcessLimit,
             function(err, rows) {
-
-                if (err) {
-                    if (errorCallback) errorCallback(err);
-                    else throw err;
-                }
-
-                if (rows && ('changedRows' in rows) && rows.changedRows > 0) {
+                logger.info('MYSQL : getting links...');
+                if (err) callback(err, null);
+                else if (rows && ('changedRows' in rows) && rows.changedRows > 0) {
 
                     mysqlConnection.query(
                         'SELECT * FROM ' + config.dbName + '.' + config.tableName +
                             ' WHERE idProcess=' + pid +
                             ' ORDER BY lastTest ASC',
                         function(err, rows) {
-                            if (err) {
-                                if (errorCallback) errorCallback(err);
-                                else throw err;
-                            }
-                            callback(rows);
+                            callback(err, rows);
                         }
                     );
 
@@ -110,7 +102,7 @@ function mysqlDriver() {
 
                     var d = setTimeout(function() {
                         clearTimeout(d);
-                        self.getLinks(pid, callback, errorCallback);
+                        self.getLinks(pid, callback);
                     }, config.options.timeOutForRetryInSec * 100)
 
                 }
@@ -118,10 +110,14 @@ function mysqlDriver() {
         );
     };
 
-    this.clearLinks = function(pid, callback) {
+    /**
+     * Set idProcess = 0 to all rows where idProcess != 0
+     * @param callback {Function}
+     */
+    this.clearLinks = function(callback) {
         mysqlConnection.query(
             'UPDATE ' + config.dbName + '.' + config.tableName + ' set idProcess=0 ' +
-            'WHERE idProcess=' + pid,
+            'WHERE idProcess != 0',
             function(err, rows) {
                 if (callback) callback(err, rows);
             }

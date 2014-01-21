@@ -155,7 +155,9 @@ function linkManager() {
                         clearInterval(interval);
                         self.resetBrokenCount();
 
-                        mysql.clearLinks(botPID, function() {});
+                        mysql.clearLinks(function(err, rows) {
+                            if (err) throw err;
+                        });
 
                         if (callbackOnIterateFin) callbackOnIterateFin(guide);
 

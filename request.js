@@ -74,7 +74,7 @@ function requestManager() {
     function terminateRequest(request) {
         try {
             request.end();
-            request.abort();
+            //request.abort();
         } catch (e) {
             //
         }
@@ -228,7 +228,7 @@ function requestManager() {
             logger.info('%d PROBLEM WITH REQUEST : %s ', guideBook.getIdD(), e.message, reqOpts);
             guideBook.markLink(function() {
                 mysql.setStatusForLink(idD, config.codes.requestAbbruptly, function(err, rows) {
-                    if (err) throw $e;
+                    if (err) throw err;
                     logger.info('%d MYSQL ROW UPDATED WITH ABRUPT HTTP ERROR', idD);
                 });
             });

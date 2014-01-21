@@ -21,7 +21,9 @@ var winston = require('winston');
 function forge(type, options) {
 
     winston.addColors({
-        'info' : 'cyan'
+        'info' : 'cyan',
+        'error' : 'red',
+        'warn' : 'green'
     });
 
     var logger = new winston.Logger({
@@ -46,6 +48,14 @@ function forge(type, options) {
             logger.remove(winston.transports.Console);
             break;
 
+        case "empty" :
+            logger = {
+                'info' : function() {},
+                'error' : function() {},
+                'warn' : function() {},
+                'log' : function() {}
+            };
+            break;
         case "console" :
             logger.remove(winston.transports.Console);
             logger.add(winston.transports.Console, options);

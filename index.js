@@ -1,12 +1,19 @@
 /**
  * Created by dezzpil on 18.11.13.
  *
+ * Правильная стратегия горизонтального расширения бота:
+ * превращение бота в сервис, и использование кластера
+ *
+ * Думать нужно в этом направлении, а не в сторону пачкования процессов
+ * и запуска нескольких инстанция бота
  */
+
+//require('longjohn');
+
 
 var memwatch = require('memwatch'),
 
     config = require('./configs/config.json'),
-    loggers = require('./drivers/loggers'),
     mongo = require('./drivers/mongo'),
     mysql = require('./drivers/mysql'),
     link = require('./link'),
@@ -14,21 +21,21 @@ var memwatch = require('memwatch'),
     response = require('./response'),
     analyzer = require('./drivers/analyzer'),
     async = require('async'),
+    util = require('util'),
 
     botName = config.name + ' v.' + config.version,
     now = new Date(),
     botPID = parseInt(now.getTime()/1000),
 
+    loggers = require('./drivers/loggers'),
     loggerProcess = loggers.forge(
         config.loggers.process.type,
         config.loggers.process.options
     ),
-
     loggerErrors = loggers.forge(
         config.loggers.errors.type,
         config.loggers.errors.options
     ),
-
     loggerMemory = loggers.forge(
         "mongodb",
         {
@@ -38,12 +45,35 @@ var memwatch = require('memwatch'),
             "username" : config.mongo.username,
             "password" : config.mongo.password,
             "timeout" : config.mongo.reconnectTimeout,
-            "collection" : "logs",
+            "collection" : "log",
             "level" : "info",
             "silent" : false,
             "safe" : false
         }
     );
+
+
+try {
+    process.stdout.setEncoding('binary');
+} catch (e) {
+    // may be log into file
+}
+
+process.on('uncaughtException', function(error) {
+
+    if (util.isError(error)) {
+        loggerErrors.error(error);
+        loggerErrors.error(error.stack);
+
+        // may be mail or something about abort?
+
+        var t = setTimeout(function(){
+            process.exit();
+        },5000)
+
+    }
+
+});
 
 
 function init() {
@@ -117,17 +147,6 @@ function init() {
     return linkManager;
 }
 
-
-try {
-    process.stdout.setEncoding('binary');
-} catch (e) {
-    // may be log into file
-}
-
-process.on('uncaughtException', function(err) {
-    // silent is golden ?
-    loggerErrors.info(err);
-});
 
 // prerequisites
 async.parallel({

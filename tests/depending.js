@@ -1,27 +1,39 @@
 /**
+ * npm test
  * Created by dezzpil on 30.12.13.
  */
 
 var exec = require('child_process').exec,
     execFile = require('child_process').execFile,
     async = require('async'),
+    path = require('path'),
+    scriptName = path.basename(process.cwd(), '.js'),
+
     config = require('./../configs/config.json'),
     mongoNative = require('./../drivers/mongo-native').driver,
     mysqlDriver = require('./../drivers/mysql').driver,
-    stdoutLoggers = require('./../drivers/mocks/loggers').forge(),
-    successNum = 0,
-    scriptName = 'dependings';
+    
+    loggers = require('./../drivers/loggers'),
+    loggerSimple = loggers.forge( "console", { level : "info", colorize: true }),
+    loggerEmpty = loggers.forge("empty", {}),
+    loggerErrors = loggers.forge( "console", { level : "error", colorize : true }),
+    
+    successNum = 0;
 
-console.log('%s : start checking', scriptName);
+
+mongoNative.setConfig(config.mongo).setLogger(loggerEmpty);
+mysqlDriver.setConfig(config.mysql).setLogger(loggerEmpty);
+
+loggerSimple.info('%s : start checking', scriptName);
 
 function error(key, err) {
-    console.error('%s : %s ', scriptName, key + ' error', err);
+    loggerErrors.error('%s : %s ', scriptName, key + ' error', err, err.stack);
     process.exit(1);
 }
 
-function success(key, callback) {
+function success(key, callback, extraText) {
     successNum++;
-    console.log('%s : %s', scriptName, key + ' ok');
+    loggerSimple.info('%s : %s', scriptName, key + ' ok ' + (extraText ? '( ' + extraText + ')' : ''));
     callback(null, key);
 }
 
@@ -56,7 +68,7 @@ async.parallel({
     },
 
     'analyzer' : function(callback) { // if analyzer exists
-        console.log('%s : analyzer path: %s', scriptName, config.path + config.analyzer.path + config.analyzer.fileName);
+        loggerSimple.info('%s : analyzer path: %s', scriptName, config.path + config.analyzer.path + config.analyzer.fileName);
         var key = 'analyzer',
             analyzer = execFile(config.path + config.analyzer.path + config.analyzer.fileName, function(err, stdout) {
                 if (err) error(key, err);
@@ -72,11 +84,9 @@ async.parallel({
         analyzer.stdin.end('foobar1');
     },
 
-    'mysql' : function(callback) {
-        var key = 'mysql';
+    'mysql connection' : function(callback) {
+        var key = 'mysql connection';
         mysqlDriver
-            .setLogger(stdoutLoggers)
-            .setConfig(config.mysql)
             .connect(function(err){
                 if (err) error(key, err);
                 success(key, callback);
@@ -84,11 +94,18 @@ async.parallel({
         );
     },
 
+    'mysql select' : function(callback) {
+        var key = 'mysql select';
+        mysqlDriver.getLinks((new Date()).getTime(), function(err, rows) {
+            if (err) error(key, err);
+            success(key, callback);
+        });
+    },
+
     'mongo connection' : function(callback) { // if mongodb collections exists
         var key = 'mongo connection';
         mongoNative
-            .setConfig(config.mongo)
-            .connect(function(err, db) {
+            .connect(function(err) {
                 if (err) error(key, err);
                 success(key, callback);
             }
@@ -96,11 +113,11 @@ async.parallel({
     },
 
     'mongo сollections' : function(callback) {
+        var key = 'mongo collections';
         mongoNative.onConnection(function() {
             mongoNative.checkCollections(function(info) {
-                console.log(info);
-                successNum++;
-                callback(null, 'mongo collections');
+                // if (err) error(key, err);
+                success(key, callback, info);
             });
         });
     },
@@ -115,8 +132,9 @@ async.parallel({
         });
     }
 }, function(err, results) {
-        console.log('%s : all checks was complete', scriptName);
-        console.log('%s : success %d from 7', scriptName, successNum);
+        loggerSimple.info('%s : all checks was complete', scriptName);
+        loggerSimple.info('%s : success %d from 8', scriptName, successNum);
+        loggerSimple.info('%s : complete checking \n', scriptName);
         process.exit();
     }
 );

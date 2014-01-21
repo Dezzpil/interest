@@ -1,14 +1,19 @@
 /**
+ * npm test
  * Created by dezzpil on 22.12.13.
  *
- * @todo Перенести в утилс/ Использовать модуль из респонсь.жс,
- * чтобы определять кодировку сайтов
+ * Все драйверы ничего не сохраняют и не запрашивают,
+ * для запроса предоставляются тестовые данные из configs/mysqlMockData.json,
+ * по полученным ссылкам выполяются запросы, полученные данные обрабатываются
+ * рабочим модулем responseFactory, в который входит работа с кодировками, с
+ * mock-оберткой над analyzer'ом. Взаимодействие с самим analyzer не проверяется.
  */
 
 var config = require('./../configs/config.json'),
-    loggers = require('./../drivers/loggers').forge(0),
+    util = require('util'),
+    path = require('path'),
+    scriptName = path.basename(process.cwd(), '.js'),
 
-    // base work flow
     response = require('./../response'),
     responseFactory = (new response.factory()),
 
@@ -18,23 +23,41 @@ var config = require('./../configs/config.json'),
     links = require('./../link'),
     linksManager = (new links.manager()),
 
-    // mocks
     mongoMockDriver = require('./../drivers/mocks/mongo').driver,
     mysqlMockDriver = require('./../drivers/mocks/mysql').driver,
-    analyzerMockFactory = require('./../drivers/mocks/analyzer').factory;
+    analyzerMockFactory = require('./../drivers/mocks/analyzer').factory,
+
+    loggers = require('./../drivers/loggers'),
+    loggerSimple = loggers.forge( "console", { level : "info", colorize: true }),
+    loggerErrors = loggers.forge( "console", { level : "error", colorize : true });
+
+
+process.on('uncaughtException', function(error) {
+    if (util.isError(error)) {
+        loggerErrors.error(error.toString());
+    } else {
+        loggerErrors.error(error);
+    }
+
+    process.exit();
+});
+
+
+loggerSimple.info('%s : start checking', scriptName);
+
 
 // inject
 mongoMockDriver
     .setConfig(config.mongo)
-    .setLogger(loggers);
+    .setLogger(loggerSimple);
 
 mysqlMockDriver
     .setConfig(config.mysql)
-    .setLogger(loggers);
+    .setLogger(loggerSimple);
 
 responseFactory
     .setConfig(config)
-    .setLogger(loggers)
+    .setLogger(loggerSimple)
     .setBotPID('mock')
     .setMysqlDriver(mysqlMockDriver)
     .setMongoDriver(mongoMockDriver)
@@ -52,7 +75,7 @@ responseFactory
 
 requestManager
     .setConfig(config)
-    .setLogger(loggers)
+    .setLogger(loggerSimple)
     .setMysqlDriver(mysqlMockDriver)
     .setUserAgent(config.name + ' v.' + config.version)
     .setModel(function(response, guideBook) {
@@ -63,7 +86,7 @@ requestManager
     });
 
 linksManager
-    .setLogger(loggers)
+    .setLogger(loggerSimple)
     .setConfig(config)
     .setMysqlDriver(mysqlMockDriver)
     .setBotPID('mock')
@@ -75,7 +98,10 @@ linksManager
         requestManager.run(guideBook);
     })
     .setOnIterateFin(function(guide) {
+
+        loggerSimple.info('%s : complete checking \n', scriptName);
         process.exit();
+
     });
 
 // go
