@@ -115,9 +115,10 @@ function LinkGuide(rows) {
             linkListTmp.push(rows[i]['domain']);
             linkIds.push(rows[i]['idD']);
         }
-    } else {
-        throw new Error('instance of LinkGuide gets empty rows list!');
     }
+//    else {
+//        throw new Error('instance of LinkGuide gets empty rows list!');
+//    }
 
     delete(i);
 

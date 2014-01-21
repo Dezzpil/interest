@@ -58,7 +58,7 @@ mysqlMockDriver
 responseFactory
     .setConfig(config)
     .setLogger(loggerSimple)
-    .setBotPID('mock')
+    .setBotPID(parseInt(process.pid))
     .setMysqlDriver(mysqlMockDriver)
     .setMongoDriver(mongoMockDriver)
     .setAnalyzerFactory(analyzerMockFactory)
