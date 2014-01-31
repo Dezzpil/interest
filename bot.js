@@ -36,8 +36,7 @@ var memwatch = require('memwatch'),
         config.loggers.errors.options
     ),
     loggerMemory = loggers.forge(
-        "mongodb",
-        {
+        "mongodb",{
             "db" : config.mongo.db,
             "host" : config.mongo.host,
             "port" : config.mongo.port,
@@ -127,7 +126,6 @@ function init() {
             /**
              * we get link here, may do what we want
              */
-
             requestManager.run(guideBook);
         })
         .setOnIterateFin(function(guide) {

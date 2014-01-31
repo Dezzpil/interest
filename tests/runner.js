@@ -42,7 +42,7 @@ function startNextTest() {
                 process.exit(1);
             } else if (error) {
                 loggerSimple.error('%s : error\n', scriptName, error.stack);
-                process.exit();
+                process.exit(1);
             } else {
                 loggerSimple.warn('%s : %s success \n', scriptName, testScriptName)
                 startNextTest();

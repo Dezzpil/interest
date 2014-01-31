@@ -1,8 +1,8 @@
 {
   "name": "crystal-interest",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "bot for detour links from Crawler db in mysql and checks content and collect data for sphinx",
-  "main": "index.js",
+  "main": "bot.js",
   "directories": {
     "test": "tests/"
   },
@@ -15,11 +15,13 @@
     "mongoose": "~3.8.1",
     "mysql": "~2.0.0-rc2",
     "winston": "~0.7.2",
-    "winston-mongodb": "~0.4.3"
+    "winston-mongodb": "~0.4.3",
+    "daemon": "~1.1.0"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "node tests/runner.js"
+      "prestart": "node tests/runner.js",
+      "start": "node daemon.js"
   },
   "repository": {
     "type": "git",

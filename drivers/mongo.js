@@ -48,7 +48,11 @@ function mongoDriver() {
             options.host + ':' +
             options.port + '/' + options.db;
 
-        mongoose.connect(path);
+        if ( connection !== null) {
+            callback();
+        } else {
+            mongoose.connect(path);
+        }
 
         connection = mongoose.connection
             .on('error', function(err) {
