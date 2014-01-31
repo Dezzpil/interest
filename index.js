@@ -66,9 +66,9 @@ process.on('uncaughtException', function(error) {
 
         // may be mail or something about abort?
 
-        var t = setTimeout(function(){
-            process.exit();
-        },5000)
+//        var t = setTimeout(function(){
+//            process.exit();
+//        },5000)
 
     }
 

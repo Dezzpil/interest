@@ -1,3 +1,6 @@
 [submodule "analyzer"]
 	path = analyzer
 	url = http://gitlab.crystalteam.ru/n.orlov/analyzer-crystal-interest.git
+[submodule "sphinx"]
+	path = sphinx
+	url = http://gitlab.crystalteam.ru/n.orlov/xmlpipe2-crystal-interest.git
