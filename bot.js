@@ -1,11 +1,6 @@
 /**
- * Created by dezzpil on 18.11.13.
- *
- * Правильная стратегия горизонтального расширения бота:
- * превращение бота в сервис, и использование кластера
- *
- * Думать нужно в этом направлении, а не в сторону пачкования процессов
- * и запуска нескольких инстанция бота
+ * @author Nikita Dezzpil Orlov
+ * @date 18.11.2013
  */
 
 //require('longjohn');
@@ -54,7 +49,7 @@ var memwatch = require('memwatch'),
 try {
     process.stdout.setEncoding('binary');
 } catch (e) {
-    // may be log into file
+    // whatever
 }
 
 process.on('uncaughtException', function(error) {
@@ -63,13 +58,17 @@ process.on('uncaughtException', function(error) {
         loggerErrors.error(error);
         loggerErrors.error(error.stack);
 
-        // may be mail or something about abort?
-
-//        var t = setTimeout(function(){
-//            process.exit();
-//        },5000)
+        // TODO collect errors somewhere (may be table in mongo ? )
 
     }
+
+});
+
+process.on('SIGTERM', function () {
+
+    // Disconnect from cluster master
+    process.disconnect && process.disconnect();
+    process.exit();
 
 });
 
@@ -149,7 +148,6 @@ function init() {
     return linkManager;
 }
 
-
 // prerequisites
 async.parallel({
     'mysql' : function(callback) {
@@ -174,9 +172,10 @@ async.parallel({
     }
 }, function(error, result) {
 
+    // handle errors
     loggerProcess.info(result);
-
     if (error) throw error;
 
-    init().run();
+    // start process flow
+    var linkManager = init().run();
 });

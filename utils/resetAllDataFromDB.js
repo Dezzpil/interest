@@ -44,8 +44,8 @@ function main() {
 
         if (successCount == successExpectCount) {
             clearInterval(wait);
-            logger.info('end - success. all data was successfully reset');
-            process.exit(15);
+            logger.info('Reseting data - fin success');
+            process.exit();
         }
     }, 1000);
 
@@ -84,6 +84,8 @@ function main() {
 mysql.setLogger(logger).setConfig(config.mysql);
 mongo.setLogger(logger).setConfig(config.mongo);
 mongoNative.setLogger(logger).setConfig(config.mongo);
+
+logger.info('Reseting data - start');
 
 async.parallel({
     'mysql' : function(callback) {

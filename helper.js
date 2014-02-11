@@ -31,6 +31,14 @@ process.on('uncaughtException', function(err) {
     loggerErrors.info(err, err.stack);
 });
 
+process.on('SIGTERM', function () {
+
+    // Disconnect from cluster master
+    process.disconnect && process.disconnect();
+    process.exit();
+
+});
+
 
 function ferryHelper() {
 
@@ -56,11 +64,13 @@ function ferryHelper() {
                 delay = setInterval(function() {
 
                     if (urlIdReadyList.length == urlIdList.length) {
-                        iterate(delay);
+                        clearInterval(delay);
+                        iterate();
                     } else {
                         intervalCount++;
                         if (intervalCount > 6) {
-                            iterate(delay);
+                            clearInterval(delay);
+                            iterate();
                         }
                     }
 
@@ -68,19 +78,18 @@ function ferryHelper() {
         };
     }
 
-    function filter(impress, task, callback) {
+    function check_is_empty(impress, task, callback) {
 
         if ( ! impress || impress.length == 0) {
             callback('no impress', task.id);
-        } else {
-            if (mongo.driver.isContainBadWord(impress[0])) {
-                callback('impress contain bad word', task.id);
-            } else {
-                return true;
-            }
+            return true;
         }
+    }
 
-        return false;
+    function is_with_bad_word(impress, task, callback) {
+        if (mongo.driver.isContainBadWord(impress[0])) {
+            return true;
+        }
     }
 
     function prepareText(text) {
@@ -103,6 +112,43 @@ function ferryHelper() {
         return textPrepared;
     }
 
+    /**
+     * Work with impresses finally
+     * Remove excessed impresses and set last impress as batched
+     * @param task
+     * @param impress
+     */
+    function postProcessImpress(task, impress, callback) {
+
+        async.parallel({
+                'removeExcess' : function(afterReadyFn) {
+
+                    loggerProcess.info('%s removing all impress except _id :', task.id, impress._id.toString());
+                    mongo.driver.removeExcessImpresses(impress, function(err) {
+                        if (err) loggerProcess.error('removing impress excess err', err);
+                        afterReadyFn(err, true);
+                    });
+
+                },
+                'setBatched' : function(afterReadyFn) {
+
+                    loggerProcess.info('%s mark impress as batched :', task.id);
+                    mongo.driver.setImpressFerried(impress, function(err) {
+                        if (err) loggerProcess.error('set impress batch flag err', err);
+                        afterReadyFn(err, true);
+                    });
+
+                }},
+            function(err, results) { // after ready handler
+
+                loggerProcess.info('%s complete', task.id);
+                callback('text created', impress.url_id);
+
+            }
+        )
+
+    }
+
     self.process = function (task, callback) {
 
         var textInParser = '',
@@ -119,11 +165,18 @@ function ferryHelper() {
         // response work here
         mongo.driver.getImpress(task.id, function(err, impress) {
 
-            if (filter(impress, task, callback)) {
+            if (check_is_empty(impress, task, callback)) {
+                return ;
+            }
 
-                var impress = impress[0],
-                    parser;
+            if (is_with_bad_word(impress, task, callback)) {
 
+                postProcessImpress(task, impress[0], callback);
+                return ;
+
+            }
+
+            var impress = impress[0],
                 parser = new htmlparser.Parser({
 
                     onopentag: function(tagname, attribs) {
@@ -161,33 +214,7 @@ function ferryHelper() {
 
                                 } else {
 
-                                    // work with impresses finally
-                                    async.parallel({
-                                        'removeExcess' : function(afterReadyFn) {
-
-                                            loggerProcess.info('%s removing all impress except _id :', task.id, impress._id.toString());
-                                            mongo.driver.removeExcessImpresses(impress, function(err) {
-                                                if (err) loggerProcess.error('removing impress excess err', err);
-                                                afterReadyFn(err, true);
-                                            });
-
-                                        },
-                                        'setBatched' : function(afterReadyFn) {
-
-                                            loggerProcess.info('%s mark impress as batched :', task.id);
-                                            mongo.driver.setImpressFerried(impress, function(err) {
-                                                if (err) loggerProcess.error('set impress batch flag err', err);
-                                                afterReadyFn(err, true);
-                                            });
-
-                                        }},
-                                        function(err, results) { // after ready handler
-
-                                            loggerProcess.info('%s complete', task.id);
-                                            callback('text created', impress.url_id);
-
-                                        }
-                                    )
+                                    postProcessImpress(task, impress, callback);
 
                                 }
 
@@ -197,26 +224,25 @@ function ferryHelper() {
 
                 });
 
-                // @todo парсим html в простой текст без тегов.
-                loggerProcess.info(
-                    '%s give content from impress to parser (length %d)',
-                    impress.url_id, impress.length
-                );
 
-                content = impress.content;
+            loggerProcess.info(
+                '%s give content from impress to parser (length %d)',
+                impress.url_id, impress.length
+            );
 
-                parser.write(content);
-                parser.done();
+            content = impress.content;
 
-            }
+            parser.write(content);
+            parser.done();
 
         });
     };
 
-    function iterate(interval) {
+    //function iterate(interval) {
+    function iterate() {
         loggerProcess.info('note : starting new iteration ...');
 
-        if (interval) clearInterval(interval);
+        //if (interval) clearInterval(interval);
 
         mongo.driver.getFerryTask(function(error, task) {
 
@@ -224,9 +250,15 @@ function ferryHelper() {
 
             if (error) {
 
+                //  MONGO error (getting ferryTasks) :  MongoDB : No ferry tasks!
                 loggerProcess.info('MONGO error (getting ferryTasks) : ', error);
-                var interval = setInterval(function() {
-                    iterate(interval);
+                var delay = setTimeout(function() {
+                    clearTimeout(delay);
+
+                    // while no ferry tasks, lets remove duplicates from impresses
+                    // TODO
+
+                    iterate();
                 }, 10000);
 
             } else {
@@ -245,7 +277,10 @@ function ferryHelper() {
                         return iterate();
                     }
 
+                    // init queue
                     initQueue();
+
+                    // and push items to queue
                     while(urlId !== undefined) {
 
                         loggerProcess.info('note : push to queue item', {id: urlId});
@@ -263,6 +298,7 @@ function ferryHelper() {
                 } else {
 
                     loggerProcess.info('error : no url_id in ferryTasks', task);
+                    iterate();
 
                 }
 
@@ -271,7 +307,7 @@ function ferryHelper() {
         });
     }
 
-    this.init = function() {
+    self.init = function() {
         iterate();
     }
 }
