@@ -110,7 +110,7 @@ process - логирует последовательность выполнен
 
     node utils/resetAllDataFromDB.js
 
-# Sphinx
+## Sphinx
 
 Файл конфигурации examples/sphinx-mongo.conf настроен на работу через xmlpipe2 и содержит 2 индекса.
 Xmlpipe2 использует xmltexts.py, который формирует xml с config.json:xmlpipe2.documentsNumEachExec
@@ -139,7 +139,8 @@ Xmlpipe2 использует xmltexts.py, который формирует xml
     | crystalkids27_sites_mongo  | local |
     | crystalkids712_sites_mongo | local |
 
-# Upstart
+## Upstart
+
 
 
 
