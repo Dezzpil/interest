@@ -1,7 +1,8 @@
-#!/usr/bin/env node
+#! /usr/bin/node
 
-// Running daemon
-require('daemon')();
+// Running daemon. WTF it crashes start and nothing happen!
+// TODO for a wut?
+//require('daemon')();
 
 // Require need libs for daemon
 var cluster = require('cluster'),
@@ -10,24 +11,43 @@ var cluster = require('cluster'),
     processWorkersCount = cpusCount,
     helperWorkersCount = 1,
 
-    // open with fs to prevent caching in require,
-    // so we can require config each time for each script when reload
+    loggers = require('./../drivers/loggers'),
+    loggerProcess = null,
+
+// open with fs to prevent caching in require,
+// so we can require config each time for each script when reload
     fs = require('fs'),
-    config = parseConfig(),
-    loggers = require('./drivers/loggers'),
-    loggerProcess = loggers.forge(
-        config.loggers.process.type,
-        config.loggers.process.options
-    );
+    config = {};
 
 /**
  * Get common config object (use when SIGHUP also)
  * @returns {*}
  */
 function parseConfig() {
-    var configFile = fs.readFileSync('./configs/config.json', { 'flag' : 'r' });
-    var config = JSON.parse(configFile);
-    return config;
+
+    try {
+        var configFile = fs.readFileSync('./../configs/config.json', { 'flag' : 'r' });
+    } catch (e) {
+        var configFile = fs.readFileSync('./configs/config.json', { 'flag' : 'r' });
+    }
+
+    var configNew = JSON.parse(configFile);
+
+    // defautl values
+    if (configNew.daemon.workers.process) {
+        processWorkersCount = configNew.daemon.workers.process;
+    }
+
+    if (configNew.daemon.workers.helper) {
+        helperWorkersCount = configNew.daemon.workers.helper;
+    }
+
+    loggerProcess = loggers.forge(
+        configNew.loggers.process.type,
+        configNew.loggers.process.options
+    );
+
+    config = configNew;
 }
 
 /**
@@ -45,7 +65,7 @@ function createProcessWorker() {
             createProcessWorker();
         });
     } else {
-        require('./bot');
+        require('./../bot');
     }
 }
 
@@ -64,7 +84,7 @@ function createHelperWorker() {
             createHelperWorker();
         });
     } else {
-        require('./helper');
+        require('./../helper');
     }
 }
 
@@ -109,19 +129,15 @@ function killAllWorkers(signal) {
  */
 process.on('SIGHUP', function () {
 
-    config = parseConfig();
-    loggerProcess = loggers.forge(
-        config.loggers.process.type,
-        config.loggers.process.options
-    );
-
-    loggerProcess.info('***** DAEMON RELOAD START');
+    parseConfig();
+    loggerProcess.info('***** DAEMON RELOAD START *****');
 
     killAllWorkers('SIGTERM');
 
     var t = setTimeout(function(){
         createWorkers();
-        loggerProcess.info('***** DAEMON RELOAD COMPLETE');
+        loggerProcess.info('***** DAEMON RELOAD COMPLETE *****');
+        clearTimeout(t);
     }, 1000);
 
 });
@@ -133,16 +149,8 @@ process.on('SIGTERM', function () {
     killAllWorkers('SIGTERM');
 });
 
-
-// defautl values
-if (config.daemon.workers.process) {
-    processWorkersCount = config.daemon.workers.process;
-}
-
-if (config.daemon.workers.helper) {
-    helperWorkersCount = config.daemon.workers.helper;
-}
+parseConfig();
 
 // run, Forest, run!
-loggerProcess.info('***** DAEMON START');
+loggerProcess.info('***** DAEMON START *****');
 createWorkers();

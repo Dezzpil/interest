@@ -72,6 +72,10 @@ process.on('SIGTERM', function () {
 
 });
 
+//if (process.getgid() === 0) {
+//    process.setgid('nobody');
+//    process.setuid('nobody');
+//}
 
 function init() {
 

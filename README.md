@@ -1,0 +1,141 @@
+# Crystal Interest Bot
+
+Бот обходит ссылки из белого списка сайтов и пытается обнаружить насколько изменились страницы
+с момента последнего прохода.
+
+***
+
+# Crystal Interest Bot Helper
+
+Вспомогательный бот для трансформации слепков (impress документы из MongoDB)
+в простой текст и сохранения этого текста в text документы в MongoDB с
+дополнительными данными, необходимыми для передачи их в Sphinx через xmlpipe2
+
+***
+
+# Установка и запуск
+
+## Подготовка
+
+### NodeJS >=v0.10.23
+
+[выбрать установку под систему]
+(https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager)
+
+[CentOS 6.5]
+(https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager#rhelcentosscientific-linux-6)
+
+### recode >= v3.6
+
+    sudo yum install recode.i686
+    
+### Python v.2
+
+    sudo yum install python-pip
+    sudo pip install chardet
+
+    sudo yum install gcc python-devel
+    sudo yum install pymongo
+    sudo yum install python-lxml.i686
+
+### MySQL
+
+работает с Crawler.domain
+
+### MongoDB :
+
+[download](http://www.mongodb.org/downloads)
+
+использует 4 коллекции (все коллекции Mongo создает само (автоматически)):
++  log - для хранения снимков памяти
++  impresses - для хранения тела http ответов
++  ferry_tasks - для хранения ссылок проработанных http запросы
++  texts - для хранения текста, извлеченного из тела http запроса
+
+## Установка
+
+    git pull
+    git submodule init
+    git submodule update
+    mkdir -m 775 logs
+    mkdir configs
+    cp examples/config.json configs/config.json
+    nano configs/config.json
+
+В configs/config.json прописать правильные пути до директории бота,
+для подключения к базам данных, анализатору.
+
+Можно настроить логирование в секции loggers. Секция поделена на 2 подсекции,
+process - логирует последовательность выполнения, а errors - ошибки выполнения.
+Для каждой из этих подсекций можно выбрать транспорт модуля winston и определить
+настройки самостоятельно.
+Сейчас поддерживаются транспорты из [Winston Core](https://github.com/flatiron/winston/blob/master/docs/transports.md#http-transport)
+
+    cp examples/mysqlMockData.json configs/mysqlMockData.json
+    npm install
+
+Теперь проверяем все ли на месте и настроено как надо:
+
+    npm test
+
+## Запуск
+
+    npm start
+
+Для пертых чуваков, которые будут это поддерживать есть и другой путь.
+Проверка работы (npm test вызывает этот скрипт, см. package.json):
+
+    node tests/runner.js
+
+Запустить только бота:
+
+    node bot.js
+
+Запуситить только помощника:
+
+    node helper.js
+
+Сводку о результатах работы бота можно увидеть:
+
+    node utils/statsDataFromDB.js
+
+Если необходимо обнулить результаты работы бота, т.е. снять отметки о работе
+в MySQL Crawler.domain и удалить все документы в рабочих коллекциях MongoDB:
+
+    node utils/resetAllDataFromDB.js
+
+# Sphinx
+
+Файл конфигурации examples/sphinx-mongo.conf настроен на работу через xmlpipe2 и содержит 2 индекса.
+Xmlpipe2 вызывает исполнение xmltexts.py, который формирует xml с
+config.json:xmlpipe2.documentsNumEachExec документов, которые еще не были
+проиндексированы ранее.
+
+Секции source & index надо включить в боевой конфиг sphinx'a.
+Для локальных проверок можно запускать прямо так с
+предустановленными настройками, но ПЕРЕПИСАТЬ ПУТИ СФИНКСА!
+
+После включения секций, описывающих новые индексы надо подхватить новые конфиги:
+
+    sudo searchd --stop
+    sudo searchd
+
+Скрипт индексации, вероятно, останется прежним, на всякий случай:
+
+    indexer --all --verbose --rotate
+
+Для проверки подключаемся к sphinx'y:
+
+    mysql -h 127.0.0.1 -P 3312
+    show tables;
+
+В списке должны быть:
+
+    | crystalkids27_sites_mongo  | local |
+    | crystalkids712_sites_mongo | local |
+
+# Upstart
+
+
+
+

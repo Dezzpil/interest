@@ -20,12 +20,13 @@
   },
   "devDependencies": {},
   "scripts": {
+      "test" : "node tests/runner.js",
       "prestart": "node tests/runner.js",
-      "start": "node daemon.js"
+      "start": "node bot.js"
   },
   "repository": {
     "type": "git",
-    "url": "git@gitlab.crystalteam.ru:n.orlov/bot-crystal-interest.git"
+    "url": "http://gitlab.crystalteam.ru/n.orlov/bot-crystal-interest.git"
   },
   "keywords": [
     "bot",
