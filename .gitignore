@@ -4,3 +4,5 @@
 configs
 logs
 node_modules
+analyzer
+sphinx

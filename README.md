@@ -120,14 +120,14 @@ Xmlpipe2 использует xmltexts.py, который формирует xml
 Для локальных проверок можно запускать конфиг из файлов проекта с предустановленными настройками,
 но ПЕРЕПИСАТЬ ПУТИ СФИНКСА!
 
-Подгружаем новые индексы:
-
-    indexer --all --verbose --rotate --%your_config%
-
 После включения секций, описывающих новые индексы надо подхватить новые конфиги:
 
     sudo searchd --stop
-    sudo searchd
+    sudo searchd --config %your_config%
+
+Индексируем индексы:
+
+    indexer --all --verbose --rotate --config %your_config%
 
 Для проверки подключаемся к sphinx'y:
 
@@ -139,9 +139,13 @@ Xmlpipe2 использует xmltexts.py, который формирует xml
     | crystalkids27_sites_mongo  | local |
     | crystalkids712_sites_mongo | local |
 
-## Upstart
+## [Upstart][]
 
+Для управления ботом как процессом можно использовать скрипт upstart/interest-bot.conf
+он очень простой: проверяет пройдены ли тесты, и если да - запускает скрипт upstart/interest-bot, который автоматически запускает
+необходимые процессы для бота
 
+	[upstart](http://upstart.ubuntu.com/)
 
 
 
