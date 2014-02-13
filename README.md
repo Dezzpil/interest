@@ -41,6 +41,12 @@
 ### MySQL
 
 работает с Crawler.domain
+можно использовать дамп из папки examples/
+
+    mysql -h localhost -u root -p
+    CREATE DATABASE IF NOT EXISTS Crawler DEFAULT CHARACTER SET utf8
+
+    mysql -h localhost -u root -p Crawler < examples/domain20140113.sql
 
 ### MongoDB :
 
@@ -82,7 +88,7 @@ process - логирует последовательность выполнен
 
     npm start
 
-Для пертых чуваков, которые будут это поддерживать есть и другой путь.
+Для пертых чуваков, которые будут это поддерживать, есть и другой путь.
 Проверка работы (npm test вызывает этот скрипт, см. package.json):
 
     node tests/runner.js
@@ -107,22 +113,21 @@ process - логирует последовательность выполнен
 # Sphinx
 
 Файл конфигурации examples/sphinx-mongo.conf настроен на работу через xmlpipe2 и содержит 2 индекса.
-Xmlpipe2 вызывает исполнение xmltexts.py, который формирует xml с
-config.json:xmlpipe2.documentsNumEachExec документов, которые еще не были
-проиндексированы ранее.
+Xmlpipe2 использует xmltexts.py, который формирует xml с config.json:xmlpipe2.documentsNumEachExec
+документов, которые еще не были проиндексированы ранее.
 
 Секции source & index надо включить в боевой конфиг sphinx'a.
-Для локальных проверок можно запускать прямо так с
-предустановленными настройками, но ПЕРЕПИСАТЬ ПУТИ СФИНКСА!
+Для локальных проверок можно запускать конфиг из файлов проекта с предустановленными настройками,
+но ПЕРЕПИСАТЬ ПУТИ СФИНКСА!
+
+Подгружаем новые индексы:
+
+    indexer --all --verbose --rotate --%your_config%
 
 После включения секций, описывающих новые индексы надо подхватить новые конфиги:
 
     sudo searchd --stop
     sudo searchd
-
-Скрипт индексации, вероятно, останется прежним, на всякий случай:
-
-    indexer --all --verbose --rotate
 
 Для проверки подключаемся к sphinx'y:
 
