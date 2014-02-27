@@ -139,7 +139,7 @@ Xmlpipe2 использует xmltexts.py, который формирует xml
     | crystalkids27_sites_mongo  | local |
     | crystalkids712_sites_mongo | local |
 
-## [Upstart][]
+## [Upstart]()
 
 Для управления ботом как процессом можно использовать скрипт upstart/interest-bot.conf
 он очень простой: проверяет пройдены ли тесты, и если да - запускает скрипт upstart/interest-bot, который автоматически запускает

@@ -1,9 +1,5 @@
 #! /usr/bin/node
 
-// Running daemon. WTF it crashes start and nothing happen!
-// TODO for a wut?
-//require('daemon')();
-
 // Require need libs for daemon
 var cluster = require('cluster'),
     cpusCount = require('os').cpus().length,
@@ -152,5 +148,5 @@ process.on('SIGTERM', function () {
 parseConfig();
 
 // run, Forest, run!
-loggerProcess.info('***** DAEMON START *****');
+loggerProcess.info('***** PROCESS START *****');
 createWorkers();
