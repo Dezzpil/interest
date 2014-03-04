@@ -65,6 +65,7 @@
     git submodule update
     mkdir -m 775 logs
     mkdir configs
+    cp examples/mysqlMockData.json configs/mysqlMockData.json
     cp examples/config.json configs/config.json
     nano configs/config.json
 
@@ -77,7 +78,12 @@ process - логирует последовательность выполнен
 настройки самостоятельно.
 Сейчас поддерживаются транспорты из [Winston Core](https://github.com/flatiron/winston/blob/master/docs/transports.md#http-transport)
 
-    cp examples/mysqlMockData.json configs/mysqlMockData.json
+    npm install
+
+Если во время установки возникает ошибка Error: SELF_SIGNED_CERT_IN_CHAIN то
+нужно внести изменения в конфигурацию npm и перезапустить установку:
+
+    npm config set strict-ssl false
     npm install
 
 Теперь проверяем все ли на месте и настроено как надо:
@@ -113,8 +119,16 @@ process - логирует последовательность выполнен
 ## Sphinx
 
 Файл конфигурации examples/sphinx-mongo.conf настроен на работу через xmlpipe2 и содержит 2 индекса.
+
+    cd sphinx
+    mkdir configs
+    cp examples/sphinx-mongo.conf configs/sphinx-mongo.conf
+    cp examples/config.json configs/config.json
+
 Xmlpipe2 использует xmltexts.py, который формирует xml с config.json:xmlpipe2.documentsNumEachExec
 документов, которые еще не были проиндексированы ранее.
+
+    nano configs/config.json
 
 Секции source & index надо включить в боевой конфиг sphinx'a.
 Для локальных проверок можно запускать конфиг из файлов проекта с предустановленными настройками,
@@ -139,13 +153,33 @@ Xmlpipe2 использует xmltexts.py, который формирует xml
     | crystalkids27_sites_mongo  | local |
     | crystalkids712_sites_mongo | local |
 
-## [Upstart]()
+## Upstart
+
+[upstart - event-based init daemon](http://upstart.ubuntu.com/)
 
 Для управления ботом как процессом можно использовать скрипт upstart/interest-bot.conf
 он очень простой: проверяет пройдены ли тесты, и если да - запускает скрипт upstart/interest-bot, который автоматически запускает
 необходимые процессы для бота
 
-	[upstart](http://upstart.ubuntu.com/)
+    initctl --version # версия upstart
 
+    cp upstart/upstart.0.6.conf /etc/init/interest-bot.conf # ver. >= 0.6.5
+    cp upstart/upstart.1.10.conf /etc/init/interest-bot.conf # ver. >= 1.10
+
+    cd /etc/init/
+    vim interest-bot.conf
+    start interest-bot
+    # interest-bot start/running, process N
+
+Логирование статуса задачи происходит в logs/upstart.log. Задача запускает npm test
+перед стартом бота - logs/npmtest.log.
+
+Upstart позволяет перезагрузить бота. При перезагрузке config/config.json подтягивается заново.
+
+    restart interest-bot
+
+Чтобы остановить бота
+
+    stop interest-bot
 
 

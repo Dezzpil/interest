@@ -94,8 +94,8 @@ async.parallel({
         );
     },
 
-    'mysql select' : function(callback) {
-        var key = 'mysql select';
+    'mysql operations' : function(callback) {
+        var key = 'mysql operations';
         mysqlDriver.getLinks(1, function(err, rows) {
             if (err) error(key, err);
             success(key, callback);

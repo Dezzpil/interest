@@ -44,10 +44,6 @@
         "reconnectTimeout" : 10000
     },
 
-    "xmlpipe2" : {
-        "documentsNumEachExec" : 1000
-    },
-
     "mysql" : {
         "host" : "alpha.crystalteam.ru",
         "user" : "test",

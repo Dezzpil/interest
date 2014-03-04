@@ -1,39 +1,36 @@
 {
-  "name": "crystal-interest",
-  "version": "0.2.0",
-  "description": "bot for detour links from Crawler db in mysql and checks content and collect data for sphinx",
-  "main": "bot.js",
-  "directories": {
-    "test": "tests/"
-  },
-  "dependencies": {
-    "async": "~0.2.9",
-    "grunt": "~0.4.2",
-    "htmlparser2": "~3.3.0",
-    "memwatch": "~0.2.2",
-    "mongodb": "~1.3.19",
-    "mongoose": "~3.8.1",
-    "mysql": "~2.0.0-rc2",
-    "winston": "~0.7.2",
-    "winston-mongodb": "~0.4.3",
-    "daemon": "~1.1.0"
-  },
-  "devDependencies": {},
-  "scripts": {
-      "test" : "node tests/runner.js",
-      "prestart": "node tests/runner.js",
-      "start": "node bot.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "http://gitlab.crystalteam.ru/n.orlov/bot-crystal-interest.git"
-  },
-  "keywords": [
-    "bot",
-    "interest",
-    "whitecatalog",
-    "impress"
-  ],
-  "author": "Nikita Dezzpil Orlov",
-  "license": "BSD-2-Clause"
+    "name": "crystal-interest",
+    "version": "2.0.0",
+    "description": "bot for detour links from Crawler db in mysql and checks content and collect data for sphinx",
+    "keywords": [
+        "bot",
+        "interest",
+        "impress"
+    ],
+
+    "dependencies": {
+        "async": "~0.2.9",
+        "htmlparser2": "~3.3.0",
+        "memwatch": "~0.2.2",
+        "mongodb": "~1.3.19",
+        "mongoose": "~3.8.1",
+        "mysql": "~2.0.0-rc2",
+        "winston": "~0.7.2",
+        "winston-mongodb": "~0.4.3"
+    },
+    "devDependencies": {},
+
+    "scripts": {
+        "test" : "node tests/runner.js",
+        "prestart": "node tests/runner.js",
+        "start": "node bot.js"
+    },
+
+    "repository": {
+        "type": "git",
+        "url": "http://gitlab.crystalteam.ru/n.orlov/bot-crystal-interest.git"
+    },
+
+    "author": "Nikita Dezzpil Orlov",
+    "license": "BSD-2-Clause"
 }
