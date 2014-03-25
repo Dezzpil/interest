@@ -58,6 +58,10 @@ process.on('uncaughtException', function(error) {
 
 process.on('SIGTERM', function () {
 
+    // TODO remove it to upstart/interest-bot
+    // unlock all links
+    mysql.driver.unlockLinks(null);
+
     // Disconnect from cluster master
     process.disconnect && process.disconnect();
     process.exit();
@@ -242,7 +246,7 @@ function init() {
 
         loggerMemory.info(heapDiff.end());
 
-        mysql.driver.clearLinks(function(err, rows) {
+        mysql.driver.unlockLinks(botPID, function(err, rows) {
             if (err) throw err;
         });
 

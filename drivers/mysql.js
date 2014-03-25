@@ -2,13 +2,13 @@
  * Created by dezzpil on 21.11.13.
  */
 
-var mysql = require('mysql');
+mysql = require('mysql');
 
 function mysqlDriver() {
 
-    var self = this,
-        mysqlConnection,
-        config = {}, logger = null;
+    var self = this, mysqlConnection,
+        config = {}, logger = null,
+        tableName;
 
     /**
      *
@@ -26,11 +26,8 @@ function mysqlDriver() {
      * @returns {mysqlDriver}
      */
     this.setConfig = function(cfg) {
-        if ('mysql' in cfg) {
-            config = cfg.mysql;
-        } else {
-            config = cfg;
-        }
+        config = cfg;
+        tableName = cfg.dbName + '.' + cfg.tableName;
 
         return self;
     };
@@ -76,22 +73,18 @@ function mysqlDriver() {
     this.getLinks = function(pid, callback) {
 
         var queryUp, queryGet,
-            diff = config.options.timeToReprocessInSec,
-            table = config.dbName + '.' + config.tableName;
+            diff = config.options.timeToReprocessInSec;
 
-        queryUp = 'UPDATE ' + table + ' set idProcess=' + pid +
+        queryUp = 'UPDATE ' + tableName + ' set idProcess=' + pid +
             ' WHERE ' +
-                'idProcess=0' +
-                ' && UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(lastRechange) > ' + diff +
-                ' && UNIX_TIMESTAMP(lastTest) < UNIX_TIMESTAMP(lastRechange)' +
+                'idProcess=0 && ' +
+                'UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(lastRechange)>' + diff + ' && ' +
+                'UNIX_TIMESTAMP(lastTest)<UNIX_TIMESTAMP(lastRechange)' +
             ' ORDER BY lastTest ASC' +
             ' LIMIT ' + config.options.maxProcessLimit;
 
-        queryGet =  'SELECT * FROM ' + table +
-            ' WHERE idProcess=' + pid +
+        queryGet =  'SELECT * FROM ' + tableName + ' WHERE idProcess=' + pid +
             ' ORDER BY lastTest ASC';
-
-        //console.log(queryUp); console.log(queryGet); process.exit();
 
         logger.info('MYSQL : getting links...');
         mysqlConnection.query(
@@ -121,17 +114,22 @@ function mysqlDriver() {
     };
 
     /**
-     * Set idProcess = 0 to all rows where idProcess != 0
-     * @param callback {Function}
+     * Set idProcess = 0 to all rows where idProcess = pid
+     * if pid == null, unlock all links. Actually only on bot restart.
+     * @param {int|null} pid
+     * @param {Function} callback
      */
-    this.clearLinks = function(callback) {
-        mysqlConnection.query(
-            'UPDATE ' + config.dbName + '.' + config.tableName + ' set idProcess=0 ' +
-            'WHERE idProcess != 0',
-            function(err, rows) {
-                if (callback) callback(err, rows);
-            }
-        );
+    this.unlockLinks = function(pid, callback) {
+        var query = 'UPDATE ' + tableName + ' set idProcess=0 ';
+        if (pid === null) {
+            query += 'WHERE idProcess!=0';
+        } else {
+            query += 'WHERE idProcess=' + pid;
+        }
+
+        mysqlConnection.query(query, function(err, rows) {
+            if (callback) callback(err, rows);
+        });
     };
 
     /**
@@ -141,8 +139,7 @@ function mysqlDriver() {
      */
     this.resetLinks = function(callback) {
         mysqlConnection.query(
-            'UPDATE ' + config.dbName + '.' + config.tableName + ' SET ? ',
-            {
+            'UPDATE ' + tableName + ' SET ? ', {
                 lastTest : '2012-01-01 00:00:00',
                 lastRechange : '2012-01-02 00:00:00',
                 idProcess : 0,
@@ -175,8 +172,9 @@ function mysqlDriver() {
      */
     this.setLinkRecovered = function(idD, statusCode, callback) {
         mysqlConnection.query(
-            'UPDATE '+ (config.dbName + '.' + config.tableName) +' SET ? WHERE idD="' + idD + '"',
-            { statusRecovery : 1 },
+            'UPDATE '+ tableName +' SET ? WHERE idD="' + idD + '"', {
+                statusRecovery : 1
+            },
             function(err, rows) {
                 if (callback) callback(err, rows);
             }
@@ -193,8 +191,7 @@ function mysqlDriver() {
      */
     this.setInfoForLink = function(idD, statusCode, percent, isBad, callback) {
         mysqlConnection.query(
-            'UPDATE '+ (config.dbName + '.' + config.tableName) +' SET ? WHERE idD="' + idD + '"',
-            {
+            'UPDATE '+ tableName +' SET ? WHERE idD="' + idD + '"', {
                 idProcess : 0,
                 lastTest : new Date(),
                 statusCode : statusCode,
@@ -209,6 +206,7 @@ function mysqlDriver() {
 
     /**
      * @todo HOWTO ?
+     * @todo переделать к чертовой матери
      * @param dateStart {String}
      * @param callback {Function}
      */

@@ -39,7 +39,7 @@ function mysqlMockDriver() {
         callback(null, testData);
     };
 
-    this.clearLinks = function(pid, callback) {};
+    this.unlockLinks = function(pid, callback) {};
 
     /**
      * Обнулить все собранные ботом данные
