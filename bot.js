@@ -3,48 +3,43 @@
  * @date 18.11.2013
  */
 
-//require('longjohn');
+memwatch = require('memwatch');
+config = require('./configs/config.json');
+mongo = require('./drivers/mongo');
+mysql = require('./drivers/mysql');
+link = require('./link');
+request = require('./request');
+response = require('./response');
+analyzer = require('./drivers/mocks/analyzer');
+loggers = require('./drivers/loggers');
+async = require('async');
+util = require('util');
+htmlparser2 = require("htmlparser2");
+url = require('url');
+LinkGuide = require('./libs/linkGuide');
 
-
-var memwatch = require('memwatch'),
-
-    config = require('./configs/config.json'),
-    mongo = require('./drivers/mongo'),
-    mysql = require('./drivers/mysql'),
-    link = require('./link'),
-    request = require('./request'),
-    response = require('./response'),
-    analyzer = require('./drivers/analyzer'),
-    async = require('async'),
-    util = require('util'),
-
-    botName = config.name + ' v.' + config.version,
-    botPID = parseInt(process.pid),
-
-    loggers = require('./drivers/loggers'),
-    loggerProcess = loggers.forge(
-        config.loggers.process.type,
-        config.loggers.process.options
-    ),
-    loggerErrors = loggers.forge(
-        config.loggers.errors.type,
-        config.loggers.errors.options
-    ),
-    loggerMemory = loggers.forge(
-        "mongodb",{
-            "db" : config.mongo.db,
-            "host" : config.mongo.host,
-            "port" : config.mongo.port,
-            "username" : config.mongo.username,
-            "password" : config.mongo.password,
-            "timeout" : config.mongo.reconnectTimeout,
-            "collection" : "log",
-            "level" : "info",
-            "silent" : false,
-            "safe" : false
-        }
-    );
-
+loggerProcess = loggers.forge(
+    config.loggers.process.type,
+    config.loggers.process.options
+);
+loggerErrors = loggers.forge(
+    config.loggers.errors.type,
+    config.loggers.errors.options
+);
+loggerMemory = loggers.forge(
+    "mongodb",{
+        "db" : config.mongo.db,
+        "host" : config.mongo.host,
+        "port" : config.mongo.port,
+        "username" : config.mongo.username,
+        "password" : config.mongo.password,
+        "timeout" : config.mongo.reconnectTimeout,
+        "collection" : "log",
+        "level" : "info",
+        "silent" : false,
+        "safe" : false
+    }
+);
 
 try {
     process.stdout.setEncoding('binary');
@@ -53,15 +48,12 @@ try {
 }
 
 process.on('uncaughtException', function(error) {
-
     if (util.isError(error)) {
         loggerErrors.error(error);
         loggerErrors.error(error.stack);
-
-        // TODO collect errors somewhere (may be table in mongo ? )
-
+    } else {
+        loggerErrors.error(error);
     }
-
 });
 
 process.on('SIGTERM', function () {
@@ -72,92 +64,196 @@ process.on('SIGTERM', function () {
 
 });
 
-//if (process.getgid() === 0) {
-//    process.setgid('nobody');
-//    process.setuid('nobody');
-//}
+/**
+ * Получить список ключей объекта
+ * @todo вынести в отдельную библиотеку
+ * @todo подключить свою либу (?)
+ * @param {object} object
+ * @returns {Array}
+ */
+function keys(object) {
+    var keys = [], key;
+    for (key in object) {
+        keys.push(key);
+    }
+
+    return keys;
+}
+
+/**
+ * Извлечь значение первого ключа объекта
+ * @todo вынести в отдельную библиотеку
+ * @todo подключить свою либу (?)
+ * @param {object} object
+ * @returns {*}
+ */
+function unshift(object) {
+    var elem = null, i;
+    for (i in object) {
+        elem = object[i];
+        delete(object[i]);
+        break;
+    }
+
+    return elem;
+}
 
 function init() {
 
-    var linkManager, requestManager,
-        heapDiff, responseProcessor, analyzeFactory;
+    var heapDiff, linkManager, requestManager,
+        responseProcessor, analyzeFactory,
+        botPID = parseInt(process.pid),
+        crawlDeep = 0,
+        linkMap = {},// сохраняем ссылки по всем итерациям, чтобы не посещать одни и те же страницы несколько раз
+        options = {
+            'config' : config,
+            'logger' : loggerProcess,
+            'pid' : botPID,
+            'mysql' : mysql.driver,
+            'mongo' : mongo.driver,
+            'useragent' : config.name + ' v.' + config.version
+        },
+        guides = {},
+        currentGuideBook = null;
 
-    analyzeFactory = (new analyzer.factory())
-        .setConfig(config.analyzer)
-        .setLogger(loggerProcess);
+    analyzeFactory = new analyzer.factory(options);
 
-    responseProcessor = (new response.factory())
-        .setLogger(loggerProcess)
-        .setMysqlDriver(mysql.driver)
-        .setBotPID(botPID)
-        .setMongoDriver(mongo.driver)
-        .setConfig(config)
-        .setAnalyzerFactory(analyzeFactory);
+    responseProcessor = new response.factory(analyzeFactory, options);
 
-    requestManager = (new request.manager())
-        .setMysqlDriver(mysql.driver)
-        .setLogger(loggerProcess)
-        .setUserAgent(botName)
-        .setConfig(config)
-        .setModel(function(response, guideBook) {
+    responseProcessor.on('response', function(bodyHtml) {
 
-            /**
-             * we get response here, may do what we want
-             */
+        // парсим тело ответа и сохраняем ссылки на внутренние
+        // страницы сайта, добавляем их в путеводитель
+        var parser, links = [],
+            ignore_list = config.crawler.ignore,
+            ignore_regexp = new RegExp("^\/$" + ignore_list.replace(/\|/g,"|\\.") + "|^#$|^#.{1,}$");
 
-            var processor = new responseProcessor.create();
-            processor.run(response, guideBook);
+        parser = new htmlparser2.Parser({
+            onopentag : function(name, attrs) {
 
-        });
+                if (name != 'a') return;
 
-    linkManager = (new link.manager())
-        .setLogger(loggerProcess)
-        .setConfig(config)
-        .setMysqlDriver(mysql.driver)
-        .setBotPID(botPID)
-        .setOnIterateStart(function(guide) {
+                if (! ('href' in attrs)) return;
 
-            /**
-             * On link iteration start
-             * @type {HeapDiff}
-             */
-            heapDiff = new memwatch.HeapDiff();
+                if ('rel' in attrs && attrs.rel == 'nofollow' && config.crawler.perceive_nofollow) {
+                    return;
+                }
 
-        })
-        .setRequestManager(function(guideBook) {
+                if (attrs.href.match(ignore_regexp) == null) {
 
-            /**
-             * we get link here, may do what we want
-             */
-            requestManager.run(guideBook);
-        })
-        .setOnIterateFin(function(guide) {
+                    // избавляем текущую ссылку от ненужных частей
+                    var currentDomain = currentGuideBook.getDomain();
+                    if (currentGuideBook.getDomain().match(/^(?:http|https):\/\/(.+)/) != null) {
+                        currentDomain = url.parse(currentGuideBook.getDomain()).hostname;
+                    }
 
-            /**
-             * On link iteration end
-             */
+                    // иногда ссылки на странице указаны абсолютно
+                    if (attrs.href.match(/^(?:http|https):\/\/(.+)/) != null) {
 
-            // save ferry tasks, only if guide guided something )
-            var idList = guide.getIdList();
-            if (idList.length) {
-                mongo.driver.saveFerryTask(idList, botPID, function(err) {
-                    if (err) throw err;
-                });
+                        // и иногда это ссылки на внешние ресурсы, которые нас не интересуют
+                        if (url.parse(attrs.href).hostname != currentGuideBook.getDomain()) {
+                            return;
+                        }
+                    } else {
+                        attrs.href = currentGuideBook.getDomain() + attrs.href;
+                    }
+
+                    // если ссылка еще не встречалась, мы сохраняем ее в список для гида
+                    // и в индекс, чтобы в дальнейшем ее не проходить
+                    if (!(attrs.href in linkMap)) {
+                        links.push(attrs.href);
+                        linkMap[attrs.href] = true;
+                    }
+                }
+
+                /**
+                 * @todo добавить проверку значений robots.txt, отдельная задача
+                 */
+            },
+            'onend' : function() {
+
+                guides[currentGuideBook.getDomain()] = LinkGuide.forge();
+
+                for (var i in links) {
+                    guides[currentGuideBook.getDomain()].addSub(currentGuideBook, links[i]);
+                }
+
+                console.log('save guide for %s', currentGuideBook.getDomain());
+                console.log(guides[currentGuideBook.getDomain()].getIdMap());
+
             }
-
-            loggerMemory.info(heapDiff.end());
-
         });
+
+        parser.write(bodyHtml);
+        parser.end();
+
+        return bodyHtml;
+    });
+    responseProcessor.on('encode', function(bodyEncoded) {
+        return bodyEncoded;
+    });
+
+    requestManager = new request.manager(options, function(response, guideBook) {
+        // we get response object here, may do what we want
+        // we always can stop further process with
+        // return guideBook.markLink();
+        currentGuideBook = guideBook;
+
+        var responser = new responseProcessor.create();
+        responser.run(response, guideBook);
+    });
+
+    linkManager = new link.manager(options, function(guideBook) {
+
+        // инициализируем запрос по гайдбуку
+        requestManager.run(guideBook);
+
+    });
+
+    linkManager.on('start', function(guide) {
+
+        // учет потребляемой памяти за итерацию
+        heapDiff = new memwatch.HeapDiff();
+
+        // Инициализация, гид не указан.
+        // Получаем список адресов, создаем гида для их обхода,
+        // только в случае, если нет существующего гида
+        // ( мог быть создан во время сбора ссылок на уже пройденном сайте )
+        // и вызываем менеджера ссылок для контроля работа гида
+        if (crawlDeep <= config.crawler.deep && guides && keys(guides).length) {
+
+            var guide = unshift(guides);
+            crawlDeep++;
+            linkManager.run(guide);
+
+        } else {
+
+            mysql.driver.getLinks(botPID, function(err, rows) {
+                guide = LinkGuide.forge(rows);
+                console.log('get new guide', guide.getIdMap());
+                linkManager.run(guide);
+            });
+
+        }
+
+    });
+
+    linkManager.on('end', function(guide) {
+
+        loggerMemory.info(heapDiff.end());
+
+        mysql.driver.clearLinks(function(err, rows) {
+            if (err) throw err;
+        });
+
+    });
 
     return linkManager;
 }
 
-// prerequisites
 async.parallel({
     'mysql' : function(callback) {
-        loggerProcess.info('MYSQL - Connecting ...');
-        mysql.driver
-            .setLogger(loggerProcess)
+        mysql.driver.setLogger(loggerProcess)
             .setConfig(config.mysql)
             .connect(function(err) {
                 callback(err, true);
@@ -165,9 +261,7 @@ async.parallel({
         );
     },
     'mongo' : function(callback) {
-        loggerProcess.info('MONGODB - Connecting ...');
-        mongo.driver
-            .setLogger(loggerProcess)
+        mongo.driver.setLogger(loggerProcess)
             .setConfig(config.mongo)
             .connect(function(err) {
                 callback(err, true);
@@ -176,10 +270,8 @@ async.parallel({
     }
 }, function(error, result) {
 
-    // handle errors
     loggerProcess.info(result);
     if (error) throw error;
 
-    // start process flow
-    var linkManager = init().run();
+    init().run();
 });

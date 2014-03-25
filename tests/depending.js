@@ -67,22 +67,22 @@ async.parallel({
         recode.stdin.end('foo bar');
     },
 
-    'analyzer' : function(callback) { // if analyzer exists
-        loggerSimple.info('%s : analyzer path: %s', scriptName, config.path + config.analyzer.path + config.analyzer.fileName);
-        var key = 'analyzer',
-            analyzer = execFile(config.path + config.analyzer.path + config.analyzer.fileName, function(err, stdout) {
-                if (err) error(key, err);
-                success(key, callback);
-            }
-        );
-
-        analyzer.stdin.on('error', function(err) {
-            if (err) error(key, err);
-        });
-
-        analyzer.stdin.write('foobar');
-        analyzer.stdin.end('foobar1');
-    },
+//    'analyzer' : function(callback) { // if analyzer exists
+//        loggerSimple.info('%s : analyzer path: %s', scriptName, config.path + config.analyzer.path + config.analyzer.fileName);
+//        var key = 'analyzer',
+//            analyzer = execFile(config.path + config.analyzer.path + config.analyzer.fileName, function(err, stdout) {
+//                if (err) error(key, err);
+//                success(key, callback);
+//            }
+//        );
+//
+//        analyzer.stdin.on('error', function(err) {
+//            if (err) error(key, err);
+//        });
+//
+//        analyzer.stdin.write('foobar');
+//        analyzer.stdin.end('foobar1');
+//    },
 
     'mysql connection' : function(callback) {
         var key = 'mysql connection';
@@ -133,7 +133,7 @@ async.parallel({
     }
 }, function(err, results) {
         loggerSimple.info('%s : all checks was complete', scriptName);
-        loggerSimple.info('%s : success %d from 8', scriptName, successNum);
+        loggerSimple.info('%s : success %d', scriptName, successNum);
         loggerSimple.info('%s : complete checking \n', scriptName);
         process.exit();
     }

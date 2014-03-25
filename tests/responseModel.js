@@ -15,13 +15,13 @@ var config = require('./../configs/config.json'),
     scriptName = path.basename(process.cwd(), '.js'),
 
     response = require('./../response'),
-    responseFactory = (new response.factory()),
+    responseFactory = null,
 
     request = require('./../request'),
-    requestManager = (new request.manager()),
+    requestManager = null,
 
     links = require('./../link'),
-    linksManager = (new links.manager()),
+    linksManager = null,
 
     mongoMockDriver = require('./../drivers/mocks/mongo').driver,
     mysqlMockDriver = require('./../drivers/mocks/mysql').driver,
@@ -29,12 +29,22 @@ var config = require('./../configs/config.json'),
 
     loggers = require('./../drivers/loggers'),
     loggerSimple = loggers.forge( "console", { level : "info", colorize: true }),
-    loggerErrors = loggers.forge( "console", { level : "error", colorize : true });
+    loggerErrors = loggers.forge( "console", { level : "info", colorize : true }),
+    options = {
+        'config' : config,
+        'logger' : loggerSimple,
+        'pid' : 'mock',
+        'mysql' : mysqlMockDriver,
+        'mongo' : mongoMockDriver,
+        'useragent' : 'te#w2@'
+    };
+
 
 
 process.on('uncaughtException', function(error) {
     if (util.isError(error)) {
         loggerErrors.error(error.toString());
+        loggerErrors.error(error.stack);
     } else {
         loggerErrors.error(error);
     }
@@ -42,9 +52,7 @@ process.on('uncaughtException', function(error) {
     process.exit();
 });
 
-
 loggerSimple.info('%s : start checking', scriptName);
-
 
 // inject
 mongoMockDriver
@@ -55,54 +63,23 @@ mysqlMockDriver
     .setConfig(config.mysql)
     .setLogger(loggerSimple);
 
+responseFactory = new response.factory(analyzerMockFactory, options);
 responseFactory
-    .setConfig(config)
-    .setLogger(loggerSimple)
-    .setBotPID(parseInt(process.pid))
-    .setMysqlDriver(mysqlMockDriver)
-    .setMongoDriver(mongoMockDriver)
-    .setAnalyzerFactory(analyzerMockFactory)
-    .on('responseEnd', function(text) {
+    .on('response', function(data) { return data; })
+    .on('recode', function(data) { return data; });
 
-        //loggers.file.info(text.substr(0,1000));
+requestManager = new request.manager(options, function(response, guideBook) {
+    var responseHandle = new responseFactory.create();
+    responseHandle.run(response, guideBook);
+});
 
-    })
-    .on('recodeEnd', function(text) {
+(new links.manager(options, function(guideBook) {
 
-        //loggers.file.info(text.substr(0,1000));
+    requestManager.run(guideBook);
 
-    });
+})).on('end', function(guide) {
 
-requestManager
-    .setConfig(config)
-    .setLogger(loggerSimple)
-    .setMysqlDriver(mysqlMockDriver)
-    .setUserAgent(config.name + ' v.' + config.version)
-    .setModel(function(response, guideBook) {
+    loggerSimple.info('%s : complete checking \n', scriptName);
+    process.exit();
 
-        var responseHandle = new responseFactory.create();
-        responseHandle.run(response, guideBook);
-
-    });
-
-linksManager
-    .setLogger(loggerSimple)
-    .setConfig(config)
-    .setMysqlDriver(mysqlMockDriver)
-    .setBotPID('mock')
-    .setOnIterateStart(function(guide) {
-        //
-    })
-    .setRequestManager(function(guideBook) {
-
-        requestManager.run(guideBook);
-    })
-    .setOnIterateFin(function(guide) {
-
-        loggerSimple.info('%s : complete checking \n', scriptName);
-        process.exit();
-
-    });
-
-// go
-linksManager.run();
+}).run();

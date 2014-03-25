@@ -2,7 +2,7 @@ exports.impress = {
     date : Date,
     pid : Number,
     url : String,
-    url_id : Number,
+    url_id : String,
     content : String,
     length : Number,
     category : Array,          // [] => 0, [2-7] => 1, (7-12] => 2

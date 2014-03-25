@@ -5,21 +5,12 @@
 var execFile = require('child_process').execFile,
     queryString = require('querystring');
 
-function analyzeMockFactory() {
+function analyzeMockDriver(options) {
 
     var instances = [],
-        factory = this,
-        logger, options = {};
-
-    this.setConfig = function(cfg) {
-        options = cfg;
-        return factory;
-    };
-
-    this.setLogger = function(object) {
-        logger = object;
-        return factory;
-    };
+        count = 0, self = this,
+        logger = options.logger,
+        config = options.config.analyzer;
 
     this.getInstances = function() {
         return instances;
@@ -104,4 +95,4 @@ function analyzeMockFactory() {
 
 }
 
-exports.factory = new analyzeMockFactory();
+exports.factory = analyzeMockDriver;

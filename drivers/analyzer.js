@@ -5,21 +5,12 @@
 var execFile = require('child_process').execFile,
     queryString = require('querystring');
 
-function analyzeFactory() {
+function analyzeDriver(options) {
 
     var instances = [],
         count = 0, self = this,
-        logger, options;
-
-    this.setConfig = function(cfg) {
-        options = cfg;
-        return self;
-    };
-
-    this.setLogger = function(object) {
-        logger = object;
-        return self;
-    };
+        logger = options.logger,
+        config = options.config.analyzer;
 
     this.getInstances = function() {
         return instances;
@@ -28,7 +19,7 @@ function analyzeFactory() {
     this.empty = function() {
         for (var i = 0; i < instances.length; i++) {
             try {
-                instances[i].kill(options.killSignal);
+                instances[i].kill(config.killSignal);
             } catch (e) {
                 // instances[i] is undefineed
             }
@@ -67,7 +58,7 @@ function analyzeFactory() {
             if ( isTerminated) return false;
 
             process = execFile(
-                options.path + options.fileName,
+                config.path + config.fileName,
                 function (error, stdout, stderr) {
 
                     if (error || stderr) {
@@ -152,7 +143,7 @@ function analyzeFactory() {
             try {
                 if (process) { // если процесс уже создан
                     process.stdin.end();
-                    process.kill(options.killSignal);
+                    process.kill(config.killSignal);
                     delete(process);
                     delete(instances[num]);
                     count--;
@@ -169,4 +160,4 @@ function analyzeFactory() {
 
 }
 
-exports.factory = analyzeFactory;
+exports.factory = analyzeDriver;

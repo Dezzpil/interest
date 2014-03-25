@@ -27,7 +27,7 @@ function LinkGuideBook(guide, index) {
 
     this.isEmpty = parent.isEmpty;
 
-    this.setCallback = function(callback) {
+    this.setQueueCallback = function(callback) {
         finCallback = callback;
     };
 
@@ -39,7 +39,6 @@ function LinkGuideBook(guide, index) {
             callback();
             finCallback();
         }
-
     };
 
     /**
@@ -105,53 +104,100 @@ function LinkGuide(rows) {
         linkListTmp = [], // для постоянного unshifta
         linkList = [], // для сравнения (не должен изменяться)
         linkIds = [],
-        readyList = [],
+        linkReadyList = [],
+
+        sublinkList = [], // список ссылок, собираемый со страницы текущей ссылки
+
         self = this;
+
+    /**
+     * Добавить данные о ссылке в список гида
+     * @param {{ idD: number, link: string }} linkData
+     */
+    self.add = function(linkData) {
+
+        if (linkData['link'].indexOf('http') + 1 == 0) {
+            linkData['link'] = 'http://' + linkData['link'];
+        }
+
+        // merge object to prevent save by link
+        var idD = linkData['idD'], attrname;
+        linkMap[idD] = {};
+        for (attrname in linkData) { linkMap[idD][attrname] = linkData[attrname]; }
+
+        linkIds.push(linkData['idD']);
+        linkList.push(linkData['link']);
+        linkListTmp.push(linkData['link']);
+    }
+
+    /**
+     * Отформатировать данные в правильный формат для добавления
+     * с помощью функции add. Используется для формирования зависимых ссылок
+     * @param {LinkGuideBook} guidebook
+     * @param {string} link
+     * @returns {Object}
+     */
+    function format(guidebook, link) {
+        sublinkList.push(link);
+
+        var index = sublinkList.length - 1,
+            idD = guidebook.getIdD() + ':' + index,
+            data = guidebook.getLinkData();
+
+        data.idD = idD;
+        data.link = link;
+
+        return data;
+    }
+
+    /**
+     * @param {LinkGuideBook} guidebook
+     * @param {string} link
+     */
+    self.addSub = function(guidebook, link) {
+        var data = format(guidebook, link);
+        self.add(data);
+    };
 
     if (rows && rows.length) {
         for (i = 0; i < rows.length; i++) {
-            linkMap[rows[i]['idD']] = rows[i];
-            linkList.push(rows[i]['domain']);
-            linkListTmp.push(rows[i]['domain']);
-            linkIds.push(rows[i]['idD']);
+            rows[i]['link'] = rows[i]['domain'];
+            self.add(rows[i]);
         }
     }
-//    else {
-//        throw new Error('instance of LinkGuide gets empty rows list!');
-//    }
 
     delete(i);
 
-    this.next = function() {
+    self.next = function() {
         index++;
         return linkListTmp.shift();
     };
 
-    this.isEmpty = function() {
+    self.isEmpty = function() {
         return (linkListTmp.length == 0);
     };
 
-    this.getIdMap = function() {
+    self.getIdMap = function() {
         return linkMap;
     };
 
-    this.getIdList = function() {
+    self.getIdList = function() {
         return linkIds;
     };
 
-    this.getList = function() {
+    self.getList = function() {
         return linkList;
     };
 
-    this.getReadyList = function() {
-        return readyList;
+    self.getReadyList = function() {
+        return linkReadyList;
     };
 
-    this.markLink = function(idD) {
-        if (readyList.indexOf(idD) + 1 > 0)
+    self.markLink = function(idD) {
+        if (linkReadyList.indexOf(idD) + 1 > 0)
             return false;
 
-        readyList.push(idD);
+        linkReadyList.push(idD);
         return true;
     };
 
@@ -159,7 +205,7 @@ function LinkGuide(rows) {
      *
      * @returns {LinkGuideBook}
      */
-    this.getGuideBook = function() {
+    self.getGuideBook = function() {
         return (new LinkGuideBook(self, index));
     }
 

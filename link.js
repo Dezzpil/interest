@@ -1,62 +1,55 @@
 /**
  * Created by dezzpil on 29.11.13.
- *
- * Контроллер работ,
- * следит за общим ходом процесса, запрашивает
- * новые адреса для новой итерации проверки
  */
 
-var LinkGuide = require('./libs/linkGuide'),
-    async = require('async');
+async = require('async');
 
 
-function linkManager() {
+/**
+ * Менеджер ссылок.
+ * Следит за общим ходом процесса, запрашивает
+ * новые адреса для новой итерации проверки.
+ *
+ * @todo дописать примеры использования
+ * @param {object} options
+ * @param {function} callback
+ */
+function linkManager(options, callback) {
 
-    var logger, botPID, mysql,
+    var logger = options.logger,
+        config = options.config,
         self = this,
-        callback = null,
-        callbackOnIterateStart = null,
-        callbackOnIterateFin = null,
-        queue, config, linkBrokenProcs = 0;
+        hooks = { 'start' : null, 'end' : null },
+        queue = [],
+        linkBrokenProcs = 0;
 
-    this.setConfig = function(opts) {
-        config = opts;
-        return self;
-    };
-
-    this.setLogger = function(object) {
-        logger = object;
-        return self;
-    };
-
-    this.setMysqlDriver = function(driver) {
-        mysql = driver;
-        return self;
-    };
-
-    this.setBotPID = function(pid) {
-        botPID = pid;
-        return self;
-    };
-
-    this.setRequestManager = function(fn) {
-        callback = fn;
-        return self;
-    };
-
-    this.setOnIterateStart = function(fn) {
-        callbackOnIterateStart = fn;
-        return self;
-    };
-
-    this.setOnIterateFin = function(fn) {
-        callbackOnIterateFin = fn;
+    /**
+     * Установить обработчики для событий. [start, end]
+     * @param {string} eventName
+     * @param {function} callback
+     * @returns {linkManager}
+     */
+    self.on = function(eventName, callback) {
+        hooks[eventName] = callback;
         return self;
     };
 
     /**
+     * Выполнить хук по указанному событию
+     * @param {string} eventName
+     * @param {string} data
+     * @returns {string}
+     */
+    function invokeHooks(eventName, data) {
+        if (hooks[eventName]) {
+            data = hooks[eventName](data);
+        }
+        return data;
+    }
+
+    /**
      * Запустить контроллер ссылок
-     * @param guide {LinkGuide}
+     * @param {LinkGuide} guide
      * @returns {boolean}
      */
     this.run = function(guide) {
@@ -68,29 +61,17 @@ function linkManager() {
 
         if ( ! guide) {
 
-            // Инициализация, если гид не указан.
-            // Получаем список адресов, создаем гида для их обхода,
-            // и вызываем сами себя, но уже с гидом
-            mysql.getLinks(botPID, function(err, rows) {
+            // определяем механизм работы обработчика для очереди
+            // обработки путеводителя, запуск очереди происходит позже
+            queue = async.queue(
+                function (guidebook, afterReady) {
+                    guidebook.setQueueCallback(afterReady);
+                    callback(guidebook);
+                },
+                config.maxYields
+            );
 
-                var guide = LinkGuide.forge(rows);
-
-                if (callbackOnIterateStart) {
-                    callbackOnIterateStart(guide);
-                }
-
-                queue = async.queue(
-                    function (guidebook, afterReady) {
-                        guidebook.setCallback(afterReady);
-                        callback(guidebook);
-                    },
-                    config.maxYields
-                );
-
-                self.run(guide);
-
-            });
-
+            invokeHooks('start', null);
             return false;
         }
 
@@ -119,7 +100,7 @@ function linkManager() {
              *  с некоторой задержкой
              */
 
-            while (!guide.isEmpty()) {
+            while ( ! guide.isEmpty()) {
 
                 var guidebook = guide.getGuideBook();
 
@@ -155,11 +136,7 @@ function linkManager() {
                         clearInterval(interval);
                         self.resetBrokenCount();
 
-                        mysql.clearLinks(function(err, rows) {
-                            if (err) throw err;
-                        });
-
-                        if (callbackOnIterateFin) callbackOnIterateFin(guide);
+                        invokeHooks('end', guide);
 
                         var delay = setTimeout(function() {
                             clearTimeout(delay);

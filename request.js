@@ -6,12 +6,14 @@ var http = require('http'),
     https = require('https'),
     url = require('url');
 
-function requestManager() {
+function requestManager(options, responseProcessor) {
 
     var self = this,
-        logger, mysql, responseProcessor,
-        stepToDeep = 0, config = {},
-        reqConfig = {},
+        logger = options.logger,
+        mysql = options.mysql,
+        config = options.config,
+        reqConfig = config.request,
+        stepToDeep = 0,
         reqOptions = {
             hostname: '',
             port: 80,
@@ -22,32 +24,6 @@ function requestManager() {
                 'connection' : 'keep-alive'
             }
         };
-
-    this.setLogger = function(object) {
-        logger = object;
-        return self;
-    };
-
-    this.setMysqlDriver = function(driver) {
-        mysql = driver;
-        return self;
-    };
-
-    this.setConfig = function(options) {
-        config = options;
-        reqConfig = config.request;
-        return self;
-    };
-
-    this.setUserAgent = function(name) {
-        reqOptions.headers['user-agent'] = name;
-        return self;
-    };
-
-    this.setModel = function(fn) {
-        responseProcessor = fn;
-        return self;
-    };
 
     /**
      * Запускает и возвращает соотв. запрос (http or https)
@@ -142,7 +118,7 @@ function requestManager() {
                     mysql.setStatusForLink(
                         idD, config.codes.requestMaxdeep,
                         function(err, rows) {
-                            logger.info('%d MYSQL ROW UPDATED WITH REACH MAX DEEP', idD);
+                            logger.info('%s MYSQL ROW UPDATED WITH REACH MAX DEEP', idD);
                         }
                     )
                 });
@@ -155,12 +131,8 @@ function requestManager() {
         } else {
 
             // возвращаем значения в исходное положение
-            reqOpts = reqOptions;
-            reqOpts.hostname = link;
-            reqOpts.path = '/';
-            reqOpts.port = 80;
-
-            logger.info('%d START %s', idD, link);
+            reqOpts = url.parse(link);
+            logger.info('%s START %s', idD, link);
 
         }
 
@@ -169,7 +141,7 @@ function requestManager() {
             response.setEncoding('binary');
 
             var statusCode = response.statusCode + '';
-            logger.info('%d REQUEST STATUS : %s', idD, statusCode);
+            logger.info('%s REQUEST STATUS : %s', idD, statusCode);
             if (isBadStatusCode(statusCode)) {
 
                 guideBook.markLink(function() {
@@ -177,7 +149,7 @@ function requestManager() {
                     mysql.setStatusForLink(idD, statusCode,
                         function(err, rows) {
                             if (err) throw err;
-                            logger.info('%d MYSQL ROW UPDATED WITH BAD STATUS', idD);
+                            logger.info('%s MYSQL ROW UPDATED WITH BAD STATUS', idD);
                         }
                     );
                 });
@@ -195,29 +167,27 @@ function requestManager() {
                 // проверяем какой код был у этой ссылки
                 mysql.setLinkRecovered(idD, statusCode, function(err, rows) {
                     if (err) throw err;
-                    logger.info('%d MYSQL ROW UPDATED WITH RECOVERY STATUS', idD);
+                    logger.info('%s MYSQL ROW UPDATED WITH RECOVERY STATUS', idD);
                 });
             }
 
             response.setTimeout(
                 reqConfig.timeoutInMS,
                 function(err) {
-                    logger.info('%d HTTP LONG RESPONSE (more %d msec)', idD, reqConfig.timeoutInMS);
+                    logger.info('%s HTTP LONG RESPONSE (more %d msec)', idD, reqConfig.timeoutInMS);
 
                     guideBook.markLink(function(){
                         mysql.setStatusForLink(idD, config.codes.requestTimeout,
                             function(err, rows) {
                                 if (err) throw err;
-                                logger.info('%d MYSQL ROW UPDATED WITH HTTP LONG RESPONSE', idD);
+                                logger.info('%s MYSQL ROW UPDATED WITH HTTP LONG RESPONSE', idD);
                             }
                         );
                     });
                 }
             );
 
-
             return responseProcessor(response, guideBook);
-
 
         }).on('error', function(e) {
 
@@ -225,11 +195,11 @@ function requestManager() {
             // actual HTTP parse errors) an 'error' event is emitted on the returned request object.
             // @link http://nodejs.org/api/http.html#http_http_request_options_callback
 
-            logger.info('%d PROBLEM WITH REQUEST : %s ', guideBook.getIdD(), e.message, reqOpts);
+            logger.info('%s PROBLEM WITH REQUEST : %s ', guideBook.getIdD(), e.message, reqOpts);
             guideBook.markLink(function() {
                 mysql.setStatusForLink(idD, config.codes.requestAbbruptly, function(err, rows) {
                     if (err) throw err;
-                    logger.info('%d MYSQL ROW UPDATED WITH ABRUPT HTTP ERROR', idD);
+                    logger.info('%s MYSQL ROW UPDATED WITH ABRUPT HTTP ERROR', idD);
                 });
             });
 
@@ -237,18 +207,17 @@ function requestManager() {
 
         });
 
-
         req.setTimeout(
             reqConfig.timeoutInMS,
             function() {
 
-                logger.info('%d HTTP LONG REQUEST (more %d msec)', idD, reqConfig.timeoutInMS);
+                logger.info('%s HTTP LONG REQUEST (more %d msec)', idD, reqConfig.timeoutInMS);
 
                 guideBook.markLink(function(){
                     mysql.setStatusForLink(idD, config.codes.requestTimeout,
                         function(err, rows) {
                             if (err) throw err;
-                            logger.info('%d MYSQL ROW UPDATED WITH HTTP LONG RESPONSE', idD);
+                            logger.info('%s MYSQL ROW UPDATED WITH HTTP LONG RESPONSE', idD);
                         }
                     );
                 });

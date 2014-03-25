@@ -91,7 +91,7 @@ function mysqlDriver() {
             ' WHERE idProcess=' + pid +
             ' ORDER BY lastTest ASC';
 
-        // console.log(queryUp); console.log(queryGet); process.exit();
+        //console.log(queryUp); console.log(queryGet); process.exit();
 
         logger.info('MYSQL : getting links...');
         mysqlConnection.query(
