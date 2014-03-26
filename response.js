@@ -55,8 +55,7 @@ function model(analyzer, options) {
 
         var guideBook, link, idD,
             response, statusCode, responseBody = '',
-            responseEncodedBody,
-            analyzer, _charset = 'utf8';
+            _charset = 'utf8';
 
         /**
          * Установить определенную кодировку текста
@@ -77,13 +76,10 @@ function model(analyzer, options) {
         /**
          * Wrapper for Analyzer instance
          * @param responseEncodedBody {string}
-         * @param charset {string}
          */
-        function analyzerInit(responseEncodedBody, charset) {
+        function analyzerInit(responseEncodedBody) {
 
-            analyzer = Analyzer.forge();
-
-            analyzer.run(
+            Analyzer.run(
                 function(analyzeResult) { // readyCallback
 
                     logger.info('%s DATA ANALYZED :', idD);
@@ -151,9 +147,9 @@ function model(analyzer, options) {
         function saveDataToMongo(encodedResponseBody, charset, desc, analyzeResult) {
 
             if ( ! desc) desc = 'default case';
-            if ( ! analyzeResult) analyzeResult = analyzer.getNoResult();
+            if ( ! analyzeResult) analyzeResult = AnalyzerFactory.getNoResult();
 
-            mongo.saveNewImpress(
+            mongo.savePage(
                 guideBook, botPID, charset, encodedResponseBody, analyzeResult,
                 function(err, impress) {
                     if (err) logger.info('%s MONGO ERROR (impress saving) : ', idD, err);
@@ -170,24 +166,24 @@ function model(analyzer, options) {
         function pullDataToAnalyzer(encodedResponseBody) {
 
             // new data
-            analyzer.write(encodedResponseBody);
+            AnalyzerFactory.write(encodedResponseBody);
             logger.info('%s WRITING NEW CONTENT TO ANALYZER ', idD);
 
             // предыдущие данные
-            mongo.getImpress(idD, function(err, result) {
+            mongo.findPagesById(idD, function(err, result) {
 
                 if (err) logger.info('%s MONGO ERROR (find prev data) : ', idD, err);
 
                 if (result && result.length) {
 
-                    analyzer.write(result[0].content);
+                    AnalyzerFactory.write(result[0].content);
                     logger.info('%s GOT PREVIOUS DATA', idD);
 
                 } else {
 
                     // нет данных для сравнения, но нам нужно узнать о наличии мата все-равно
                     logger.info('%s NO PREVIOUS DATA', idD);
-                    analyzer.write(encodedResponseBody);
+                    AnalyzerFactory.write(encodedResponseBody);
 
                 }
 
@@ -225,7 +221,6 @@ function model(analyzer, options) {
                 }
 
                 responseBody = invokeHooks('response', responseBody);
-                responseEncodedBody = responseBody;
 
                 var execOptions = {}, chardetector;
 
@@ -271,8 +266,8 @@ function model(analyzer, options) {
                                 stdout = invokeHooks('recode', stdout);
 
                                 // TODO перенести эту логику в отдельный модуль
-                                analyzerInit(stdout, charset);
-                                pullDataToAnalyzer(stdout);
+                                // analyzerInit(stdout);
+                                // pullDataToAnalyzer(stdout);
                             }
                         );
 

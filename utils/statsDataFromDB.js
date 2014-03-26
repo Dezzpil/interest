@@ -11,7 +11,7 @@ var config = require('./../configs/config.json'),
     loggers = require('./../drivers/loggers'),
     mongoNative = require('./../drivers/mongo-native').driver,
     mysqlDriver = require('./../drivers/mysql').driver,
-    botLoggers = loggers.forge(0);
+    botLoggers = LoggerFactory.forge(0);
 
 function error(err) {
     if (err) {
@@ -24,12 +24,12 @@ function main() {
 
     mysqlDriver
         .setLogger(botLoggers)
-        .setConfig(config.mysql)
+        .setConfig(config.DomainStorageDriver)
         .connect(error);
 
     mongoNative
         .setLogger(botLoggers)
-        .setConfig(config.mongo)
+        .setConfig(config.PageStorageDriver)
         .connect(error);
 
     var success = { 'mysql' : false, 'mongo' : false },
@@ -51,7 +51,7 @@ function main() {
 
     mysqlDriver.getStats('2013-12-27 00:00:00', function(results) {
 
-        success.mysql = true;
+        success.DomainStorageDriver = true;
         var propPadded, prop, subprop;
 
         for (prop in results) {
@@ -78,7 +78,7 @@ function main() {
 
     mongoNative.onConnection(function() {
         mongoNative.stats(null, function(err, stats) {
-            success.mongo = true;
+            success.PageStorageDriver = true;
             console.log(stats);
         });
     });

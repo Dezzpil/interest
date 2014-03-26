@@ -2,9 +2,9 @@
  * Created by dezzpil on 29.11.13.
  */
 
-var http = require('http'),
-    https = require('https'),
-    url = require('url');
+var http = require('http');
+var https = require('https');
+var url = require('url');
 
 function requestManager(options, responseProcessor) {
 
@@ -50,7 +50,6 @@ function requestManager(options, responseProcessor) {
     function terminateRequest(request) {
         try {
             request.end();
-            //request.abort();
         } catch (e) {
             //
         }
@@ -233,4 +232,4 @@ function requestManager(options, responseProcessor) {
 
 }
 
-exports.manager = requestManager;
+module.exports = requestManager;

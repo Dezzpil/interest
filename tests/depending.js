@@ -14,15 +14,15 @@ var exec = require('child_process').exec,
     mysqlDriver = require('./../drivers/mysql').driver,
     
     loggers = require('./../drivers/loggers'),
-    loggerSimple = loggers.forge( "console", { level : "info", colorize: true }),
-    loggerEmpty = loggers.forge("empty", {}),
-    loggerErrors = loggers.forge( "console", { level : "error", colorize : true }),
+    loggerSimple = LoggerFactory.forge( "console", { level : "info", colorize: true }),
+    loggerEmpty = LoggerFactory.forge("empty", {}),
+    loggerErrors = LoggerFactory.forge( "console", { level : "error", colorize : true }),
     
     successNum = 0;
 
 
-mongoNative.setConfig(config.mongo).setLogger(loggerEmpty);
-mysqlDriver.setConfig(config.mysql).setLogger(loggerEmpty);
+mongoNative.setConfig(config.PageStorageDriver).setLogger(loggerEmpty);
+mysqlDriver.setConfig(config.DomainStorageDriver).setLogger(loggerEmpty);
 
 loggerSimple.info('%s : start checking', scriptName);
 

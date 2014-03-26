@@ -12,7 +12,7 @@ function mysqlMockDriver() {
         logger = null;
 
     this.setLogger = function(object) {
-        logger = object;
+        loggerProcess = object;
         return self;
     };
 
@@ -22,24 +22,24 @@ function mysqlMockDriver() {
     };
 
     this.connect = function() {
-        logger.info('MYSQL - connection established!');
+        loggerProcess.info('MYSQL - connection established!');
     };
 
     this.getLinks = function(pid, callback) {
-        logger.info('MYSQL : gets data from mysqlMockData.json ...');
+        loggerProcess.info('MYSQL : gets data from mysqlMockData.json ...');
 
         var i, testData = [];
 
         for (var i in testDataObj) {
-
             testData[i] = testDataObj[i];
-
         }
 
         callback(null, testData);
     };
 
-    this.unlockLinks = function(pid, callback) {};
+    this.unlockLinks = function(pid, callback) {
+        callback(null, []);
+    };
 
     /**
      * Обнулить все собранные ботом данные

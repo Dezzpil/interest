@@ -2,21 +2,16 @@
  * Created by dezzpil on 22.11.13.
  */
 
-function forge(rows) {
-    return new LinkGuide(rows);
-}
-
-
 /**
  * Instance of guidebook pulled to link processing for data presentation about link and
  * avail mark end of process for the loop on the top of process.
  * @example link.js:71
- * @param guide {LinkGuide}
+ * @param guide {LinksGuide}
  * @param index {number}
- * @returns {LinkGuideBook}
+ * @returns {LinksGuideBook}
  * @constructor
  */
-function LinkGuideBook(guide, index) {
+function LinksGuideBook(guide, index) {
 
     var i = index,
         parent = guide,
@@ -96,7 +91,7 @@ function LinkGuideBook(guide, index) {
  * @param rows {Array}
  * @constructor
  */
-function LinkGuide(rows) {
+function LinksGuide(rows) {
 
     var i,
         index = 0,
@@ -113,6 +108,7 @@ function LinkGuide(rows) {
     /**
      * Добавить данные о ссылке в список гида
      * @param {{ idD: number, link: string }} linkData
+     * @returns {LinksGuide}
      */
     self.add = function(linkData) {
 
@@ -128,12 +124,13 @@ function LinkGuide(rows) {
         linkIds.push(linkData['idD']);
         linkList.push(linkData['link']);
         linkListTmp.push(linkData['link']);
+        return self;
     }
 
     /**
      * Отформатировать данные в правильный формат для добавления
      * с помощью функции add. Используется для формирования зависимых ссылок
-     * @param {LinkGuideBook} guidebook
+     * @param {LinksGuideBook} guidebook
      * @param {string} link
      * @returns {Object}
      */
@@ -151,12 +148,13 @@ function LinkGuide(rows) {
     }
 
     /**
-     * @param {LinkGuideBook} guidebook
+     * @param {LinksGuideBook} guidebook
      * @param {string} link
+     * @returns {LinksGuide}
      */
     self.addSub = function(guidebook, link) {
         var data = format(guidebook, link);
-        self.add(data);
+        return self.add(data);
     };
 
     if (rows && rows.length) {
@@ -203,12 +201,12 @@ function LinkGuide(rows) {
 
     /**
      *
-     * @returns {LinkGuideBook}
+     * @returns {LinksGuideBook}
      */
     self.getGuideBook = function() {
-        return (new LinkGuideBook(self, index));
+        return (new LinksGuideBook(self, index));
     }
 
 }
 
-exports.forge = forge;
+module.exports = LinksGuide;

@@ -16,13 +16,13 @@ var async = require('async'),
     mongo = require('./drivers/mongo'),
 
     loggers = require('./drivers/loggers'),
-    loggerProcess = loggers.forge(
-        config.loggers.process.type,
-        config.loggers.process.options
+    loggerProcess = LoggerFactory.forge(
+        config.LoggerFactory.process.type,
+        config.LoggerFactory.process.options
     ),
-    loggerErrors = loggers.forge(
-        config.loggers.errors.type,
-        config.loggers.errors.options
+    loggerErrors = LoggerFactory.forge(
+        config.LoggerFactory.errors.type,
+        config.LoggerFactory.errors.options
     );
 
 
@@ -92,7 +92,7 @@ function ferryHelper() {
     }
 
     function is_with_bad_word(impress, task, callback) {
-        if (mongo.driver.isContainBadWord(impress[0])) {
+        if (PageStorageDriver.driver.isContainBadWord(impress[0])) {
             return true;
         }
     }
@@ -129,7 +129,7 @@ function ferryHelper() {
                 'removeExcess' : function(afterReadyFn) {
 
                     loggerProcess.info('%s removing all impress except _id :', task.id, impress._id.toString());
-                    mongo.driver.removeExcessImpresses(impress, function(err) {
+                    PageStorageDriver.driver.removeExcessImpresses(impress, function(err) {
                         if (err) loggerProcess.error('removing impress excess err', err);
                         afterReadyFn(err, true);
                     });
@@ -138,7 +138,7 @@ function ferryHelper() {
                 'setBatched' : function(afterReadyFn) {
 
                     loggerProcess.info('%s mark impress as batched :', task.id);
-                    mongo.driver.setImpressFerried(impress, function(err) {
+                    PageStorageDriver.driver.setImpressFerried(impress, function(err) {
                         if (err) loggerProcess.error('set impress batch flag err', err);
                         afterReadyFn(err, true);
                     });
@@ -168,7 +168,7 @@ function ferryHelper() {
         });
 
         // response work here
-        mongo.driver.getImpress(task.id, function(err, impress) {
+        PageStorageDriver.driver.findPagesById(task.id, function(err, impress) {
 
             if (check_is_empty(impress, task, callback)) {
                 return ;
@@ -209,7 +209,7 @@ function ferryHelper() {
                         var text = prepareText(textInParser);
                         loggerProcess.info('%s text from impress complete (length - %d)', task.id, text.length);
 
-                        mongo.driver.makeTextFromImpress(
+                        PageStorageDriver.driver.makeTextFromImpress(
                             impress, text, function(err, textDoc) {
 
                                 if (err) {
@@ -249,7 +249,7 @@ function ferryHelper() {
 
         //if (interval) clearInterval(interval);
 
-        mongo.driver.getFerryTask(function(error, task) {
+        PageStorageDriver.driver.getFerryTask(function(error, task) {
 
             var urlId;
 
@@ -317,8 +317,8 @@ function ferryHelper() {
     }
 }
 
-mongo.driver
-    .setConfig(config.mongo)
+PageStorageDriver.driver
+    .setConfig(config.PageStorageDriver)
     .setLogger(loggerProcess)
     .connect(function(err) {
 

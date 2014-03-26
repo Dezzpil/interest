@@ -38,9 +38,9 @@ function parseConfig() {
         helperWorkersCount = configNew.daemon.workers.helper;
     }
 
-    loggerProcess = loggers.forge(
-        configNew.loggers.process.type,
-        configNew.loggers.process.options
+    loggerProcess = LoggerFactory.forge(
+        configNew.LoggerFactory.process.type,
+        configNew.LoggerFactory.process.options
     );
 
     config = configNew;

@@ -9,8 +9,8 @@ function analyzeMockDriver(options) {
 
     var instances = [],
         count = 0, self = this,
-        logger = options.logger,
-        config = options.config.analyzer;
+        logger = options.loggerProcess,
+        config = options.config.AnalyzerFactory;
 
     this.getInstances = function() {
         return instances;
@@ -95,4 +95,6 @@ function analyzeMockDriver(options) {
 
 }
 
-exports.factory = analyzeMockDriver;
+exports.factory = function(options) {
+    return new analyzeMockDriver(options);
+}

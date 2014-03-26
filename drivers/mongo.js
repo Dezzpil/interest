@@ -2,241 +2,141 @@
  * Created by dezzpil on 21.11.13.
  */
 
-var mongoose = require('mongoose'),
-    schemas = require('./schemas');
+var mongoose    = require('mongoose');
+var Schema      = mongoose.Schema;
+var schemas     = require('./schemas');
 
-function mongoDriver() {
+function mongoDriver(options) {
 
     var self = this,
-        logger = null,
-
-        impressSchema = mongoose.Schema(schemas.impress),
-        textSchema = mongoose.Schema(schemas.text),
-        ferryTaskSchema = mongoose.Schema(schemas.ferry_task),
-
-        impressModel = mongoose.model('impress',impressSchema),
-        textModel = mongoose.model('text', textSchema),
-        ferryTaskModel = mongoose.model('ferry_task', ferryTaskSchema),
-
+        logger = options.logger,
+        config = options.config.mongo,
         connection = null,
-        options = {};
+        path,
+        pageSchema = new Schema(schemas.page),
+        pageModel = mongoose.model('pages', pageSchema);
+
+    path = 'mongodb://' + config.username + ':' + config.password + '@' +
+        config.host + ':' + config.port + '/' + config.db;
+
+    pageSchema.set('autoIndex', false);
 
     /**
-     * @link http://mongoosejs.com/docs/guide.html Indexes
+     * Connect to mongodb
+     * @param {function} callback
      */
-    impressSchema.set('autoIndex', false);
-    textSchema.set('autoIndex', false);
-    ferryTaskSchema.set('autoIndex', false);
-
-
-    self.setLogger = function(object) {
-        logger = object;
-        return self;
-    };
-    
-    self.setConfig = function(cfg) {
-        options = cfg;
-        return self;
-    };
-
     self.connect = function(callback) {
 
-        // mongoose.connect('mongodb://username:password@host:port/database?options...');
-        var path = 'mongodb://' +
-            options.username + ':' +
-            options.password + '@' +
-            options.host + ':' +
-            options.port + '/' + options.db;
+        if ( connection !== null) callback();
+        else mongoose.connect(path);
 
-        if ( connection !== null) {
+        connection = mongoose.connection;
+        connection.on('error', function(err) {
+            callback(err);
+            var delay = setTimeout(function() {
+                clearTimeout(delay);
+                self.connect();
+            }, config.reconnectTimeout);
+            throw err;
+        });
+        connection.on('connected', function() {
+            logger.info('MONGODB : connection established');
             callback();
-        } else {
-            mongoose.connect(path);
-        }
-
-        connection = mongoose.connection
-            .on('error', function(err) {
-                callback(err);
-                var delay = setTimeout(function() {
-                    clearTimeout(delay);
-                    self.connect();
-                }, options.reconnectTimeout);
-                throw err;
-            })
-            .on('connected', function() {
-                logger.info('MONGODB : connection established');
-                callback();
-            })
-            .on('reconnected', function() {
-                logger.info('MONGODB : connection reestablished');
-            })
+        });
+        connection.on('reconnected', function() {
+            logger.info('MONGODB : connection reestablished');
+        })
     };
 
     /**
-     * Обнулить все собранные ботом данные
-     * Данные восстановить не удасться !!!
+     * Find page documents by id, sorted DESC by date_created
+     * @param {string} id
+     * @param {function} callback
      */
-    self.removeAllDocs = function(callback) {
-
-        impressModel.remove({}, function(err) {
-            if (err) callback(err);
-            else textModel.remove({}, function(err) {
-                if (err) callback(err);
-                else ferryTaskModel.remove({}, function(err) {
-                    callback(err);
-                });
-            });
-
-        });
-
-    };
-
-    self.getImpress = function(linkId, callback) {
-        impressModel.find(
-            { url_id : linkId }, null, { sort : { date : -1}, limit : 1 },
+    self.findPagesById = function(id, callback) {
+        pageModel.find(
+            { id : id }, null, { sort : { date_created : -1}},
             function(err, result) {
                 callback(err, result);
             }
         );
     };
 
-    self.saveNewImpress = function(guidebook, pid, charset, html, analyzeResult, callback) {
-        impressModel.create({
-            date : new Date(),
-            pid : pid,
-            content : html,
-            length : html.length,
+    /**
+     * Find page documents by url, sorted DESC by date_created
+     * @param {string} url
+     * @param {function} callback
+     */
+    self.findPagesByUrl = function(url, callback) {
+        pageModel.find(
+            { url : url }, null, { sort : { date_created : -1}},
+            function(err, result) {
+                callback(err, result);
+            }
+        );
+    }
+
+    /**
+     * Save new page document, get err and page document in callback
+     * @param {LinksGuideBook} guidebook
+     * @param {string} data
+     * @param {string} charset
+     * @param {{percent: number, isBad: boolean, badWord: string}} analyzeResult
+     * @param {function} callback
+     */
+    self.savePage = function(guidebook, data, charset, analyzeResult, callback) {
+        pageModel.create({
+            id : guidebook.getIdD(),
             url : guidebook.getDomain(),
-            url_id : guidebook.getIdD(),
             category :guidebook.getGroups(),
-            charset : charset,
-            changePercent : analyzeResult.percent,
-            containBadWord : analyzeResult.isBad,
-            badWord : analyzeResult.badWord,
-            batched : false
-        }, function(error, impress) {
-            if (callback) callback(error, impress);
+            content : data,
+            content_length : data.length,
+            content_charset : charset,
+            change_percent : analyzeResult.percent,
+            has_bad_word : analyzeResult.isBad,
+            bad_word : analyzeResult.badWord,
+            date_created : new Date(),
+            is_indexed : false
+        }, function(error, page) {
+            if (callback) callback(error, page);
         });
     };
 
-    self.isContainBadWord = function(impress) {
-        return impress.containBadWord;
+    /**
+     * Remove excess of page documents.
+     * If We need to keep one page document (the given one)
+     * @param {object} page
+     * @param {function} callback
+     */
+    self.removePrevPages = function(page, callback) {
+        pageModel.remove({_id : { $ne : page._id}, url : page.url}, callback);
     };
 
-    self.isBadCharset = function(impress) {
-        return impress.charset.toLowerCase() != 'utf-8';
-    };
+    /**
+     * Удалить все документы
+     * @param {function} callback
+     */
+    self.removeAllPages = function(callback) {
+        pageModel.remove({}, callback);
+    }
 
-    self.saveFerryTask = function(linkIdLst, pid, callback) {
-        var impressBatchInfo = new ferryTaskModel({
-            date : new Date(),
-            pid : pid,
-            url_ids : linkIdLst
-        });
-
-        impressBatchInfo.save(function(error, batchInfo) {
-            callback(error, batchInfo);
-        });
-    };
-
-    self.getFerryTask = function(callback) {
-        ferryTaskModel.findOneAndRemove( null, { sort : { 'date' : -1}}, function(err, result) {
-        //ferryTaskModel.findOne({}, {}, {sort : { 'date' : -1}}, function(err, result) {
-            if ( ! result) return callback('MongoDB : No ferry tasks!');
-            return callback(err, result);
-        });
-    };
-
-    self.getText = function(urlId, callback) {
-        //
-    };
-
-    self.removeText = function(urlId, callback) {
-        //
+    /**
+     *
+     * @param {object} page
+     * @returns {boolean}
+     */
+    self.hasBadWord = function(page) {
+        return page.has_bad_word;
     };
 
     /**
      *
-     * @param impress {object}
-     * @param content {string}
-     * @param callback {function}
+     * @param {object} page
+     * @returns {boolean}
      */
-    self.makeTextFromImpress = function(impress, content, callback) {
-
-        textModel.find({'url_id' : impress.url_id }, function(result) {
-
-            var count = result ? result.length : 0, text;
-
-            logger.info('%s making text from impress : count of text documents - ', impress.url_id, count);
-
-            if (count == 1) { // update and return
-
-                return result.update({
-                    date : impress.date,
-                    pid : impress.pid,
-                    url : impress.url,
-                    content : content,
-                    length : content.length,
-                    category : impress.category,
-                    is_indexed : false
-                }, function(err, text) {
-                    logger.info('%s updating success', impress.url_id, err);
-                    callback(err, text);
-                });
-            }
-
-            if (count > 1) { // remove all prev texts and going on
-
-                textModel.remove({ url_id : impress.url_id }, function(err) {
-                    logger.info('%s removing success', impress.url_id, err);
-                    callback(err);
-                });
-            }
-
-            text = new textModel({
-                date : impress.date,
-                pid : impress.pid,
-                url : impress.url,
-                url_id : impress.url_id,
-                content : content,
-                length : content.length,
-                category : impress.category,
-                is_indexed : false,
-                index_date : new Date()
-            });
-
-            text.save(function(err, text) {
-                logger.info('%s text inserting success', impress.url_id, err);
-                callback(err, text);
-            });
-
-        })
-    };
-
-    /**
-     * Remove excess of impress.
-     * We need to keep one impress document (the last one) after text complete
-     * @param impress {object}
-     * @param callback {function}
-     */
-    self.removeExcessImpresses = function(impress, callback) {
-        impressModel.remove({_id : { $ne : impress._id}, url_id : impress.url_id}, callback);
-    };
-
-    /**
-     * Mark that we done text document from impress document
-     * @param impress {object}
-     * @param callback {function}
-     */
-    self.setImpressFerried = function(impress, callback) {
-
-        impressModel.findById(impress._id, function(err, impressDoc) {
-            impressDoc.update({batched: true}, function(err, impress) {
-                callback(err, impress);
-            });
-        });
-
+    self.isBadCharset = function(page) {
+        return page.charset.toLowerCase() != 'utf-8';
     };
 }
 
-exports.driver = new mongoDriver();
+module.exports = mongoDriver;

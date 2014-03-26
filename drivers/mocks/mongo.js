@@ -8,7 +8,7 @@ function mongoMockDriver() {
         logger = null, connection = null;
 
     self.setLogger = function(object) {
-        logger = object;
+        loggerProcess = object;
         return self;
     };
     
@@ -18,7 +18,7 @@ function mongoMockDriver() {
     };
 
     self.connect = function(callback) {
-        logger.info('MONGODB - connection established!');
+        loggerProcess.info('MONGODB - connection established!');
     };
 
     /**
@@ -27,11 +27,11 @@ function mongoMockDriver() {
      */
     self.removeAllDocs = function(callback) {};
 
-    self.getImpress = function(linkId, callback) {
+    self.findPagesById = function(linkId, callback) {
         callback(null, {});
     };
 
-    self.saveNewImpress = function(guidebook, pid, charset, html, analyzeResult, callback) {
+    self.savePage = function(guidebook, pid, charset, html, analyzeResult, callback) {
         if (callback) callback(null, {});
     };
 

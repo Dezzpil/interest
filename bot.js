@@ -3,279 +3,230 @@
  * @date 18.11.2013
  */
 
-memwatch = require('memwatch');
-config = require('./configs/config.json');
-mongo = require('./drivers/mongo');
-mysql = require('./drivers/mysql');
-link = require('./link');
-request = require('./request');
-response = require('./response');
-analyzer = require('./drivers/mocks/analyzer');
-loggers = require('./drivers/loggers');
-async = require('async');
-util = require('util');
-htmlparser2 = require("htmlparser2");
-url = require('url');
-LinkGuide = require('./libs/linkGuide');
+var memwatch            = require('memwatch');
+var async               = require('async');
+var util                = require('util');
 
-loggerProcess = loggers.forge(
-    config.loggers.process.type,
-    config.loggers.process.options
-);
-loggerErrors = loggers.forge(
-    config.loggers.errors.type,
-    config.loggers.errors.options
-);
-loggerMemory = loggers.forge(
-    "mongodb",{
-        "db" : config.mongo.db,
-        "host" : config.mongo.host,
-        "port" : config.mongo.port,
-        "username" : config.mongo.username,
-        "password" : config.mongo.password,
-        "timeout" : config.mongo.reconnectTimeout,
-        "collection" : "log",
-        "level" : "info",
-        "silent" : false,
-        "safe" : false
-    }
-);
+(function(){
 
-try {
-    process.stdout.setEncoding('binary');
-} catch (e) {
-    // whatever
-}
+    var RequestManager      = require('./request');
+    var response            = require('./response');
+    var obj                 = require('./libs/object');
+    var config              = require('./configs/config.json');
+    var PageStorageDriver   = require('./drivers/mongo');
+    var DomainStorageDriver = require('./drivers/mysql');
+    var AnalyzerFactory     = require('./drivers/analyze/node');
+    var LoggerFactory       = require('./drivers/loggers');
+    var LinksManager        = require('./link');
+    var LinksCollector      = require('./collector/links');
+    var LinksGuide          = require('./libs/linksGuide');
+    var TextsCollector      = require('./collector/texts');
 
-process.on('uncaughtException', function(error) {
-    if (util.isError(error)) {
-        loggerErrors.error(error);
-        loggerErrors.error(error.stack);
-    } else {
-        loggerErrors.error(error);
-    }
-});
+    var botPID = parseInt(process.pid);
 
-process.on('SIGTERM', function () {
+    var loggerProcess = LoggerFactory.forge(
+        config.loggers.process.type,
+        config.loggers.process.options
+    );
+    var loggerErrors = LoggerFactory.forge(
+        config.loggers.errors.type,
+        config.loggers.errors.options
+    );
+    var loggerMemory = LoggerFactory.forge(
+        "mongodb",{
+            "db" : config.mongo.db,
+            "host" : config.mongo.host,
+            "port" : config.mongo.port,
+            "username" : config.mongo.username,
+            "password" : config.mongo.password,
+            "timeout" : config.mongo.reconnectTimeout,
+            "collection" : "log",
+            "level" : "info",
+            "silent" : false,
+            "safe" : false
+        }
+    );
 
-    // TODO remove it to upstart/interest-bot
-    // unlock all links
-    mysql.driver.unlockLinks(null);
+    var pageStorage = null;
+    var domainStorage = null;
+    var storageOptions = {
+        'logger' : loggerProcess,
+        'config' : config
+    };
 
-    // Disconnect from cluster master
-    process.disconnect && process.disconnect();
-    process.exit();
-
-});
-
-/**
- * Получить список ключей объекта
- * @todo вынести в отдельную библиотеку
- * @todo подключить свою либу (?)
- * @param {object} object
- * @returns {Array}
- */
-function keys(object) {
-    var keys = [], key;
-    for (key in object) {
-        keys.push(key);
+    try {
+        process.stdout.setEncoding('binary');
+    } catch (e) {
+        // whatever
     }
 
-    return keys;
-}
+    process.on('uncaughtException', function(error) {
+        if (util.isError(error)) {
+            loggerErrors.error(error);
+            loggerErrors.error(error.stack);
+        } else {
+            loggerErrors.error(error);
+        }
+    });
 
-/**
- * Извлечь значение первого ключа объекта
- * @todo вынести в отдельную библиотеку
- * @todo подключить свою либу (?)
- * @param {object} object
- * @returns {*}
- */
-function unshift(object) {
-    var elem = null, i;
-    for (i in object) {
-        elem = object[i];
-        delete(object[i]);
-        break;
-    }
+    process.on('SIGTERM', function () {
 
-    return elem;
-}
+        // TODO remove it to upstart/interest-bot
+        // unlock all links
+        domainStorage.unlockLinks(null);
 
-function init() {
+        // Disconnect from cluster master
+        process.disconnect && process.disconnect();
+        process.exit();
 
-    var heapDiff, linkManager, requestManager,
-        responseProcessor, analyzeFactory,
-        botPID = parseInt(process.pid),
-        crawlDeep = 0,
-        linkMap = {},// сохраняем ссылки по всем итерациям, чтобы не посещать одни и те же страницы несколько раз
-        options = {
-            'config' : config,
-            'logger' : loggerProcess,
-            'pid' : botPID,
-            'mysql' : mysql.driver,
-            'mongo' : mongo.driver,
-            'useragent' : config.name + ' v.' + config.version
+    });
+
+    async.parallel({
+        'domain' : function(callback) {
+            domainStorage = new DomainStorageDriver(storageOptions);
+            domainStorage.connect(function(err) {
+                callback(err, true);
+            });
         },
-        guides = {},
-        currentGuideBook = null;
+        'page' : function(callback) {
+            pageStorage = new PageStorageDriver(storageOptions);
+            pageStorage.connect(function(err) {
+                callback(err, true);
+            });
+        }
+    }, function(error, result) {
 
-    analyzeFactory = new analyzer.factory(options);
+        loggerProcess.info(result);
+        if (error) throw error;
 
-    responseProcessor = new response.factory(analyzeFactory, options);
+        init();
+    });
 
-    responseProcessor.on('response', function(bodyHtml) {
 
-        // парсим тело ответа и сохраняем ссылки на внутренние
-        // страницы сайта, добавляем их в путеводитель
-        var parser, links = [],
-            ignore_list = config.crawler.ignore,
-            ignore_regexp = new RegExp("^\/$" + ignore_list.replace(/\|/g,"|\\.") + "|^#$|^#.{1,}$");
+    /**
+     * Инициализировать
+     * параметры и начать работу
+     */
+    function init() {
 
-        parser = new htmlparser2.Parser({
-            onopentag : function(name, attrs) {
-
-                if (name != 'a') return;
-
-                if (! ('href' in attrs)) return;
-
-                if ('rel' in attrs && attrs.rel == 'nofollow' && config.crawler.perceive_nofollow) {
-                    return;
-                }
-
-                if (attrs.href.match(ignore_regexp) == null) {
-
-                    // избавляем текущую ссылку от ненужных частей
-                    var currentDomain = currentGuideBook.getDomain();
-                    if (currentGuideBook.getDomain().match(/^(?:http|https):\/\/(.+)/) != null) {
-                        currentDomain = url.parse(currentGuideBook.getDomain()).hostname;
-                    }
-
-                    // иногда ссылки на странице указаны абсолютно
-                    if (attrs.href.match(/^(?:http|https):\/\/(.+)/) != null) {
-
-                        // и иногда это ссылки на внешние ресурсы, которые нас не интересуют
-                        if (url.parse(attrs.href).hostname != currentGuideBook.getDomain()) {
-                            return;
-                        }
-                    } else {
-                        attrs.href = currentGuideBook.getDomain() + attrs.href;
-                    }
-
-                    // если ссылка еще не встречалась, мы сохраняем ее в список для гида
-                    // и в индекс, чтобы в дальнейшем ее не проходить
-                    if (!(attrs.href in linkMap)) {
-                        links.push(attrs.href);
-                        linkMap[attrs.href] = true;
-                    }
-                }
-
-                /**
-                 * @todo добавить проверку значений robots.txt, отдельная задача
-                 */
+        var heapDiff, linksManager, linksCollector,
+            requestManager, textsCollector,
+            responseProcessor, analyzeFactory,
+            options = {
+                'config' : config,
+                'logger' : loggerProcess,
+                'pid' : botPID,
+                'mysql' : domainStorage,
+                'mongo' : pageStorage,
+                'useragent' : config.name + ' v.' + config.version
             },
-            'onend' : function() {
+            guides = {},
+            currentGuideBook = null;
 
-                guides[currentGuideBook.getDomain()] = LinkGuide.forge();
+        analyzeFactory = new AnalyzerFactory(options);
+        analyzeFactory.on('error', function(err) {
+            console.log('analyzeFactory error', err)
+        });
+
+        analyzeFactory.on('success', function(data) {
+            console.log('analyzeFactory', data);
+        });
+
+        responseProcessor = new response.factory(analyzeFactory, options);
+
+        linksCollector = new LinksCollector(options);
+        linksCollector.on('collected', function(links) {
+            if (links && links.length) {
+                guides[currentGuideBook.getDomain()] = new LinksGuide();
 
                 for (var i in links) {
                     guides[currentGuideBook.getDomain()].addSub(currentGuideBook, links[i]);
                 }
-
-                console.log('save guide for %s', currentGuideBook.getDomain());
-                console.log(guides[currentGuideBook.getDomain()].getIdMap());
-
             }
         });
+        linksCollector.on('error', function(err) {
+            //
+        });
 
-        parser.write(bodyHtml);
-        parser.end();
+        textsCollector = new TextsCollector();
+        textsCollector.on('collected', function(text) {
 
-        return bodyHtml;
-    });
-    responseProcessor.on('encode', function(bodyEncoded) {
-        return bodyEncoded;
-    });
+            // start analyzer work
+            analyzeFactory.write(text);
+            analyzeFactory.end(text);
 
-    requestManager = new request.manager(options, function(response, guideBook) {
-        // we get response object here, may do what we want
-        // we always can stop further process with
-        // return guideBook.markLink();
-        currentGuideBook = guideBook;
+        });
+        textsCollector.on('error', function(err) {
+           //
+        });
 
-        var responser = new responseProcessor.create();
-        responser.run(response, guideBook);
-    });
 
-    linkManager = new link.manager(options, function(guideBook) {
+        responseProcessor.on('response', function(bodyHtml) {
+            return bodyHtml;
+        });
+        responseProcessor.on('recode', function(bodyEncoded) {
 
-        // инициализируем запрос по гайдбуку
-        requestManager.run(guideBook);
+            linksCollector.parseHTML(bodyEncoded);
+            textsCollector.parseHTML(bodyEncoded);
 
-    });
+            return bodyEncoded;
+        });
 
-    linkManager.on('start', function(guide) {
+        requestManager = new RequestManager(options, function(response, guideBook) {
+            // we get response object here, may do what we want
+            // we always can stop further process with
+            // return guideBook.markLink();
+            currentGuideBook = guideBook;
+            linksCollector.setGuideBook(guideBook);
 
-        // учет потребляемой памяти за итерацию
-        heapDiff = new memwatch.HeapDiff();
+            var responser = new responseProcessor.create();
+            responser.run(response, guideBook);
+        });
 
-        // Инициализация, гид не указан.
-        // Получаем список адресов, создаем гида для их обхода,
-        // только в случае, если нет существующего гида
-        // ( мог быть создан во время сбора ссылок на уже пройденном сайте )
-        // и вызываем менеджера ссылок для контроля работа гида
-        if (crawlDeep <= config.crawler.deep && guides && keys(guides).length) {
+        linksManager = new LinksManager(options, function(guideBook) {
+            // инициализируем запрос по гайдбуку
+            requestManager.run(guideBook);
+        });
 
-            var guide = unshift(guides);
-            crawlDeep++;
-            linkManager.run(guide);
+        linksManager.on('start', function(guide) {
 
-        } else {
+            // учет потребляемой памяти за итерацию
+            heapDiff = new memwatch.HeapDiff();
 
-            mysql.driver.getLinks(botPID, function(err, rows) {
-                guide = LinkGuide.forge(rows);
-                console.log('get new guide', guide.getIdMap());
-                linkManager.run(guide);
+            // Инициализация, гид не указан.
+            // Получаем список адресов, создаем гида для их обхода,
+            // только в случае, если нет существующего гида
+            // ( мог быть создан во время сбора ссылок на уже пройденном сайте )
+            // и вызываем менеджера ссылок для контроля работа гида
+            if (guides && Object.keys(guides).length) {
+
+                var guide = obj.unshift(guides);
+                console.log('collect links for guide', guide.getList());
+                linksManager.run(guide);
+
+            } else {
+
+                domainStorage.getLinks(botPID, function(err, rows) {
+                    guide = new LinksGuide(rows);
+                    console.log('get new guide', guide.getList());
+                    linksManager.run(guide);
+                });
+
+            }
+
+        });
+
+        linksManager.on('end', function(guide) {
+
+            loggerMemory.info(heapDiff.end());
+
+            domainStorage.unlockLinks(botPID, function(err, rows) {
+                if (err) throw err;
             });
 
-        }
-
-    });
-
-    linkManager.on('end', function(guide) {
-
-        loggerMemory.info(heapDiff.end());
-
-        mysql.driver.unlockLinks(botPID, function(err, rows) {
-            if (err) throw err;
         });
 
-    });
-
-    return linkManager;
-}
-
-async.parallel({
-    'mysql' : function(callback) {
-        mysql.driver.setLogger(loggerProcess)
-            .setConfig(config.mysql)
-            .connect(function(err) {
-                callback(err, true);
-            }
-        );
-    },
-    'mongo' : function(callback) {
-        mongo.driver.setLogger(loggerProcess)
-            .setConfig(config.mongo)
-            .connect(function(err) {
-                callback(err, true);
-            }
-        );
+        linksManager.run();
     }
-}, function(error, result) {
 
-    loggerProcess.info(result);
-    if (error) throw error;
-
-    init().run();
-});
+})();

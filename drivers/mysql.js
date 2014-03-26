@@ -2,37 +2,17 @@
  * Created by dezzpil on 21.11.13.
  */
 
-mysql = require('mysql');
+var mysql = require('mysql');
 
-function mysqlDriver() {
+function mysqlDriver(options) {
 
-    var self = this, mysqlConnection,
-        config = {}, logger = null,
-        tableName;
+    var self = this, 
+        mysqlConnection,
+        logger = options.logger,
+        config = options.config.mysql,
+        tableName = config.dbName + '.' + config.tableName;
 
-    /**
-     *
-     * @param object {Object}
-     * @returns {mysqlDriver}
-     */
-    this.setLogger = function(object) {
-        logger = object;
-        return self;
-    };
-
-    /**
-     *
-     * @param cfg {Object}
-     * @returns {mysqlDriver}
-     */
-    this.setConfig = function(cfg) {
-        config = cfg;
-        tableName = cfg.dbName + '.' + cfg.tableName;
-
-        return self;
-    };
-
-    this.connect = function(callback) {
+    self.connect = function(callback) {
 
         mysqlConnection = mysql.createConnection(config);
         mysqlConnection.connect(function(err) {
@@ -70,7 +50,7 @@ function mysqlDriver() {
      * @param string pid
      * @param function callback
      */
-    this.getLinks = function(pid, callback) {
+    self.getLinks = function(pid, callback) {
 
         var queryUp, queryGet,
             diff = config.options.timeToReprocessInSec;
@@ -119,7 +99,7 @@ function mysqlDriver() {
      * @param {int|null} pid
      * @param {Function} callback
      */
-    this.unlockLinks = function(pid, callback) {
+    self.unlockLinks = function(pid, callback) {
         var query = 'UPDATE ' + tableName + ' set idProcess=0 ';
         if (pid === null) {
             query += 'WHERE idProcess!=0';
@@ -137,7 +117,7 @@ function mysqlDriver() {
      * Данные восстановить не удасться !!!
      * @param callback {Function}
      */
-    this.resetLinks = function(callback) {
+    self.resetLinks = function(callback) {
         mysqlConnection.query(
             'UPDATE ' + tableName + ' SET ? ', {
                 lastTest : '2012-01-01 00:00:00',
@@ -160,7 +140,7 @@ function mysqlDriver() {
      * @param statusCode {Integer}
      * @param callback {Function}
      */
-    this.setStatusForLink = function(idD, statusCode, callback) {
+    self.setStatusForLink = function(idD, statusCode, callback) {
         self.setInfoForLink(idD, statusCode, 0, 0, callback);
     };
 
@@ -170,7 +150,7 @@ function mysqlDriver() {
      * @param statusCode {Integer}
      * @param callback {Function}
      */
-    this.setLinkRecovered = function(idD, statusCode, callback) {
+    self.setLinkRecovered = function(idD, statusCode, callback) {
         mysqlConnection.query(
             'UPDATE '+ tableName +' SET ? WHERE idD="' + idD + '"', {
                 statusRecovery : 1
@@ -189,7 +169,7 @@ function mysqlDriver() {
      * @param isBad {Boolean}
      * @param callback {Function}
      */
-    this.setInfoForLink = function(idD, statusCode, percent, isBad, callback) {
+    self.setInfoForLink = function(idD, statusCode, percent, isBad, callback) {
         mysqlConnection.query(
             'UPDATE '+ tableName +' SET ? WHERE idD="' + idD + '"', {
                 idProcess : 0,
@@ -210,7 +190,7 @@ function mysqlDriver() {
      * @param dateStart {String}
      * @param callback {Function}
      */
-    this.getStats = function(dateStart, callback) {
+    self.getStats = function(dateStart, callback) {
 
         var results = {},
             wait = setInterval(function() {
@@ -278,4 +258,4 @@ function mysqlDriver() {
 
 };
 
-exports.driver = new mysqlDriver();
+module.exports = mysqlDriver;

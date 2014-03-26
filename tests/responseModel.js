@@ -9,77 +9,99 @@
  * mock-оберткой над analyzer'ом. Взаимодействие с самим analyzer не проверяется.
  */
 
-var config = require('./../configs/config.json'),
-    util = require('util'),
-    path = require('path'),
-    scriptName = path.basename(process.cwd(), '.js'),
+(function(){
+    var config = require('./../configs/config.json'),
+        util = require('util'),
+        path = require('path'),
+        scriptName = path.basename(process.cwd(), '.js'),
 
-    response = require('./../response'),
-    responseFactory = null,
+        response = require('./../response'),
+        responseFactory = null,
 
-    request = require('./../request'),
-    requestManager = null,
+        request = require('./../request'),
+        requestManager = null,
 
-    links = require('./../link'),
-    linksManager = null,
+        links = require('./../link'),
+        linksManager = null,
 
-    mongoMockDriver = require('./../drivers/mocks/mongo').driver,
-    mysqlMockDriver = require('./../drivers/mocks/mysql').driver,
-    analyzerMockFactory = require('./../drivers/mocks/analyzer').factory,
+        mongoMockDriver = require('./../drivers/mocks/mongo').driver,
+        mysqlMockDriver = require('./../drivers/mocks/mysql').driver,
+        analyzerMockFactory = require('./../drivers/mocks/analyzer'),
+        analyzerMock = null,
+        LinkGuide = require('./../manager/linkGuide'),
 
-    loggers = require('./../drivers/loggers'),
-    loggerSimple = loggers.forge( "console", { level : "info", colorize: true }),
-    loggerErrors = loggers.forge( "console", { level : "info", colorize : true }),
-    options = {
-        'config' : config,
-        'logger' : loggerSimple,
-        'pid' : 'mock',
-        'mysql' : mysqlMockDriver,
-        'mongo' : mongoMockDriver,
-        'useragent' : 'te#w2@'
-    };
+        loggers = require('./../drivers/loggers'),
+        loggerSimple = LoggerFactory.forge( "console", { level : "info", colorize: true }),
+        loggerErrors = LoggerFactory.forge( "console", { level : "info", colorize : true }),
+        options = {
+            'config' : config,
+            'logger' : loggerSimple,
+            'pid' : 'mock',
+            'mysql' : mysqlMockDriver,
+            'mongo' : mongoMockDriver,
+            'useragent' : 'te#w2@'
+        };
 
 
 
-process.on('uncaughtException', function(error) {
-    if (util.isError(error)) {
-        loggerErrors.error(error.toString());
-        loggerErrors.error(error.stack);
-    } else {
-        loggerErrors.error(error);
-    }
+    process.on('uncaughtException', function(error) {
+        if (util.isError(error)) {
+            loggerErrors.error(error.toString());
+            loggerErrors.error(error.stack);
+        } else {
+            loggerErrors.error(error);
+        }
 
-    process.exit();
-});
+        process.exit();
+    });
 
-loggerSimple.info('%s : start checking', scriptName);
+    loggerSimple.info('%s : start checking', scriptName);
 
-// inject
-mongoMockDriver
-    .setConfig(config.mongo)
-    .setLogger(loggerSimple);
+    mongoMockDriver
+        .setConfig(config.PageStorageDriver)
+        .setLogger(loggerSimple);
 
-mysqlMockDriver
-    .setConfig(config.mysql)
-    .setLogger(loggerSimple);
+    mysqlMockDriver
+        .setConfig(config.DomainStorageDriver)
+        .setLogger(loggerSimple);
 
-responseFactory = new response.factory(analyzerMockFactory, options);
-responseFactory
-    .on('response', function(data) { return data; })
-    .on('recode', function(data) { return data; });
+    analyzerMock = analyzerMockFactory.factory(options);
+    responseFactory = new response.factory(analyzerMock, options);
+    responseFactory
+        .on('response', function(data) { return data; })
+        .on('recode', function(data) { return data; });
 
-requestManager = new request.manager(options, function(response, guideBook) {
-    var responseHandle = new responseFactory.create();
-    responseHandle.run(response, guideBook);
-});
+    requestManager = new request.manager(options, function(response, guideBook) {
+        var responseHandle = new responseFactory.create();
+        responseHandle.run(response, guideBook);
+    });
 
-(new links.manager(options, function(guideBook) {
+    linksManager = new links.manager(options, function(guideBook) {
 
-    requestManager.run(guideBook);
+        requestManager.run(guideBook);
 
-})).on('end', function(guide) {
+    });
 
-    loggerSimple.info('%s : complete checking \n', scriptName);
-    process.exit();
+    linksManager.on('start', function() {
 
-}).run();
+        mysqlMockDriver.getLinks(1, function(err, rows) {
+            var guide = LinksGuide.forge(rows);
+            linksManager.run(guide);
+        });
+
+    });
+
+    linksManager.on('end', function(guide) {
+
+        loggerSimple.info('%s : complete checking \n', scriptName);
+
+        mysqlMockDriver.unlockLinks(1, function(err, rows) {
+            loggerSimple.info('%s : links unlocked \n', scriptName);
+            process.exit();
+        });
+
+    });
+
+    return linksManager;
+
+})().run()

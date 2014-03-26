@@ -14,7 +14,7 @@ function mongoNativeDriver() {
         }
 
     self.setLogger = function(object) {
-        logger = object;
+        loggerProcess = object;
         return self;
     };
 

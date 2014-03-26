@@ -17,7 +17,7 @@ var exec = require('child_process').exec,
     },
 
     loggers = require('./../drivers/loggers'),
-    loggerSimple = loggers.forge( "console", {colorize: true }),
+    loggerSimple = LoggerFactory.forge( "console", {colorize: true }),
 
 
     scriptForTestList = ['depending', 'responseModel'];
