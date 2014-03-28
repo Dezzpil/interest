@@ -6,46 +6,16 @@ var execFile     = require('child_process').execFile;
 var queryString  = require('querystring');
 var EventEmitter = require('events').EventEmitter;
 var util         = require('util');
+var net          = require('net');
+var buffer       = require('buffer');
 
 function analyzeNodeDriver(options) {
 
     EventEmitter.call(this);
 
-    this.logger = options.loggerProcess;
-    this.config = options.config.analyze;
+    this.logger = options.logger;
+    this.config = options.config.analyzer;
     this.data = [];
-
-    /**
-     * @returns {{percent: number, isBad: boolean, badWord: string}}
-     */
-    this.on('data', function() {
-        /**
-         * @todo write logic for compare data
-         * @type {{percent: *, isBad: boolean, badWord: *}}
-         */
-
-
-
-        if (this.data.length == 1) { // find bad words
-
-
-
-        }
-
-        if (this.data.length > 1) { // compare 2 texts
-
-        }
-
-
-        var result = {
-            'percent' : 0,
-            'isBad' : false,
-            'badWord' : '][akep'
-        };
-
-        this.emit('success', result);
-
-    })
 
 }
 
@@ -53,12 +23,34 @@ function analyzeNodeDriver(options) {
 util.inherits(analyzeNodeDriver, EventEmitter);
 
 analyzeNodeDriver.prototype.write = function(text) {
-    this.data.push(text);
-};
 
-analyzeNodeDriver.prototype.end = function(text) {
     this.data.push(text);
-    this.emit('data');
+    if (this.data.length < 2) return;
+
+    // opens socket only after 2 strings have been given
+    var self = this, socket;
+    socket = net.createConnection(this.config.port, this.config.host, function() {
+
+        var buffer, i;
+
+        for (i in self.data) {
+            buffer = new Buffer(self.data[i], 'utf8');
+            socket.write(buffer, 'utf8');
+        }
+
+    });
+
+    socket.setEncoding('utf8');
+
+    socket.on('data', function(result) {
+        self.emit('success', result);
+        socket.end();
+    });
+
+    socket.on('error', function(err) {
+        self.emit('error', err);
+        socket.end();
+    });
 };
 
 module.exports = analyzeNodeDriver;

@@ -93,8 +93,8 @@ function mongoDriver(options) {
             content_length : data.length,
             content_charset : charset,
             change_percent : analyzeResult.percent,
-            has_bad_word : analyzeResult.isBad,
-            bad_word : analyzeResult.badWord,
+            contain_badword : analyzeResult.isBad,
+            badword : analyzeResult.badWord,
             date_created : new Date(),
             is_indexed : false
         }, function(error, page) {

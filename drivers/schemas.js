@@ -45,8 +45,8 @@ exports.page = {
     content_length : Number,
     content_charset : String,
     change_percent : Number,
-    is_bad_word : Boolean,
-    bad_word : String,
+    badword_id : Number,
+    badword_context : String,
     is_indexed : Boolean,
     date_indexed : Date,
     category : Array

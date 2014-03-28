@@ -6,15 +6,19 @@
 // start server
 (function(){
 
-    var net           = require('net');
-    var config        = require('./../configs/config.json');
-    var analyzeServer = net.createServer();
-    var analyzeWorker = require('./worker');
+    var net            = require('net');
+    var config         = require('./../configs/config.json');
+    var badwordsDriver = require('./badwords/file');
+    var analyzeServer  = net.createServer();
+    var analyzeWorker  = require('./worker');
+
+    var options = {};
+    var serverPresentation = "analyzer : ";
 
     analyzeServer.on('connection', function(con) {
-        console.log('new connection');
+        console.log(serverPresentation + 'new connection');
         con.on('end', function() {
-            console.log('connection end');
+            console.log(serverPresentation + 'connection end');
         });
 
         con.setEncoding('utf8');
@@ -22,22 +26,37 @@
 
         var data = [], worker;
 
-        con.on('data', function(buffer) {
-            data.push(buffer);
+        // create worker and config it
+        worker = new analyzeWorker({});
+        worker.on('complete', function(result) {
+            con.write(result);
+        });
+        worker.on('error', function(err) {
+            con.write(err);
         });
 
-        con.on('end', function(buffer) {
-            data.push(buffer);
+        // set handler on incoming data
+        con.on('data', function(buffer) {
+            data.push(buffer.toString());
 
-            worker = new analyzeWorker({});
-            worker.on('success', function(result) {});
-            worker.on('error', function(err) {});
+            console.log(data);
+            if (data.length >= 2) {
+                worker.work(data);
+            }
         });
 
     });
 
     analyzeServer.listen(config.analyzer.port, function() {
-        console.log('server bound');
+        console.log(serverPresentation + 'server bound');
+
+        // get list of bad words
+        var badwords = new badwordsDriver();
+        badwords.list(function(list) {
+            console.log(serverPresentation + 'get list of bad words!', list);
+            //console.log('get list of bad words!', list);
+            options.badwordslist = list;
+        })
     });
 
 })()
