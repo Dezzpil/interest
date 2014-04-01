@@ -151,6 +151,8 @@ function mysqlDriver(options) {
      * @param callback {Function}
      */
     self.setLinkRecovered = function(idD, statusCode, callback) {
+        idD += '';
+        if (idD.split(':').length > 1) callback(null, null);
         mysqlConnection.query(
             'UPDATE '+ tableName +' SET ? WHERE idD="' + idD + '"', {
                 statusRecovery : 1
@@ -170,6 +172,8 @@ function mysqlDriver(options) {
      * @param callback {Function}
      */
     self.setInfoForLink = function(idD, statusCode, percent, isBad, callback) {
+        idD += '';
+        if (idD.split(':').length > 1) callback(null, null);
         mysqlConnection.query(
             'UPDATE '+ tableName +' SET ? WHERE idD="' + idD + '"', {
                 idProcess : 0,

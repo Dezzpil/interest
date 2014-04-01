@@ -1,26 +1,31 @@
+
+var http           = require('http');
+var https          = require('https');
+var url            = require('url');
+var EventEmitter   = require('events').EventEmitter;
+var util           = require('util');
+
 /**
+ * TODO написать примеры использования
+ * TODO написать описание
  * Created by dezzpil on 29.11.13.
  */
+function RequestManager(options) {
 
-var http = require('http');
-var https = require('https');
-var url = require('url');
-
-function requestManager(options, responseProcessor) {
+    EventEmitter.call(this);
 
     var self = this,
         logger = options.logger,
         mysql = options.mysql,
         config = options.config,
-        reqConfig = config.request,
         stepToDeep = 0,
-        reqOptions = {
+        requestDefOptions = {
             hostname: '',
             port: 80,
             path: '/',
             method: 'GET',
             headers: {
-                'user-agent' : '',
+                'user-agent' : config.request.userAgent,
                 'connection' : 'keep-alive'
             }
         };
@@ -64,10 +69,9 @@ function requestManager(options, responseProcessor) {
     function redirect(response, guideBook) {
         if ('location' in response.headers) {
 
-            var reqOpts =  reqOptions,
+            var reqOpts =  requestDefOptions,
                 redirectUrl = url.parse(response.headers.location);
 
-            // коды 300, пробуем перейти по редиректу reqConfig.redirectDeep раз
             if (redirectUrl.protocol && redirectUrl.protocol == 'https:') {
                 reqOpts.port = 443;
             }
@@ -83,19 +87,24 @@ function requestManager(options, responseProcessor) {
         return false;
     }
 
+    /**
+     *
+     * @param {Number} statusCode
+     * @returns {boolean}
+     */
     function isBadStatusCode(statusCode) {
         return statusCode.indexOf('5') == 0
             || statusCode.indexOf('4') == 0
             || statusCode.indexOf('9') == 0;
     }
 
-
     /**
-     * Контроллер запросов,
-     * следит за процессами обращения по адресам,
-     * пытается получить данные для модели
+     * Получить ответ для гайдбука.
+     * Следит за процессами обращения по адресам,
+     * пытается получить данные и запускает событие
+     * success, если удается получить корректный ответ (200)
      *
-     * @param guideBook
+     * @param {LinksGuideBook} guideBook
      * @param request [optional]
      * @param deep [optional]
      * @returns {boolean}
@@ -111,8 +120,10 @@ function requestManager(options, responseProcessor) {
 
         if (request) {
 
-            if (stepToDeep >= reqConfig.redirectDeep) {
-
+            // проверяем текущую глубину редиректа, если
+            // она больше, либо равна указанной в конфиге, то
+            // закрываем лавочку
+            if (stepToDeep >= config.request.redirectDeep) {
                 guideBook.markLink(function() {
                     mysql.setStatusForLink(
                         idD, config.codes.requestMaxdeep,
@@ -130,10 +141,23 @@ function requestManager(options, responseProcessor) {
         } else {
 
             // возвращаем значения в исходное положение
-            reqOpts = url.parse(link);
-            logger.info('%s START %s', idD, link);
+            // мержим объекты
 
+            var prop, linkParsed = url.parse(link);
+
+            for (prop in requestDefOptions) {
+                reqOpts[prop] = requestDefOptions[prop];
+            }
+
+            for (prop in reqOpts) {
+                if (prop in linkParsed) {
+                    reqOpts[prop] = linkParsed[prop];
+                }
+            }
         }
+
+        if (request) link = request.hostname + request.path;
+        logger.info('%s START %s', idD, link);
 
         req = makeRequest(reqOpts, function(response) {
 
@@ -141,14 +165,14 @@ function requestManager(options, responseProcessor) {
 
             var statusCode = response.statusCode + '';
             logger.info('%s REQUEST STATUS : %s', idD, statusCode);
-            if (isBadStatusCode(statusCode)) {
 
+            // коды 40Х и 50Х, закрываем лавочку
+            if (isBadStatusCode(statusCode)) {
                 guideBook.markLink(function() {
-                    // коды 400 и 500, закрываем лавочку
                     mysql.setStatusForLink(idD, statusCode,
                         function(err, rows) {
                             if (err) throw err;
-                            logger.info('%s MYSQL ROW UPDATED WITH BAD STATUS', idD);
+                            logger.info('%s MYSQL ROW UPDATED WITH BAD HTTP CODE', idD);
                         }
                     );
                 });
@@ -156,37 +180,23 @@ function requestManager(options, responseProcessor) {
                 return false;
             }
 
+            // если код 30Х, то закрываем этот запрос и открываем 
+            // новый по адресу указанному в заголовках ответа с кодом 30Х
             if (statusCode.indexOf('3') == 0) {
 
                 terminateRequest(req);
                 return redirect(response, guideBook);
             }
 
+            // проверяем какой код был у этой ссылки
             if (isBadStatusCode(guideBook.getLinkData().statusCode + '')) {
-                // проверяем какой код был у этой ссылки
                 mysql.setLinkRecovered(idD, statusCode, function(err, rows) {
                     if (err) throw err;
                     logger.info('%s MYSQL ROW UPDATED WITH RECOVERY STATUS', idD);
                 });
             }
 
-            response.setTimeout(
-                reqConfig.timeoutInMS,
-                function(err) {
-                    logger.info('%s HTTP LONG RESPONSE (more %d msec)', idD, reqConfig.timeoutInMS);
-
-                    guideBook.markLink(function(){
-                        mysql.setStatusForLink(idD, config.codes.requestTimeout,
-                            function(err, rows) {
-                                if (err) throw err;
-                                logger.info('%s MYSQL ROW UPDATED WITH HTTP LONG RESPONSE', idD);
-                            }
-                        );
-                    });
-                }
-            );
-
-            return responseProcessor(response, guideBook);
+            self.emit('response', guideBook, response);
 
         }).on('error', function(e) {
 
@@ -203,15 +213,14 @@ function requestManager(options, responseProcessor) {
             });
 
             terminateRequest(req);
-
         });
 
         req.setTimeout(
-            reqConfig.timeoutInMS,
+            config.request.timeout,
             function() {
 
-                logger.info('%s HTTP LONG REQUEST (more %d msec)', idD, reqConfig.timeoutInMS);
-
+                if (guideBook.isMarked()) return ;
+                logger.info('%s HTTP LONG REQUEST (more %d msec)', idD, config.request.timeout);
                 guideBook.markLink(function(){
                     mysql.setStatusForLink(idD, config.codes.requestTimeout,
                         function(err, rows) {
@@ -232,4 +241,5 @@ function requestManager(options, responseProcessor) {
 
 }
 
-module.exports = requestManager;
+util.inherits(RequestManager, EventEmitter);
+module.exports = RequestManager;

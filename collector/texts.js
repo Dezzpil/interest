@@ -8,6 +8,14 @@ var util         = require('util');
 var htmlparser2  = require("htmlparser2");
 var fnstore      = require('./../libs/functionStore');
 
+/**
+ *
+ * Имеет 2 события: collected & error
+ * @event collected возвращает guidebook, {String}
+ * @event error возвращает guidebook, {Object}
+ *
+ * @constructor
+ */
 function TextsCollector() {
 
     EventEmitter.call(this);
@@ -29,22 +37,22 @@ function TextsCollector() {
         //var textPrepared = text.replace(/(&.{1,6};)/g, ' ');
         var textPrepared = text;
 
+        // replace many \s to one ' '
+        textPrepared = textPrepared.replace(/\s+|\&nbsp;/g, ' ');
+
         // any instances of <, >, & (except for normal element usage) needing
         // to be replaced with &lt;, &gt; and &amp; respectively
         textPrepared = textPrepared.replace(/\</g, '&lt;');
         textPrepared = textPrepared.replace(/\>/g, '&gt;');
         textPrepared = textPrepared.replace(/\&/g, '&amp;');
 
-        // replace many \s to one ' '
-        textPrepared = textPrepared.replace(/\s+/g, ' ');
-
-        return textPrepared;
+        return textPrepared.trim();
     }
     
 }
 
 util.inherits(TextsCollector, EventEmitter);
-TextsCollector.prototype.parseHTML = function(html) {
+TextsCollector.prototype.parseHTML = function(guidebook, html) {
 
     var textInParser = '', parser, self = this,
         storageFnName = 'ontext';
@@ -73,11 +81,11 @@ TextsCollector.prototype.parseHTML = function(html) {
         },
 
         onerror: function(err) {
-            self.emit('error', err);
+            self.emit('error', guidebook, err);
         },
 
         onend: function() {
-            self.emit('collected', self.normalizeText(textInParser));
+            self.emit('collected', guidebook, self.normalizeText(textInParser));
         }
 
     });

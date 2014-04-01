@@ -7,35 +7,62 @@ var util           = require('util');
 var url            = require('url');
 var htmlparser2    = require("htmlparser2");
 
+/**
+ * Умеет собирать уникальные значения атрибута href у тегов <a />
+ * определять какие из них ведут на отличные от текущей страницы
+ * внутри сайта.
+ *
+ * Фильтрует :
+ *  внешние адреса
+ *  ссылки протоколов, отличных от http & https
+ *  и якоря
+ *
+ * Имеет 2 события: collected & error
+ * @event collected возвращает guidebook, {Array}
+ * @event error возвращает guidebook, {Object}
+ *
+
+  linksCollector = new LinksCollector({ config : a });
+  linksCollector.on('collected', function(links) {
+        // делаем что-то полезное со массивом ссылок
+  });
+
+  responseManager.on('recoded', function(guidebook, html) {
+       linksCollector.parseHTML(guidebook, html);
+  });
+
+  // надо пересоздать коллектора, ибо каждый коллектор
+  // накапливает cacheMap, в котором хранит индекс уже найденных
+  // ссылок. Нельзя, чтобы индекс разрастался на протяжении всей работы бота,
+  // потому что в нем лежат данные об уже пройденных сайтах
+  linkManager.on('empty', function() {
+       linksCollector = new LinksCollector({ config : a });
+  });
+
+ * @param {Object} options
+ * @constructor
+ */
 function LinksCollector(options) {
 
     EventEmitter.call(this);
 
-    this.guidebook = null;
     this.config = options.config;
-    this.linksMap = {};
-
-    /**
-     * Установить активный гайдбук
-     * @param {LinksGuideBook} guideBook
-     */
-    this.setGuideBook = function(guideBook) {
-        this.guidebook = guideBook
-    };
-
+    this.addHostname = ('addHostname' in options) ? options.addHostname : true;
+    this.cacheMap = {};
 }
 
 util.inherits(LinksCollector, EventEmitter);
-LinksCollector.prototype.parseHTML = function(html) {
+
+/**
+ * Вызывает события collected || error
+ * @param {LinksGuideBook} guidebook
+ * @param {String} html
+ */
+LinksCollector.prototype.parseHTML = function(guidebook, html) {
 
     var self = this, currentId;
 
-    if (self.guidebook == null) {
-        self.emit('error', new Error('no guidebook setted'));
-        return;
-    }
-
-    currentId = self.guidebook.getIdD() + '';
+    currentId = guidebook.getIdD() + '';
 
     if (currentId.split(':').length - 1 >= self.config.crawler.deep) {
         self.emit('collected', null);
@@ -46,7 +73,7 @@ LinksCollector.prototype.parseHTML = function(html) {
     // страницы сайта, добавляем их в путеводитель
     var parser, links = [],
         ignore_list = self.config.crawler.ignore,
-        ignore_regexp = new RegExp("^\/$" + ignore_list.replace(/\|/g,"|\\.") + "|^#$|^#.{1,}$");
+        ignore_regexp = new RegExp("^\/+$" + ignore_list.replace(/\|/g,"|\\.") + "|^\/*#+.*$|^mailto:|file:|^#.{1,}$");
 
     parser = new htmlparser2.Parser({
         onopentag : function(name, attrs) {
@@ -55,16 +82,16 @@ LinksCollector.prototype.parseHTML = function(html) {
 
             if (! ('href' in attrs)) return;
 
-            if ('rel' in attrs && attrs.rel == 'nofollow' && self.config.crawler.perceive_nofollow) {
+            if ('rel' in attrs && attrs.rel == 'nofollow' && self.config.crawler.perceiveNofollow) {
                 return;
             }
 
             if (attrs.href.match(ignore_regexp) == null) {
 
                 // избавляем текущую ссылку от ненужных частей
-                var currentDomain = self.guidebook.getDomain();
-                if (self.guidebook.getDomain().match(/^(?:http|https):\/\/(.+)/) != null) {
-                    currentDomain = url.parse(self.guidebook.getDomain()).hostname;
+                var currentDomain = guidebook.getDomain();
+                if (guidebook.getDomain().match(/^(?:http|https):\/\/(.+)/) != null) {
+                    currentDomain = url.parse(guidebook.getDomain()).hostname;
                 }
 
                 // иногда ссылки на странице указаны абсолютно
@@ -75,14 +102,16 @@ LinksCollector.prototype.parseHTML = function(html) {
                         return;
                     }
                 } else {
-                    attrs.href = currentDomain + attrs.href;
+                    if (self.addHostname) {
+                        attrs.href = currentDomain + attrs.href;
+                    }
                 }
 
                 // если ссылка еще не встречалась, мы сохраняем ее в список
                 // и в индекс, чтобы в дальнейшем ее не проходить
-                if (!(attrs.href in self.linksMap)) {
+                if (!(attrs.href in self.cacheMap)) {
                     links.push(attrs.href);
-                    self.linksMap[attrs.href] = true;
+                    self.cacheMap[attrs.href] = true;
                 }
             }
 
@@ -92,10 +121,10 @@ LinksCollector.prototype.parseHTML = function(html) {
         },
         'onend' : function() {
 
-            self.emit('collected', links);
+            self.emit('collected', guidebook, links);
 
         },
-        'onerror' : function(err) {
+        'onerror' : function(guidebook, err) {
 
             self.emit('error', err);
 

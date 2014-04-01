@@ -2,28 +2,36 @@
     "name": "Crystal Interest Bot",
     "version": "2.0",
     "path" : "/home/crystal-interest/",
-    "maxYields" : 3,
-    "readyCheckPeriodInSec" : 6,
-    "readyCheckMaxTryCount" : 10,
 
-    "request" : {
-        "redirectDeep" : 3,
-        "timeoutInMS" : 30000
+    "iteration" : {
+        "yields" : 5,
+        "recheckCount" : 30,
+        "recheckDelay" : 1000,
+        "restartDelay" : 1000
     },
 
-    "charsetProcessing" : {
+    "request" : {
+        "redirectDeep" : 5,
+        "timeout" : 30000,
+        "userAgent" : null
+    },
+
+    "response" : {
+        "timeout" : 30000
+    },
+
+    "encode" : {
         "detectionName" : "encoding/chardet",
         "recodeName" : "recode",
-        "timeoutInSec": 5,
-        "maxBufferInKb": 200,
+        "timeout": 500,
+        "maxBufferInKb": 1024,
         "killSignal": "SIGTERM",
         "cwd": null,
         "env": null
     },
 
-    "debug" : 0,
-    "eachLinkDelay" : 500,
-    "eachIterationDelay" : 10000,
+    "debug" : 1,
+
     "codes" : {
         "htmlParseError" : "970",
         "errorWhenChardet" : "975",
@@ -41,18 +49,18 @@
         "db" : "crawler",
         "password" : "",
         "username" : "",
-        "reconnectTimeout" : 10000
+        "reconnectTimeout" : 1000
     },
 
     "mysql" : {
-        "host" : "alpha.crystalteam.ru",
-        "user" : "test",
-        "password": "123456",
+        "host" : "localhost",
+        "user" : "root",
+        "password": "toor",
         "dbName" : "Crawler",
         "tableName" : "domain",
         "debug" : false,
         "options" : {
-            "maxProcessLimit" : 10,
+            "maxProcessLimit" : 1,
             "timeToReprocessInSec" : 86400,
             "timeOutForRetryInSec" : 60,
             "reconnectAfterInSec" : 5
@@ -63,7 +71,11 @@
         "path" : "analyzer/",
         "fileName" : "analyzer",
         "maxInstances" : 100,
-        "killSignal" : "SIGKILL"
+        "killSignal" : "SIGKILL",
+        "port" : 8124,
+        "host" : "localhost",
+        "maxConnections" : 10,
+        "waitForConnection" : 500
     },
 
     "loggers" : {
@@ -86,8 +98,14 @@
                 "json" : false
 
             }
+        },
+        "tests" : {
+            "type" : "console",
+            "options" : {
+                "level" : "info",
+                "colorize" : true
+            }
         }
-
     },
 
     "daemon" : {
@@ -95,5 +113,13 @@
             "process" : 0,
             "helper" : 1
         }
-    }
+    },
+
+    "crawler" : {
+        "ignore" : "|js|css|jpg|jpeg|png|gif|bmp|doc|docx|pdf|xls|xlsx",
+        "perceiveNofollow" : true,
+        "deep" : 2
+    },
+
+    "textChangeThreshold" : 50
 }

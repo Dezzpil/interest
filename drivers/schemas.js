@@ -43,7 +43,7 @@ exports.page = {
     date_created : Date,
     content : String,
     content_length : Number,
-    content_charset : String,
+//    content_charset : String,
     change_percent : Number,
     badword_id : Number,
     badword_context : String,

@@ -49,7 +49,7 @@ function mongoDriver(options) {
     };
 
     /**
-     * Find page documents by id, sorted DESC by date_created
+     * Find page documents by page id, sorted DESC by date_created
      * @param {string} id
      * @param {function} callback
      */
@@ -79,22 +79,20 @@ function mongoDriver(options) {
     /**
      * Save new page document, get err and page document in callback
      * @param {LinksGuideBook} guidebook
-     * @param {string} data
-     * @param {string} charset
-     * @param {{percent: number, isBad: boolean, badWord: string}} analyzeResult
+     * @param {String} text
+     * @param {{change_percent: number, isBad: boolean, badWord: string}} analyzeResult
      * @param {function} callback
      */
-    self.savePage = function(guidebook, data, charset, analyzeResult, callback) {
+    self.savePage = function(guidebook, text, analyzeResult, callback) {
         pageModel.create({
             id : guidebook.getIdD(),
             url : guidebook.getDomain(),
             category :guidebook.getGroups(),
-            content : data,
-            content_length : data.length,
-            content_charset : charset,
-            change_percent : analyzeResult.percent,
-            contain_badword : analyzeResult.isBad,
-            badword : analyzeResult.badWord,
+            content : text,
+            content_length : text.length,
+            change_percent : analyzeResult.change_percent,
+            badword_id : analyzeResult.badword_id,
+            badword_context : analyzeResult.badword_context,
             date_created : new Date(),
             is_indexed : false
         }, function(error, page) {

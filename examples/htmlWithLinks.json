@@ -1,0 +1,30 @@
+{
+    "0" : {
+        "html" : "<a href='/news/'>news</a><a href='/summer'>I WANNA SUMMER</a><a href='/leet/stuff.html'>stuff</a>",
+        "assert" : ["/news/", "/summer", "/leet/stuff.html"]
+    },
+    "1" : {
+        "html" : "<a href='/'>main</a><a href='//'>main</a>",
+        "assert" : []
+    },
+    "2" : {
+        "html" : "<a href='#'></a><a href='#top'>top</a><a href='/#news'>news on main</a>",
+        "assert" : []
+    },
+    "3" : {
+        "html" : "<a href='mailto:foo@bar.pew'>mail to admin</a><a href='file://troyan'>jackpot!</a>",
+        "assert" : []
+    },
+    "4" : {
+        "html" : "<a href='http://ya.ru'>Yandex</a><a href='https://ya.ru'>Yandex:443</a>",
+        "assert" : []
+    },
+    "5" : {
+        "html" : "<a href='/img/1.jpg'></a><a href='/img/2.jpeg'></a><a href='/img/3.bmp'></a>",
+        "assert" : []
+    },
+    "6" : {
+        "html" : "<a href='/good/link/?ok=1' rel='nofollow'>nofollow</a>",
+        "assert" : []
+    }
+}

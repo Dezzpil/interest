@@ -1,6 +1,4 @@
-/**
- * Created by dezzpil on 29.11.13.
- */
+
 var util         = require("util");
 var EventEmitter = require('events').EventEmitter;
 var async        = require('async');
@@ -10,7 +8,21 @@ var async        = require('async');
  * Следит за общим ходом процесса, запрашивает
  * новые адреса для новой итерации проверки.
  *
- * @todo дописать примеры использования
+ * Created by dezzpil on 29.11.13.
+ *
+ * Имеет 4 события: empty & start & end & terminated
+ * @event start - старт итерации по гиду
+ * @event end - корректное завершнеие итерации (все гайдбуки помечены)
+ * Это штатные события, возникающие при нормальном ходе работы менеджера.
+ * Старт возникает в начале итерации, а енд в конце, при условии,
+ * что все гайдбуки помеченны как посещенные (guidebook.markLink())
+ *
+ * @event empty возникает в ситуации, когда не указан гид, с которым может работать
+ * менеджер ссылок. empty ничего не передает в колбэк.
+ *
+ * @event terminated возникает в ситуации, когда время ожидания ответа всех ссылок
+ * после начала итерации истекло
+ *
  * @param {object} options
  * @param {function} callback
  */
@@ -20,12 +32,10 @@ function LinksManager(options, callback) {
 
     this.logger = options.logger;
     this.config = options.config;
-    this.linkBroken = 0;
-    this.callback = callback;
 
     if ( ! this.config) throw new Error('LinksManager : no logger config!');
     if ( ! this.logger) throw new Error('LinksManager : no logger setted!');
-    if ( ! this.callback) throw new Error('LinksManager : no callback setted!');
+    if ( ! callback) throw new Error('LinksManager : no callback setted!');
 
     // определяем механизм работы обработчика для очереди
     // обработки путеводителя, запуск очереди происходит позже
@@ -35,7 +45,7 @@ function LinksManager(options, callback) {
             guidebook.setQueueCallback(afterReady);
             callback(guidebook);
         },
-        this.config.maxYields
+        this.config.iteration.yields
     );
 
 }
@@ -49,34 +59,12 @@ LinksManager.prototype.run = function(guide) {
         queue = this.queue;
 
     if ( ! guide) {
-
-        self.emit('start', null);
-        return false;
+        return self.emit('empty', null);
     }
 
     if ( ! guide.isEmpty()) {
 
-        // Упреждающая проверка адресов на корректность.
-        // На те случаи, когда адреса кончились или
-        // состоят из пробелов. Тут можно @todo проверять на корректность адресных имен
-
-        /**
-         * Самая сложная часть для понимания, имхо, в этом куске кода.
-         * Чтобы реализовать асинхронный процесс прохода по ссылкам, полученным из БД
-         * необходимо отказаться от циклов и использовать рекурсию. readLinkList вызывает
-         * сам себя с небольшим интервалом времени после вызова модели. Функция реализующая
-         * модель возвращает ответ очень быстро, так как, все что она делает - инициирует
-         * запрос на переданный из контроллера адрес. Все остальное происходит асинхронно
-         * и делается по мере возникновения соотв. событий :
-         *  - когда приходит заголовки ответа
-         *  - когда приходит тело ответа
-         *  - когда приходят ответы от баз данных
-         *  - когда приходит ответ анализатора
-         *
-         *  Чтобы контроллер был самодостаточен, и понятна логика происходящего,
-         *  рекурсивный вызов контроллера должен помещаться в самом контроллере и происходить
-         *  с некоторой задержкой
-         */
+        self.emit('start', guide);
 
         while ( ! guide.isEmpty()) {
 
@@ -106,25 +94,24 @@ LinksManager.prototype.run = function(guide) {
 
                 count++;
 
-                if (
-                    config.readyCheckMaxTryCount <= count ||
-                        guide.getList().length <= (guide.getReadyList().length + self.linkBroken)
-                    ) {
+                if (count >= config.iteration.recheckCount) {
+                    clearInterval(interval);
+                    self.emit('terminate', guide);
+                }
+
+                if (guide.getList().length <= guide.getReadyList().length) {
 
                     clearInterval(interval);
-                    self.linkBroken = 0;
-
-                    //invokeHooks('end', guide);
                     self.emit('end', guide);
 
                     var delay = setTimeout(function() {
                         clearTimeout(delay);
                         self.run();
-                    }, config.eachIterationDelay);
+                    }, config.iteration.restartDelay);
 
                 }
 
-            }, config.readyCheckPeriodInSec * 1000);
+            }, config.iteration.recheckDelay);
 
     }
 

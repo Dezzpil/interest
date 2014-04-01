@@ -6,33 +6,34 @@
 var memwatch            = require('memwatch');
 var async               = require('async');
 var util                = require('util');
+var config              = require('./configs/config.json');
 
 (function(){
 
-    var RequestManager      = require('./request');
-    var response            = require('./response');
     var obj                 = require('./libs/object');
-    var config              = require('./configs/config.json');
     var PageStorageDriver   = require('./drivers/mongo');
     var DomainStorageDriver = require('./drivers/mysql');
-    var AnalyzerFactory     = require('./drivers/analyze/node');
-    var LoggerFactory       = require('./drivers/loggers');
+    var AnalyzeDriver       = require('./drivers/analyze/node');
+    var LoggerDriver        = require('./drivers/loggers');
+    var RequestManager      = require('./request');
+    var ResponseManager     = require('./response');
     var LinksManager        = require('./link');
-    var LinksCollector      = require('./collector/links');
     var LinksGuide          = require('./libs/linksGuide');
+    var LinksCollector      = require('./collector/links');
     var TextsCollector      = require('./collector/texts');
+    var PageSaver           = require('./pagesaver');
 
     var botPID = parseInt(process.pid);
 
-    var loggerProcess = LoggerFactory.forge(
+    var loggerProcess = LoggerDriver.forge(
         config.loggers.process.type,
         config.loggers.process.options
     );
-    var loggerErrors = LoggerFactory.forge(
+    var loggerErrors = LoggerDriver.forge(
         config.loggers.errors.type,
         config.loggers.errors.options
     );
-    var loggerMemory = LoggerFactory.forge(
+    var loggerMemory = LoggerDriver.forge(
         "mongodb",{
             "db" : config.mongo.db,
             "host" : config.mongo.host,
@@ -110,9 +111,9 @@ var util                = require('util');
     function init() {
 
         var heapDiff, linksManager, linksCollector,
-            requestManager, textsCollector,
-            responseProcessor, analyzeFactory,
-            options = {
+            requester, responser,
+            textsCollector, analyzeDriver,
+            saver, options = {
                 'config' : config,
                 'logger' : loggerProcess,
                 'pid' : botPID,
@@ -121,18 +122,22 @@ var util                = require('util');
                 'useragent' : config.name + ' v.' + config.version
             },
             guides = {},
-            currentGuideBook = null;
+            currentGuideBook = null;             // guidebook в работе
 
-        analyzeFactory = new AnalyzerFactory(options);
-        analyzeFactory.on('error', function(err) {
-            console.log('analyzeFactory error', err)
+        // объект управляющий сохранением и завершением работы с
+        // гайдбуком по разным причинам, настраивается в зависимости от
+        // ситуации
+        saver = new PageSaver(options);
+
+        analyzeDriver = new AnalyzeDriver(options);
+        analyzeDriver.on('complete', function(data) {
+            saver.setAnalyzeResult(data);
+            saver.save();
         });
-
-        analyzeFactory.on('success', function(data) {
-            console.log('analyzeFactory', data);
+        analyzeDriver.on('error', function(err) {
+            saver.setAnalyzeResult(analyzeDriver.getDummyResult());
+            saver.save();
         });
-
-        responseProcessor = new response.factory(analyzeFactory, options);
 
         linksCollector = new LinksCollector(options);
         linksCollector.on('collected', function(links) {
@@ -151,43 +156,52 @@ var util                = require('util');
         textsCollector = new TextsCollector();
         textsCollector.on('collected', function(text) {
 
-            // start analyzer work
-            analyzeFactory.write(text);
-            analyzeFactory.end(text);
+            saver.setText(text);
 
+            pageStorage.findPagesById(currentGuideBook.getIdD(), function(err, result) {
+                if (err == null && result.length > 0) {
+                    analyzeDriver.setPrevText(result[0].content);
+                } else {
+                    analyzeDriver.setPrevText(text);
+                }
+            });
+
+            analyzeDriver.setNewText(text);
         });
         textsCollector.on('error', function(err) {
-           //
+            loggerProcess.info('%s error while collecting text', currentGuideBook.getIdD(), err);
+            currentGuideBook.markLink();
         });
 
-
-        responseProcessor.on('response', function(bodyHtml) {
-            return bodyHtml;
-        });
-        responseProcessor.on('recode', function(bodyEncoded) {
-
-            linksCollector.parseHTML(bodyEncoded);
-            textsCollector.parseHTML(bodyEncoded);
-
-            return bodyEncoded;
+        responser = new ResponseManager(options);
+        responser.on('recode', function(bodyRecoded) {
+            linksCollector.parseHTML(bodyRecoded);
+            textsCollector.parseHTML(bodyRecoded);
         });
 
-        requestManager = new RequestManager(options, function(response, guideBook) {
+        requester = new RequestManager(options);
+        requester.on('success', function(data) {
+
             // we get response object here, may do what we want
             // we always can stop further process with
             // return guideBook.markLink();
-            currentGuideBook = guideBook;
-            linksCollector.setGuideBook(guideBook);
 
-            var responser = new responseProcessor.create();
-            responser.run(response, guideBook);
+            var response = data.response,
+                guidebook = data.guidebook;
+
+            currentGuideBook = guidebook;
+
+            saver.setGuideBook(guidebook);
+            saver.setStatusCode(response.statusCode + '');
+
+            linksCollector.setGuideBook(guidebook);
+            responser.run(response, guidebook);
         });
 
         linksManager = new LinksManager(options, function(guideBook) {
             // инициализируем запрос по гайдбуку
-            requestManager.run(guideBook);
+            requester.run(guideBook);
         });
-
         linksManager.on('start', function(guide) {
 
             // учет потребляемой памяти за итерацию
@@ -201,25 +215,23 @@ var util                = require('util');
             if (guides && Object.keys(guides).length) {
 
                 var guide = obj.unshift(guides);
-                console.log('collect links for guide', guide.getList());
+                loggerProcess.info('collect links for guide', guide.getList());
                 linksManager.run(guide);
 
             } else {
 
                 domainStorage.getLinks(botPID, function(err, rows) {
                     guide = new LinksGuide(rows);
-                    console.log('get new guide', guide.getList());
+                    loggerProcess.info('get new guide', guide.getList());
                     linksManager.run(guide);
                 });
 
             }
 
         });
-
         linksManager.on('end', function(guide) {
 
             loggerMemory.info(heapDiff.end());
-
             domainStorage.unlockLinks(botPID, function(err, rows) {
                 if (err) throw err;
             });

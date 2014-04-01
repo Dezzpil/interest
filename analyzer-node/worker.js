@@ -1,6 +1,3 @@
-/**
- * Created by root on 27.03.14.
- */
 
 var EventEmitter   = require('events').EventEmitter;
 var util           = require('util');
@@ -17,7 +14,9 @@ var ld             = require('ld');
  * На данный момент текст сравнивается с использованием расстояния Левенштейна
  * @see http://ru.wikipedia.org/wiki/%D0%A0%D0%B0%D1%81%D1%81%D1%82%D0%BE%D1%8F%D0%BD%D0%B8%D0%B5_%D0%9B%D0%B5%D0%B2%D0%B5%D0%BD%D1%88%D1%82%D0%B5%D0%B9%D0%BD%D0%B0
  *
- * @param options
+ * @param {Object} options
+ *
+ * Created by dezzpil on 27.03.14.
  */
 function analyzeWorker(options) {
 
@@ -41,11 +40,10 @@ function analyzeWorker(options) {
     this.work = function(data) {
 
         // сначала проверим наличие плохих слов в первом тексте
-        var newText, newTextWords, oldText, oldTextWords,
+        var newText, newTextWords, oldText,
             i, j, word, badword_context = '', badword_id = 0,
             distance = 0;
 
-        if ()
         newText = data[0].toLowerCase().replace(/\s/g, ' ');
         newTextWords = newText.split(' ');
 
@@ -54,7 +52,11 @@ function analyzeWorker(options) {
             if (word in options.badwordslist) {
                 badword_id = options.badwordslist[word].id;
                 for (j = i - 2; j >= i + 2; j++) {
-                    badword_context += newTextWords[j]
+                    try {
+                        badword_context += newTextWords[j]
+                    } catch (e) {
+                        // no such index
+                    }
                 }
 
                 this.emit('complete', {
@@ -62,18 +64,19 @@ function analyzeWorker(options) {
                     badword_id: badword_id,
                     change_percent: 0
                 });
+
+                return ;
             }
         }
 
         oldText = data[1].toLowerCase().replace(/\s/g,' ');
-        oldTextWords = oldText.split(' ');
 
         // текст может быть дописан или, вообще, переписан заново
         // попарное сравнение слов разумно только для массивов одинаковой длины, но
         // в массивах одинаковой длины могут быть просто переставлены слова.
         // какой метод лучше подходит для определения процента изменений
         // на данный момент несущественно, тут надо TODO продумать механизм сравнения 2 текстов
-
+        // пока используем сравнение с использованием расстояния Левенштейна
         distance = ld.computeDistance(oldText, newText);
         distance = Math.floor(distance / oldText.length * 100);
 

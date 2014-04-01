@@ -1,17 +1,17 @@
 {
     "0" : {
         "idD" : -100,
-        "domain" : "osu.ru",
+        "domain" : "http://crystalprotection.ru/",
         "charset" : "koi8-r"
     },
     "1" : {
         "idD" : -101,
-        "domain" : "mgsu.ru",
-        "charset" : "windows-1251"
+        "domain" : "http://crystaltube.ru/12/17/5",
+        "charset" : "utf-8"
     },
     "2" : {
         "idD" : -102,
-        "domain" : "eltech.ru",
+        "domain" : "http://crystalcloud.ru/catalog/index",
         "charset" : "utf-8"
     }
 }

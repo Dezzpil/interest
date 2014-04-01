@@ -15,6 +15,7 @@ function LinksGuideBook(guide, index) {
 
     var i = index,
         parent = guide,
+        marked = false,
         linkIds = parent.getIdList(),
         linkMap = parent.getIdMap(),
         linkList = parent.getList(),
@@ -28,13 +29,23 @@ function LinksGuideBook(guide, index) {
 
     /**
      *
+     * @param {Function} callback
      */
     this.markLink = function(callback) {
+        marked = true;
         if (parent.markLink(this.getIdD())) {
-            callback();
+            if (callback) callback();
             finCallback();
         }
     };
+
+    /**
+     *
+     * @returns {boolean}
+     */
+    this.isMarked = function() {
+        return marked;
+    }
 
     /**
      *
@@ -158,8 +169,10 @@ function LinksGuide(rows) {
     };
 
     if (rows && rows.length) {
-        for (i = 0; i < rows.length; i++) {
-            rows[i]['link'] = rows[i]['domain'];
+        for (i in rows) {
+            if ( ! ('link' in rows[i])) {
+                rows[i]['link'] = rows[i]['domain'];
+            }
             self.add(rows[i]);
         }
     }
