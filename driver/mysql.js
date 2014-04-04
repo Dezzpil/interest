@@ -64,8 +64,6 @@ function mysqlDriver(options) {
             ' && UNIX_TIMESTAMP(lastTest)<UNIX_TIMESTAMP(lastRechange)' +
             ' ORDER BY lastTest ASC LIMIT ' + count;
 
-        console.log(queryUp);
-
         queryGet =  'SELECT * FROM ' + tableName + ' WHERE idProcess=' + pid +
             ' ORDER BY lastTest ASC';
 
