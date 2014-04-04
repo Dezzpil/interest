@@ -57,7 +57,7 @@ var config         = require('./../configs/config.json');
         process.exit(1);
     });
 
-    domainDriver.getLinks(0, function(err, data) {
+    domainDriver.getLinks(0, config.iteration.count, function(err, data) {
         logger.info(data);
         linksManager.run(new LinksGuide(data));
     });

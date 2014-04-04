@@ -56,20 +56,21 @@ function mysqlDriver(options) {
         var queryUp, queryGet,
             diff = config.options.timeToReprocessInSec;
 
-        queryUp = 'UPDATE ' + tableName + ' set idProcess=' + pid +
-            ' WHERE ' +
-                'idProcess=0 && ' +
-                'UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(lastRechange)>' + diff + ' && ' +
-                'UNIX_TIMESTAMP(lastTest)<UNIX_TIMESTAMP(lastRechange)' +
-            ' ORDER BY lastTest ASC' +
-            ' LIMIT ' + count;
+        queryUp = 'UPDATE ' + tableName + ' set idProcess=' + pid + ' WHERE idProcess=0';
+        if (config.options.onlyGroup != 0) {
+            queryUp += ' && groups LIKE "%' + config.options.onlyGroup + '%"'
+        }
+        queryUp += ' && UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(lastRechange)>' + diff +
+            ' && UNIX_TIMESTAMP(lastTest)<UNIX_TIMESTAMP(lastRechange)' +
+            ' ORDER BY lastTest ASC LIMIT ' + count;
+
+        console.log(queryUp);
 
         queryGet =  'SELECT * FROM ' + tableName + ' WHERE idProcess=' + pid +
             ' ORDER BY lastTest ASC';
 
         logger.info('MYSQL : getting links...');
-        mysqlConnection.query(
-            queryUp,
+        mysqlConnection.query(queryUp,
             function(err, rows) {
 
                 if (err) callback(err, null);
@@ -86,7 +87,7 @@ function mysqlDriver(options) {
 
                     var d = setTimeout(function() {
                         clearTimeout(d);
-                        self.getLinks(pid, callback);
+                        self.getLinks(pid, count, callback);
                     }, config.options.timeOutForRetryInSec * 100)
 
                 }

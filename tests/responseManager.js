@@ -28,9 +28,12 @@ var config          = require('./../configs/config.json');
     options.mysql = domainDriver;
 
     responseManager = new ResponseManager(options);
+    responseManager.on('received', function(guidebook, bodyHTML, callback) {
+        callback(guidebook, bodyHTML);
+    });
     responseManager.on('recoded', function(guidebook, bodyHTML) {
         guidebook.markLink(function() {
-            logger.info('FINISH RESPONSE PROCESSING');
+            logger.info('%s FINISH PROCESSING', guidebook.getIdD());
         });
     });
 
@@ -49,7 +52,7 @@ var config          = require('./../configs/config.json');
         process.exit(1); // exit with error
     });
 
-    domainDriver.getLinks(0, function(err, data) {
+    domainDriver.getLinks(0, config.iteration.count, function(err, data) {
         linksManager.run(new LinksGuide(data));
     });
 

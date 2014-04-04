@@ -56,14 +56,15 @@
     "mysql" : {
         "host" : "localhost",
         "user" : "root",
-        "password": "Motorola9",
+        "password": "toor",
         "dbName" : "Crawler",
         "tableName" : "domain",
         "debug" : false,
         "options" : {
             "timeToReprocessInSec" : 86400,
             "timeOutForRetryInSec" : 60,
-            "reconnectAfterInSec" : 5
+            "reconnectAfterInSec" : 5,
+            "onlyGroup" : 3
         }
     },
 

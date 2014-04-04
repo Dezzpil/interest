@@ -36,7 +36,7 @@ var config         = require('./../configs/config.json');
     var domainDriver = new DomainDriver(options);
     options.mysql = domainDriver;
 
-    domainDriver.getLinks(0, function(err, data) {
+    domainDriver.getLinks(0, config.iteration.count, function(err, data) {
         linksManager.run(new LinksGuide(data));
     });
 

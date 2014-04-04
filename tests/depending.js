@@ -80,7 +80,7 @@ var scriptName = path.basename(process.cwd(), '.js');
 
         'mysql operations' : function(callback) {
             var key = 'mysql operations';
-            mysqlDriver.getLinks(1, function(err, rows) {
+            mysqlDriver.getLinks(1, config.iteration.count, function(err, rows) {
                 if (err) error(key, err);
                 success(key, callback);
             });

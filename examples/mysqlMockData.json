@@ -3,5 +3,10 @@
         "idD" : -100,
         "domain" : "dezzpil.ru",
         "charset" : "utf-8"
+    },
+    "1" : {
+        "idD" : -101,
+        "domain" : "crystalprotection.ru",
+        "charset" : "utf-8"
     }
 }
