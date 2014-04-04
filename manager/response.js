@@ -51,7 +51,7 @@ function ResponseManager(options) {
 
             guidebook.markLink(function() {
                 mysql.setStatusForLink(
-                    guidebook.getIdD(), code,
+                    guidebook, code,
                     function(err, rows) {
                         logger.info('%s MYSQL ROW UPDATED WITH EXEC ERROR', guidebook.getIdD(), (err || stderr));
                     }
@@ -139,7 +139,7 @@ function ResponseManager(options) {
                 if (guidebook.isMarked()) return ;
                 logger.info('%s HTTP LONG RESPONSE (more %d msec)', idD, config.response.timeout);
                 guidebook.markLink(function(){
-                    mysql.setStatusForLink(idD, config.codes.requestTimeout,
+                    mysql.setStatusForLink(guidebook, config.codes.requestTimeout,
                         function(err, rows) {
                             if (err) throw err;
                             logger.info('%s MYSQL ROW UPDATED WITH HTTP LONG RESPONSE', idD);
@@ -157,22 +157,22 @@ function ResponseManager(options) {
 
             if ( ! responseBody || ! responseBody.length) {
                 return guidebook.markLink(function() {
-                    mysql.setStatusForLink(idD, config.codes.requestEmpty, function(err, rows) {
+                    mysql.setStatusForLink(guidebook, config.codes.requestEmpty, function(err, rows) {
                         logger.info('%s MYSQL ROW UPDATED WITH EMPTY RESPONSE', idD);
                     });
                 });
             }
 
             logger.info('%s CONTENT RECEIVED, %d length', idD, responseBody.length);
-            self.emit('received', guidebook, responseBody);
+            self.emit('received', guidebook, responseBody, process);
 
-            process(guidebook, responseBody);
+            //process(guidebook, responseBody);
 
         }).on('error', function(err) {
 
             logger.info('%s HTTP ', idD, err);
             guidebook.markLink(function() {
-                mysql.setStatusForLink(idD, config.codes.requestAbbruptly,
+                mysql.setStatusForLink(guidebook, config.codes.requestAbbruptly,
                     function(err, rows) {
                         if (err) logger.console.error(err);
                         logger.info('%s MYSQL ROW UPDATED WITH HTTP ERROR', idD);

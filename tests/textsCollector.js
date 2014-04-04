@@ -2,9 +2,9 @@
  * Created by root on 01.04.14.
  */
 
-var LoggersFactory = require('./../drivers/loggers');
+var LoggersFactory = require('./../driver/loggers');
 var TextsCollector = require('./../collector/texts');
-var LinksGuide     = require('./../libs/linksGuide');
+var LinksGuide     = require('./../lib/linksGuide');
 var config         = require('./../configs/config.json');
 var testHtml       = require('./../configs/htmlWithText.json');
 var async          = require('async');

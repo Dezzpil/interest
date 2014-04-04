@@ -15,7 +15,7 @@ function mysqlMockDriver(options) {
         callback(null);
     };
 
-    this.getLinks = function(pid, callback) {
+    this.getLinks = function(pid, count, callback) {
         logger.info('MYSQL : gets data from mysqlMockData.json ...');
 
         var i, testData = [];
@@ -39,15 +39,15 @@ function mysqlMockDriver(options) {
         if (callback) callback();
     };
 
-    this.setStatusForLink = function(idD, statusCode, callback) {
+    this.setStatusForLink = function(guidebook, statusCode, callback) {
         self.setInfoForLink(idD, statusCode, 0, 0, callback);
     };
 
-    this.setLinkRecovered = function(idD, statusCode, callback) {
+    this.setLinkRecovered = function(guidebook, statusCode, callback) {
         if (callback) callback(null, []);
     };
 
-    this.setInfoForLink = function(idD, statusCode, percent, isBad, callback) {
+    this.setInfoForLink = function(guidebook, statusCode, percent, isBad, callback) {
         if (callback) callback(null, []);
     };
 

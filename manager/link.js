@@ -96,7 +96,7 @@ LinksManager.prototype.run = function(guide) {
 
                 if (count >= config.iteration.recheckCount) {
                     clearInterval(interval);
-                    self.emit('terminate', guide);
+                    self.emit('terminated', guide);
                 }
 
                 if (guide.getList().length <= guide.getReadyList().length) {

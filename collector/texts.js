@@ -3,10 +3,10 @@
  * @todo all files in folder collector must inherits from collector ?
  */
 
-var EventEmitter = require('events').EventEmitter;
 var util         = require('util');
 var htmlparser2  = require("htmlparser2");
-var fnstore      = require('./../libs/functionStore');
+var EventEmitter = require('events').EventEmitter;
+var fnstore      = require('./../lib/functionStore');
 
 /**
  *

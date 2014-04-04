@@ -1,23 +1,24 @@
 {
     "name": "Crystal Interest Bot",
-    "version": "2.0",
+    "version": "3.0",
     "path" : "/home/crystal-interest/",
 
     "iteration" : {
-        "yields" : 5,
-        "recheckCount" : 30,
+        "yields" : 2,
+        "recheckCount" : 101,
         "recheckDelay" : 1000,
-        "restartDelay" : 1000
+        "restartDelay" : 1000,
+        "count" : 10
     },
 
     "request" : {
         "redirectDeep" : 5,
-        "timeout" : 30000,
+        "timeout" : 10000,
         "userAgent" : null
     },
 
     "response" : {
-        "timeout" : 30000
+        "timeout" : 10000
     },
 
     "encode" : {
@@ -55,12 +56,11 @@
     "mysql" : {
         "host" : "localhost",
         "user" : "root",
-        "password": "toor",
+        "password": "Motorola9",
         "dbName" : "Crawler",
         "tableName" : "domain",
         "debug" : false,
         "options" : {
-            "maxProcessLimit" : 1,
             "timeToReprocessInSec" : 86400,
             "timeOutForRetryInSec" : 60,
             "reconnectAfterInSec" : 5
@@ -75,7 +75,9 @@
         "port" : 8124,
         "host" : "localhost",
         "maxConnections" : 10,
-        "waitForConnection" : 500
+        "waitForAnswer" : 10000,
+        "chunkLength" : 5000,
+        "chunkGlue" : ".l."
     },
 
     "loggers" : {
@@ -86,7 +88,6 @@
                 "maxsize" : 10485760,
                 "maxFiles" : 5,
                 "json" : false
-
             }
         },
         "errors" : {
@@ -96,7 +97,6 @@
                 "maxsize" : 10485760,
                 "maxFiles" : 5,
                 "json" : false
-
             }
         },
         "tests" : {
@@ -116,10 +116,8 @@
     },
 
     "crawler" : {
-        "ignore" : "|js|css|jpg|jpeg|png|gif|bmp|doc|docx|pdf|xls|xlsx",
+        "ignore" : "|js|css|jpg|jpeg|png|gif|bmp|doc|docx|pdf|xls|xlsx|rar|zip|gz|exe|deb|tar|rpm",
         "perceiveNofollow" : true,
         "deep" : 2
-    },
-
-    "textChangeThreshold" : 50
+    }
 }

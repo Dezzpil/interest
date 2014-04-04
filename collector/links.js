@@ -49,6 +49,13 @@ function LinksCollector(options) {
     this.config = options.config;
     this.addHostname = ('addHostname' in options) ? options.addHostname : true;
     this.cacheMap = {};
+
+    /**
+     * Очистить кэш ссылок
+     */
+    this.clearCache = function() {
+        this.cacheMap = {};
+    }
 }
 
 util.inherits(LinksCollector, EventEmitter);
@@ -65,7 +72,7 @@ LinksCollector.prototype.parseHTML = function(guidebook, html) {
     currentId = guidebook.getIdD() + '';
 
     if (currentId.split(':').length - 1 >= self.config.crawler.deep) {
-        self.emit('collected', null);
+        self.emit('collected', guidebook, null);
         return;
     }
 
@@ -73,7 +80,7 @@ LinksCollector.prototype.parseHTML = function(guidebook, html) {
     // страницы сайта, добавляем их в путеводитель
     var parser, links = [],
         ignore_list = self.config.crawler.ignore,
-        ignore_regexp = new RegExp("^\/+$" + ignore_list.replace(/\|/g,"|\\.") + "|^\/*#+.*$|^mailto:|file:|^#.{1,}$");
+        ignore_regexp = new RegExp("^\/+$" + ignore_list.replace(/\|/g,"|\\.") + "|^\/*#+.*$|^mailto:|^file:|^ftp:|^#.{1,}$");
 
     parser = new htmlparser2.Parser({
         onopentag : function(name, attrs) {
@@ -91,16 +98,19 @@ LinksCollector.prototype.parseHTML = function(guidebook, html) {
                 // избавляем текущую ссылку от ненужных частей
                 var currentDomain = guidebook.getDomain();
                 if (guidebook.getDomain().match(/^(?:http|https):\/\/(.+)/) != null) {
-                    currentDomain = url.parse(guidebook.getDomain()).hostname;
+                    currentDomain = url.parse(guidebook.getDomain()).hostname + '/';
                 }
 
                 // иногда ссылки на странице указаны абсолютно
-                if (attrs.href.match(/^(?:http|https):\/\/(.+)/) != null) {
+                if (attrs.href.match(/^(?:http:|https:|\/\/)(.+)/) != null) {
 
                     // и иногда это ссылки на внешние ресурсы, которые нас не интересуют
                     if (url.parse(attrs.href).hostname != currentDomain) {
                         return;
                     }
+
+                    if (currentDomain == attrs.href) return;
+
                 } else {
                     if (self.addHostname) {
                         attrs.href = currentDomain + attrs.href;
@@ -126,7 +136,7 @@ LinksCollector.prototype.parseHTML = function(guidebook, html) {
         },
         'onerror' : function(guidebook, err) {
 
-            self.emit('error', err);
+            self.emit('error', guidebook, err);
 
         }
     });

@@ -2,10 +2,10 @@
  * Created by root on 01.04.14.
  */
 
-var LoggersFactory = require('./../drivers/loggers');
-var LinksManager   = require('./../link');
-var LinksGuide     = require('./../libs/linksGuide');
-var DomainDriver   = require('./../drivers/mocks/mysql');
+var LoggersFactory = require('./../driver/loggers');
+var LinksManager   = require('./../manager/link');
+var LinksGuide     = require('./../lib/linksGuide');
+var DomainDriver   = require('./../driver/mocks/mysql');
 var config         = require('./../configs/config.json');
 
 (function() {

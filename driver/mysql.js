@@ -47,10 +47,11 @@ function mysqlDriver(options) {
      * where now() - lastRechange > config.options.timeToReprocessInSec
      * and were tested before lastRechange
      *
-     * @param string pid
-     * @param function callback
+     * @param {String} pid
+     * @param {Number} count
+     * @param {Function} callback
      */
-    self.getLinks = function(pid, callback) {
+    self.getLinks = function(pid, count, callback) {
 
         var queryUp, queryGet,
             diff = config.options.timeToReprocessInSec;
@@ -61,7 +62,7 @@ function mysqlDriver(options) {
                 'UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(lastRechange)>' + diff + ' && ' +
                 'UNIX_TIMESTAMP(lastTest)<UNIX_TIMESTAMP(lastRechange)' +
             ' ORDER BY lastTest ASC' +
-            ' LIMIT ' + config.options.maxProcessLimit;
+            ' LIMIT ' + count;
 
         queryGet =  'SELECT * FROM ' + tableName + ' WHERE idProcess=' + pid +
             ' ORDER BY lastTest ASC';
@@ -140,8 +141,8 @@ function mysqlDriver(options) {
      * @param statusCode {Integer}
      * @param callback {Function}
      */
-    self.setStatusForLink = function(idD, statusCode, callback) {
-        self.setInfoForLink(idD, statusCode, 0, 0, callback);
+    self.setStatusForLink = function(guidebook, statusCode, callback) {
+        self.setInfoForLink(guidebook, statusCode, 0, 0, callback);
     };
 
     /**
@@ -150,9 +151,10 @@ function mysqlDriver(options) {
      * @param statusCode {Integer}
      * @param callback {Function}
      */
-    self.setLinkRecovered = function(idD, statusCode, callback) {
-        idD += '';
-        if (idD.split(':').length > 1) callback(null, null);
+    self.setLinkRecovered = function(guidebook, statusCode, callback) {
+
+        if (guidebook.isSub()) callback(null, null);
+        var idD = guidebook.getIdD();
         mysqlConnection.query(
             'UPDATE '+ tableName +' SET ? WHERE idD="' + idD + '"', {
                 statusRecovery : 1
@@ -171,9 +173,10 @@ function mysqlDriver(options) {
      * @param isBad {Boolean}
      * @param callback {Function}
      */
-    self.setInfoForLink = function(idD, statusCode, percent, isBad, callback) {
-        idD += '';
-        if (idD.split(':').length > 1) callback(null, null);
+    self.setInfoForLink = function(guidebook, statusCode, percent, isBad, callback) {
+
+        if (guidebook.isSub()) callback(null, null);
+        var idD = guidebook.getIdD();
         mysqlConnection.query(
             'UPDATE '+ tableName +' SET ? WHERE idD="' + idD + '"', {
                 idProcess : 0,

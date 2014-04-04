@@ -2,13 +2,13 @@
  * Created by root on 01.04.14.
  */
 
-var ResponseManager = require('./../response');
-var RequestManager = require('./../request');
-var LinksManager   = require('./../link');
-var LoggersFactory = require('./../drivers/loggers');
-var LinksGuide     = require('./../libs/linksGuide');
-var DomainDriver   = require('./../drivers/mocks/mysql');
-var config         = require('./../configs/config.json');
+var ResponseManager = require('./../manager/response');
+var RequestManager  = require('./../manager/request');
+var LinksManager    = require('./../manager/link');
+var LoggersFactory  = require('./../driver/loggers');
+var LinksGuide      = require('./../lib/linksGuide');
+var DomainDriver    = require('./../driver/mocks/mysql');
+var config          = require('./../configs/config.json');
 
 (function(){
 

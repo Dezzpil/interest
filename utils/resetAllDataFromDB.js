@@ -4,9 +4,9 @@
 
 async               = require('async');
 config              = require('./../configs/config.json');
-PageStorageDriver   = require('./../drivers/mongo');
-DomainStorageDriver = require('./../drivers/mysql');
-loggers             = require('./../drivers/loggers');
+PageStorageDriver   = require('./../driver/mongo');
+DomainStorageDriver = require('./../driver/mysql');
+loggers             = require('./../driver/loggers');
 
 loggerProcess = loggers.forge(
     config.loggers.process.type,

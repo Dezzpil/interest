@@ -54,10 +54,52 @@ function RequestManager(options) {
      */
     function terminateRequest(request) {
         try {
-            request.end();
+            request.abort();
         } catch (e) {
             //
         }
+    }
+
+    function prepareUrl(originUrl, targetUrl) {
+
+        var reqOpts = {}, prop;
+
+        // мержим стандартные значения
+        for (prop in requestDefOptions) {
+            reqOpts[prop] = requestDefOptions[prop];
+        }
+
+        if (targetUrl) {
+            // мержим поверх дополнительные значения
+            for (prop in reqOpts) {
+                if (prop in targetUrl) {
+                    reqOpts[prop] = targetUrl[prop];
+                }
+            }
+
+            if (targetUrl.protocol && targetUrl.protocol == 'https:') {
+                reqOpts.port = 443;
+            } else {
+                reqOpts.port = 80;
+            }
+        }
+
+        //console.log(reqOpts);
+
+        // иногда хостнейм не указывается, восстанавливаем
+        if ( ! reqOpts['hostname']) {
+            reqOpts['hostname'] = originUrl['hostname'];
+        }
+
+        if (reqOpts['path'] == null) {
+            reqOpts['path'] = '';
+        }
+
+        if (reqOpts['path'].indexOf('/') != 0) {
+            reqOpts['hostname'] += '/';
+        }
+
+        return reqOpts;
     }
 
     /**
@@ -69,19 +111,10 @@ function RequestManager(options) {
     function redirect(response, guideBook) {
         if ('location' in response.headers) {
 
-            var reqOpts =  requestDefOptions,
+            var originUrl = url.parse(guideBook.getDomain()),
                 redirectUrl = url.parse(response.headers.location);
 
-            if (redirectUrl.protocol && redirectUrl.protocol == 'https:') {
-                reqOpts.port = 443;
-            }
-
-            if (redirectUrl.hostname)
-                reqOpts.hostname = redirectUrl.hostname;
-
-            reqOpts.path = redirectUrl.path;
-
-            self.run(guideBook, reqOpts, (stepToDeep+1));
+            self.run(guideBook, prepareUrl(originUrl, redirectUrl), (stepToDeep+1));
             return true;
         }
         return false;
@@ -126,7 +159,7 @@ function RequestManager(options) {
             if (stepToDeep >= config.request.redirectDeep) {
                 guideBook.markLink(function() {
                     mysql.setStatusForLink(
-                        idD, config.codes.requestMaxdeep,
+                        guideBook, config.codes.requestMaxdeep,
                         function(err, rows) {
                             logger.info('%s MYSQL ROW UPDATED WITH REACH MAX DEEP', idD);
                         }
@@ -143,20 +176,11 @@ function RequestManager(options) {
             // возвращаем значения в исходное положение
             // мержим объекты
 
-            var prop, linkParsed = url.parse(link);
-
-            for (prop in requestDefOptions) {
-                reqOpts[prop] = requestDefOptions[prop];
-            }
-
-            for (prop in reqOpts) {
-                if (prop in linkParsed) {
-                    reqOpts[prop] = linkParsed[prop];
-                }
-            }
+            var linkParsed = url.parse(link);
+            reqOpts = prepareUrl(linkParsed, linkParsed);
         }
 
-        if (request) link = request.hostname + request.path;
+        link = reqOpts.hostname + reqOpts.path;
         logger.info('%s START %s', idD, link);
 
         req = makeRequest(reqOpts, function(response) {
@@ -168,8 +192,9 @@ function RequestManager(options) {
 
             // коды 40Х и 50Х, закрываем лавочку
             if (isBadStatusCode(statusCode)) {
+                terminateRequest(req);
                 guideBook.markLink(function() {
-                    mysql.setStatusForLink(idD, statusCode,
+                    mysql.setStatusForLink(guideBook, statusCode,
                         function(err, rows) {
                             if (err) throw err;
                             logger.info('%s MYSQL ROW UPDATED WITH BAD HTTP CODE', idD);
@@ -206,7 +231,7 @@ function RequestManager(options) {
 
             logger.info('%s PROBLEM WITH REQUEST : %s ', guideBook.getIdD(), e.message, reqOpts);
             guideBook.markLink(function() {
-                mysql.setStatusForLink(idD, config.codes.requestAbbruptly, function(err, rows) {
+                mysql.setStatusForLink(guideBook, config.codes.requestAbbruptly, function(err, rows) {
                     if (err) throw err;
                     logger.info('%s MYSQL ROW UPDATED WITH ABRUPT HTTP ERROR', idD);
                 });
@@ -222,7 +247,7 @@ function RequestManager(options) {
                 if (guideBook.isMarked()) return ;
                 logger.info('%s HTTP LONG REQUEST (more %d msec)', idD, config.request.timeout);
                 guideBook.markLink(function(){
-                    mysql.setStatusForLink(idD, config.codes.requestTimeout,
+                    mysql.setStatusForLink(guideBook, config.codes.requestTimeout,
                         function(err, rows) {
                             if (err) throw err;
                             logger.info('%s MYSQL ROW UPDATED WITH HTTP LONG RESPONSE', idD);

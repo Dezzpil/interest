@@ -40,36 +40,33 @@ function analyzeWorker(options) {
     this.work = function(data) {
 
         // сначала проверим наличие плохих слов в первом тексте
-        var newText, newTextWords, oldText,
-            i, j, word, badword_context = '', badword_id = 0,
-            distance = 0;
+        var newText, newTextWords, oldText, index, i, j,
+            word, badword_context = '', badword_id = 0, distance;
 
-        newText = data[0].toLowerCase().replace(/\s/g, ' ');
+        newText = data[0];
         newTextWords = newText.split(' ');
 
-        for (i in newTextWords) {
-            word = newTextWords[i];
-            if (word in options.badwordslist) {
+        for (word in options.badwordslist) {
+            index = newTextWords.indexOf(word);
+            if (index > -1) {
                 badword_id = options.badwordslist[word].id;
-                for (j = i - 2; j >= i + 2; j++) {
-                    try {
-                        badword_context += newTextWords[j]
-                    } catch (e) {
-                        // no such index
-                    }
+                for (j = index - 2; j <= index + 2; j++) {
+                    if (newTextWords[j]) badword_context += ' ' + newTextWords[j];
                 }
-
-                this.emit('complete', {
-                    badword_context: badword_context,
-                    badword_id: badword_id,
-                    change_percent: 0
-                });
-
-                return ;
             }
+
+            this.emit('complete', {
+                badword_context: badword_context.trim(),
+                badword_id: badword_id,
+                change_percent: 0
+            });
+
+            return ;
         }
 
-        oldText = data[1].toLowerCase().replace(/\s/g,' ');
+        newTextWords = null;
+
+        oldText = data[1].toLowerCase();
 
         // текст может быть дописан или, вообще, переписан заново
         // попарное сравнение слов разумно только для массивов одинаковой длины, но
@@ -78,6 +75,7 @@ function analyzeWorker(options) {
         // на данный момент несущественно, тут надо TODO продумать механизм сравнения 2 текстов
         // пока используем сравнение с использованием расстояния Левенштейна
         distance = ld.computeDistance(oldText, newText);
+        if (oldText.length == 0) oldText = newText;
         distance = Math.floor(distance / oldText.length * 100);
 
         this.emit('complete', {

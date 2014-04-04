@@ -4,8 +4,7 @@
     "description": "bot for detour links from Crawler db in mysql and checks content and collect data for sphinx",
     "keywords": [
         "bot",
-        "interest",
-        "impress"
+        "interest"
     ],
 
     "dependencies": {
@@ -16,7 +15,8 @@
         "mongoose": "~3.8.1",
         "mysql": "~2.0.0-rc2",
         "winston": "~0.7.2",
-        "winston-mongodb": "~0.4.3"
+        "winston-mongodb": "~0.4.3",
+        "ld": "~0.1.0"
     },
     "devDependencies": {},
 

@@ -2,11 +2,11 @@
  * Created by root on 01.04.14.
  */
 
-var RequestManager = require('./../request');
-var LinksManager   = require('./../link');
-var LoggersFactory = require('./../drivers/loggers');
-var LinksGuide     = require('./../libs/linksGuide');
-var DomainDriver   = require('./../drivers/mocks/mysql');
+var RequestManager = require('./../manager/request');
+var LinksManager   = require('./../manager/link');
+var LoggersFactory = require('./../driver/loggers');
+var LinksGuide     = require('./../lib/linksGuide');
+var DomainDriver   = require('./../driver/mocks/mysql');
 var config         = require('./../configs/config.json');
 
 (function() {
@@ -28,10 +28,10 @@ var config         = require('./../configs/config.json');
     linksManager = new LinksManager(options, function(guidebook) {
 
         requestManager = new RequestManager(options);
-        requestManager.on('success', function(data) {
+        requestManager.on('response', function(guidebook, response) {
 
-            data.guidebook.markLink(function() {
-                logger.info('%s COMPLETE', data.guidebook.getIdD());
+            guidebook.markLink(function() {
+                logger.info('%s COMPLETE', guidebook.getIdD());
             });
 
         });
@@ -41,6 +41,7 @@ var config         = require('./../configs/config.json');
 
     linksManager.on('empty', function() {
         logger.info('ITERATION EMPTY ... ');
+        process.exit();
     });
 
     linksManager.on('start', function() {
@@ -48,8 +49,12 @@ var config         = require('./../configs/config.json');
     });
 
     linksManager.on('end', function(guide) {
-        logger.info('ITERATION COMPLETE');
-        //process.exit();
+        logger.info('ITERATION END');
+    });
+
+    linksManager.on('terminated', function(guide) {
+        logger.info('ITERATION TERMINATED');
+        process.exit(1);
     });
 
     domainDriver.getLinks(0, function(err, data) {

@@ -6,7 +6,7 @@ var util           = require('util');
  * Сохранятель для успешного случая
  * Created by dezzpil on 31.03.14.
  */
-function PageSaver(options) {
+function PageManager(options) {
 
     EventEmitter.call(this);
 
@@ -14,29 +14,9 @@ function PageSaver(options) {
         config = options.config,
         logger = options.logger,
         mysql = options.mysql,
-        mongo = options.mongo,
-        guidebook = null,
-        result = null,
-        text = null,
-        code = null;
+        mongo = options.mongo;
 
-    this.setGuideBook = function(GuideBook) {
-        guidebook = GuideBook;
-    };
-
-    this.setAnalyzeResult = function(Result) {
-        result = Result;
-    };
-
-    this.setText = function(Text) {
-        text = Text;
-    };
-
-    this.setStatusCode = function(Code) {
-        code = Code;
-    };
-
-    this.save = function() {
+    this.save = function(guidebook, text, result, code) {
 
         // проверить наличие обязательных данных
         // для сохранения, при отсутствии одного из них,
@@ -62,23 +42,21 @@ function PageSaver(options) {
         // сохраняем данные
         var idD = guidebook.getIdD();
 
-        guidebook.markLink(function() {
-            mongo.savePage(guidebook, text, result, function(err, page) {
-                if (err) logger.info('%s ERROR WHILE SAVING PAGE', idD, err);
-                else logger.info('%s PAGE SAVED', idD);
-            });
-
-            mysql.setInfoForLink(
-                idD, code, result.change_percent, result.badword_id,
-                function(err, rows) {
-                    if (err) logger.info('%s ERROR DOMAIN ROW UPDATING AFTER ANALYZING', idD, err);
-                    else logger.info('%s DOMAIN ROW UPDATED AFTER ANALYZING', idD);
-                }
-            );
+        mongo.savePage(guidebook, text, result, function(err, page) {
+            if (err) logger.info('%s ERROR WHILE SAVING PAGE', idD, err);
+            else logger.info('%s PAGE SAVED', idD);
         });
+
+        mysql.setInfoForLink(
+            guidebook, code, result.change_percent, result.badword_id,
+            function(err, rows) {
+                if (err) logger.info('%s ERROR DOMAIN ROW UPDATING AFTER ANALYZING', idD, err);
+                else logger.info('%s DOMAIN ROW UPDATED AFTER ANALYZING', idD);
+            }
+        );
     }
 
 }
 
-util.inherits(PageSaver, EventEmitter);
-module.exports = PageSaver;
+util.inherits(PageManager, EventEmitter);
+module.exports = PageManager;
