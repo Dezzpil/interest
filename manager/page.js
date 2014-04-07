@@ -18,7 +18,7 @@ function PageManager(options, start_uid) {
         logger = options.logger,
         mysql = options.mysql,
         mongo = options.mongo,
-        uid = start_uid + 1;
+        uid = start_uid;
 
     /**
      * Сохранить страницу и пометить домен как проверенный
@@ -49,6 +49,7 @@ function PageManager(options, start_uid) {
         }
 
         // сохраняем данные
+        uid++;
         var idD = guidebook.getIdD();
 
         async.parallel([
@@ -57,7 +58,6 @@ function PageManager(options, start_uid) {
                     if (err) logger.info('%s ERROR WHILE SAVING PAGE', idD, err);
                     else {
                         logger.info('%s PAGE SAVED', idD);
-                        uid++;
                     }
                     callback(err, true);
                 });
