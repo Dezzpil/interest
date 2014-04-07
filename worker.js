@@ -23,6 +23,7 @@ var TextsCollector      = require('./collector/texts');
 try { process.stdout.setEncoding('binary'); } catch (e) {}
 
 var botPID = parseInt(process.pid);
+var pageUid = 0;
 
 // Логгеры для процесса работы
 
@@ -59,7 +60,6 @@ process.on('uncaughtException', function(error) {
 });
 
 // Установка соединения с базами
-
 var pageStorage = null;
 var domainStorage = null;
 var storageOptions = {
@@ -77,6 +77,15 @@ async.parallel({
     'page' : function(callback) {
         pageStorage = new PageStorageDriver(storageOptions);
         pageStorage.connect(function(err) {
+            callback(err, true);
+        });
+    },
+    'page_uid' : function(callback) {
+        // объект управляющий сохранением и завершением работы с
+        // гайдбуком по разным причинам, настраивается в зависимости от
+        // ситуации
+        pageStorage.findPageWithMaxUid(function(err, page) {
+            if (page && page.uid >= 0) pageUid = page.uid;
             callback(err, true);
         });
     }
@@ -110,10 +119,7 @@ async.parallel({
                 'mongo' : pageStorage
             };
 
-        // объект управляющий сохранением и завершением работы с
-        // гайдбуком по разным причинам, настраивается в зависимости от
-        // ситуации
-        page = new PageManager(options);
+        page = new PageManager(options, pageUid);
 
         linksCollector = new LinksCollector(options);
 

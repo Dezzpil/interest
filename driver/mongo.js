@@ -74,18 +74,33 @@ function mongoDriver(options) {
                 callback(err, result);
             }
         );
+    };
+
+    /**
+     *
+     * @param {Function} callback
+     */
+    self.findPageWithMaxUid = function(callback) {
+        pageModel.findOne(
+            {}, null, { sort : { uid: -1, date_created : -1}},
+            function(err, result) {
+                callback(err, result);
+            }
+        );
     }
 
     /**
      * Save new page document, get err and page document in callback
      * @param {LinksGuideBook} guidebook
+     * @param {Number} uid
      * @param {String} text
      * @param {{change_percent: number, isBad: boolean, badWord: string}} analyzeResult
      * @param {function} callback
      */
-    self.savePage = function(guidebook, text, analyzeResult, callback) {
+    self.savePage = function(guidebook, uid, text, analyzeResult, callback) {
         pageModel.create({
             id : guidebook.getIdD(),
+            uid : uid,
             url : guidebook.getDomain(),
             category :guidebook.getGroups(),
             content : text,

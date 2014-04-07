@@ -2,92 +2,92 @@
  * Created by dezzpil on 10.01.14
  */
 
-function mongoMockDriver() {
+function mongoMockDriver(options) {
 
-    var self = this, config = {},
-        logger = null, connection = null;
-
-    self.setLogger = function(object) {
-        loggerProcess = object;
-        return self;
-    };
-    
-    self.setConfig = function(cfg) {
-        config = cfg;
-        return self;
-    };
+    var self = this,
+        logger = options.logger,
+        config = options.config.mongo,
+        connection = null;
 
     self.connect = function(callback) {
         loggerProcess.info('MONGODB - connection established!');
+        if (callback) callback()
     };
 
     /**
-     * Обнулить все собранные ботом данные
-     * Данные восстановить не удасться !!!
+     * Find page documents by page id, sorted DESC by date_created
+     * @param {string} id
+     * @param {function} callback
      */
-    self.removeAllDocs = function(callback) {};
-
-    self.findPagesById = function(linkId, callback) {
-        callback(null, {});
+    self.findPagesById = function(id, callback) {
+        if (callback) callback(null, {})
     };
 
-    self.savePage = function(guidebook, pid, charset, html, analyzeResult, callback) {
-        if (callback) callback(null, {});
-    };
-
-    self.isContainBadWord = function(impress) {
-        return impress.containBadWord;
-    };
-
-    self.isBadCharset = function(impress) {
-        return impress.charset.toLowerCase() != 'utf-8';
-    };
-
-    self.saveFerryTask = function(linkIdLst, pid, callback) {
-        callback(null, {});
-    };
-
-    self.getFerryTask = function(callback) {
-        return callback(null, {});
-    };
-
-    self.getText = function(urlId, callback) {
-        //
-    };
-
-    self.removeText = function(urlId, callback) {
-        //
+    /**
+     * Find page documents by url, sorted DESC by date_created
+     * @param {string} url
+     * @param {function} callback
+     */
+    self.findPagesByUrl = function(url, callback) {
+        if (callback) callback(null, {})
     };
 
     /**
      *
-     * @param impress {object}
-     * @param content {string}
-     * @param callback {function}
+     * @param {Function} callback
      */
-    self.makeTextFromImpress = function(impress, content, callback) {
-        callback(null, {});
+    self.findPageWithMaxUid = function(callback) {
+        if (callback) callback(null, null);
+    }
+
+    /**
+     * Save new page document, get err and page document in callback
+     * @param {LinksGuideBook} guidebook
+     * @param {Number} uid
+     * @param {String} text
+     * @param {{change_percent: number, isBad: boolean, badWord: string}} analyzeResult
+     * @param {function} callback
+     */
+    self.savePage = function(guidebook, uid, text, analyzeResult, callback) {
+        if (callback) callback(null, {});
     };
 
     /**
-     * Remove excess of impress.
-     * We need to keep one impress document (the last one) after text complete
-     * @param impress {object}
-     * @param callback {function}
+     * Remove excess of page documents.
+     * If We need to keep one page document (the given one)
+     * @param {object} page
+     * @param {function} callback
      */
-    self.removeExcessImpresses = function(impress, callback) {
-        callback(null, {});
+    self.removePrevPages = function(page, callback) {
+        if (callback) callback(null, {});
     };
 
     /**
-     * Mark that we done text document from impress document
-     * @param impress {object}
-     * @param callback {function}
+     * Удалить все документы
+     * @param {function} callback
      */
-    self.setImpressFerried = function(impress, callback) {
-        callback(null, {});
+    self.removeAllPages = function(callback) {
+        if (callback) callback(null, {});
+    }
+
+    /**
+     *
+     * @param {object} page
+     * @returns {boolean}
+     */
+    self.hasBadWord = function(page) {
+        return page.has_bad_word;
+    };
+
+    /**
+     *
+     * @param {object} page
+     * @returns {boolean}
+     */
+    self.isBadCharset = function(page) {
+        return page.charset.toLowerCase() != 'utf-8';
     };
 
 }
 
-exports.driver = new mongoMockDriver();
+module.exports = mongoMockDriver()

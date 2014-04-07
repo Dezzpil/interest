@@ -57,13 +57,21 @@ var numCPUs  = require('os').cpus().length;
                 console.log(serverPresentation + 'connection count - %s', count);
             });
 
+            con.on('error', function(err) {
+                try {
+                    con.end(err);
+                } catch (e) {
+
+                }
+                console.log(err.toString());
+            });
+
             con.on('end', function() {
                 console.log(serverPresentation + 'end connection');
             });
 
             con.setEncoding('utf8');
             con.setKeepAlive(true, 100);
-            //con.pipe(con);
 
             var data = [], text = '', worker;
 

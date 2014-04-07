@@ -38,6 +38,7 @@
 //}
 
 exports.page = {
+    uid : Number,
     id : String,
     url : String,
     date_created : Date,

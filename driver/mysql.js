@@ -152,7 +152,9 @@ function mysqlDriver(options) {
      */
     self.setLinkRecovered = function(guidebook, statusCode, callback) {
 
-        if (guidebook.isSub()) callback(null, null);
+        if (guidebook.isSub()) {
+            return callback(null, null);
+        }
         var idD = guidebook.getIdD();
         mysqlConnection.query(
             'UPDATE '+ tableName +' SET ? WHERE idD="' + idD + '"', {
@@ -174,7 +176,10 @@ function mysqlDriver(options) {
      */
     self.setInfoForLink = function(guidebook, statusCode, percent, isBad, callback) {
 
-        if (guidebook.isSub()) callback(null, null);
+        if (guidebook.isSub()) {
+            return callback(null, null);
+        }
+
         var idD = guidebook.getIdD();
         mysqlConnection.query(
             'UPDATE '+ tableName +' SET ? WHERE idD="' + idD + '"', {

@@ -45,6 +45,10 @@ function AnalyzeNodeDriver(options) {
         }
     };
 
+    self.getDummyResult = function() {
+        return getDummyResult();
+    }
+
     /**
      * Разбить текст на части и вернуть список частей
      *
@@ -108,6 +112,15 @@ function AnalyzeNodeDriver(options) {
 
             socket.on('drain', function() {
 
+            })
+
+            socket.on('error', function(err) {
+                try {
+                    socket.end();
+                } catch (e) {
+
+                }
+                self.emit('error', err.toString());
             })
 
         });
