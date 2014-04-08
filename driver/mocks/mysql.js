@@ -40,7 +40,7 @@ function mysqlMockDriver(options) {
     };
 
     this.setStatusForLink = function(guidebook, statusCode, callback) {
-        self.setInfoForLink(idD, statusCode, 0, 0, callback);
+        self.setInfoForLink(guidebook, statusCode, 0, 0, callback);
     };
 
     this.setLinkRecovered = function(guidebook, statusCode, callback) {

@@ -12,13 +12,23 @@ var RequestManager      = require('./manager/request');
 var ResponseManager     = require('./manager/response');
 var LinksManager        = require('./manager/link');
 var PageManager         = require('./manager/page');
-var PageStorageDriver   = require('./driver/mongo');
-var DomainStorageDriver = require('./driver/mysql');
 var AnalyzeDriver       = require('./driver/analyze/node');
 var LoggerDriver        = require('./driver/loggers');
 var LinksGuide          = require('./lib/linksGuide');
 var LinksCollector      = require('./collector/links');
 var TextsCollector      = require('./collector/texts');
+
+if (config.debugmode >= 1) {
+	var DomainStorageDriver = require('./driver/mocks/mysql');
+} else {
+	var DomainStorageDriver = require('./driver/mysql');
+}
+
+if (config.debugmode >= 2) {
+	var PageStorageDriver   = require('./driver/mocks/mongo');
+} else {
+	var PageStorageDriver   = require('./driver/mongo');
+}
 
 try { process.stdout.setEncoding('binary'); } catch (e) {}
 
