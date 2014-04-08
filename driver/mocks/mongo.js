@@ -44,11 +44,12 @@ function mongoMockDriver(options) {
      * Save new page document, get err and page document in callback
      * @param {LinksGuideBook} guidebook
      * @param {Number} uid
-     * @param {String} text
+     * @param {String} title
+     * @param {String} content
      * @param {{change_percent: number, isBad: boolean, badWord: string}} analyzeResult
      * @param {function} callback
      */
-    self.savePage = function(guidebook, uid, text, analyzeResult, callback) {
+    self.savePage = function(guidebook, uid, title, content, analyzeResult, callback) {
         if (callback) callback(null, {});
     };
 

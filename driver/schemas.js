@@ -42,6 +42,7 @@ exports.page = {
     id : String,
     url : String,
     date_created : Date,
+    title : String,
     content : String,
     content_length : Number,
 //    content_charset : String,

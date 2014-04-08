@@ -54,7 +54,8 @@ function TextsCollector() {
 util.inherits(TextsCollector, EventEmitter);
 TextsCollector.prototype.parseHTML = function(guidebook, html) {
 
-    var textInParser = '', parser, self = this,
+    var textInParser = '', titleInParser = '',
+        inTitle = false, parser, self = this,
         storageFnName = 'ontext';
 
     parser = new htmlparser2.Parser({
@@ -64,6 +65,8 @@ TextsCollector.prototype.parseHTML = function(guidebook, html) {
             storageFnName = 'ontext';
             if (tagname == 'script' || tagname == 'style') {
                 storageFnName = 'oncode';
+            } else if (tagname == 'title') {
+                inTitle = true;
             }
         },
 
@@ -71,13 +74,19 @@ TextsCollector.prototype.parseHTML = function(guidebook, html) {
 
             if (tagname == "script" || tagname == 'style') {
                 storageFnName = 'ontext';
+            } else if (inTitle && tagname == 'title') {
+                inTitle = false;
             }
 
             textInParser += ' ';
         },
 
         ontext: function(text) {
-            textInParser += (self.storageFn.obtain(storageFnName))(text);
+            if (inTitle) {
+                titleInParser += (self.storageFn.obtain(storageFnName))(text);
+            } else {
+                textInParser += (self.storageFn.obtain(storageFnName))(text);
+            }
         },
 
         onerror: function(err) {
@@ -85,7 +94,10 @@ TextsCollector.prototype.parseHTML = function(guidebook, html) {
         },
 
         onend: function() {
-            self.emit('collected', guidebook, self.normalizeText(textInParser));
+            var title = self.normalizeText(titleInParser);
+            var content = self.normalizeText(textInParser);
+
+            self.emit('collected', guidebook, content, title);
         }
 
     });

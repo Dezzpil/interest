@@ -24,10 +24,11 @@ function PageManager(options, start_uid) {
      * Сохранить страницу и пометить домен как проверенный
      * @param {LinksGuideBook} guidebook
      * @param {String} text
+     * @param {String} title
      * @param {Object} result
      * @param {NUmber} code
      */
-    this.save = function(guidebook, text, result, code) {
+    this.save = function(guidebook, text, title, result, code) {
 
         code = code ? code : 200;
 
@@ -54,7 +55,7 @@ function PageManager(options, start_uid) {
 
         async.parallel([
             function(callback) {
-                mongo.savePage(guidebook, uid, text, result, function(err, page) {
+                mongo.savePage(guidebook, uid, title, text, result, function(err, page) {
                     if (err) logger.info('%s ERROR WHILE SAVING PAGE', idD, err);
                     else {
                         logger.info('%s PAGE SAVED', idD);

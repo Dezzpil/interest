@@ -164,7 +164,7 @@ async.parallel({
 
         textsCollector = new TextsCollector();
 
-        textsCollector.on('collected', function(guidebook, text) {
+        textsCollector.on('collected', function(guidebook, text, title) {
 
             var prevText = '';
 
@@ -186,7 +186,7 @@ async.parallel({
                     if (err) loggerProcess.info('%s TEXT ANALYZING ERROR', guidebook.getIdD(), err);
 
                     guidebook.markLink(function() {
-                        page.save(guidebook, text, result, 200);
+                        page.save(guidebook, text, title, result, 200);
                     });
                 });
             });
