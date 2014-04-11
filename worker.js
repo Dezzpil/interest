@@ -113,6 +113,7 @@ async.parallel({
 
         // Disconnect from cluster master
         //process.disconnect && process.disconnect();
+        loggerProcess.info('GET SIGTERM. TERMINATED');
         process.exit();
 
     });
