@@ -103,6 +103,22 @@ function AnalyzeNodeDriver(options) {
 
         socket = net.createConnection(config.port, config.host, function() {
 
+            socket.setNoDelay(true);
+            socket.setEncoding('utf8');
+
+            socket.on('error', function(err) {
+                try { socket.end(); } catch(e) { /**/ }
+                callback(getDummyResult(), err.toString());
+            });
+
+            socket.on('data', function(result) {
+                try { socket.end(); } catch(e) { /**/ }
+                result = JSON.parse(result);
+                callback(result);
+            });
+
+            socket.on('drain', function() {})
+
             // передать данные на сервер с небольшой задержкой
             // ведь иногда 2 буфера по какой-то причине
             // прибывают на сервер как один (слипшись)
@@ -110,45 +126,24 @@ function AnalyzeNodeDriver(options) {
                 sendChunks(socket, secondTextChunked);
             });
 
-            socket.on('drain', function() {
-
-            })
-
-            socket.on('error', function(err) {
-                try {
-                    socket.end();
-                } catch (e) {
-
-                }
-                self.emit('error', err.toString());
-            })
-
+            socket.setTimeout(config.waitForAnswer, function() {
+                try { socket.end(); } catch(e) { /**/ }
+                callback(getDummyResult(), 'CONNECTION TIMEOUT');
+            });
         });
 
         firstTextChunked = chunk(firstText, config.chunkLength);
         secondTextChunked = chunk(secondText, config.chunkLength);
-
-        socket.setNoDelay(true);
-        socket.setEncoding('utf8');
-        socket.setTimeout(config.waitForAnswer, function() {
-            socket.end();
-            self.emit('error', 'CONNECTION TIMEOUT');
-        });
-
-        socket.on('data', function(result) {
-            socket.end();
-            result = JSON.parse(result);
-            callback(result);
-        });
-
-        socket.on('error', function(err) {
-            socket.end();
-            callback(getDummyResult(), err);
-        });
     }
 
-
-
+    /**
+     * Запустить передачу текстов на сервер. И
+     * по получению ответа от сервера - выполнить
+     * callback
+     * @param {String} newText
+     * @param {String} prevText
+     * @param {Function} callback
+     */
     this.run = function(newText, prevText, callback) {
 
         newText = newText ? newText : '';

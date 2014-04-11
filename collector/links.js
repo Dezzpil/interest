@@ -93,7 +93,7 @@ LinksCollector.prototype.parseHTML = function(guidebook, html) {
                 return;
             }
 
-            if (attrs.href.match(ignore_regexp) == null) {
+            if (attrs.href.toLowerCase().match(ignore_regexp) == null) {
 
                 // избавляем текущую ссылку от ненужных частей
                 var currentDomain = guidebook.getDomain();

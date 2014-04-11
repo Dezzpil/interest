@@ -32,31 +32,22 @@ function LinksManager(options, callback) {
 
     this.logger = options.logger;
     this.config = options.config;
+    this.callback = callback;
 
     if ( ! this.config) throw new Error('LinksManager : no logger config!');
     if ( ! this.logger) throw new Error('LinksManager : no logger setted!');
     if ( ! callback) throw new Error('LinksManager : no callback setted!');
-
-    // определяем механизм работы обработчика для очереди
-    // обработки путеводителя, запуск очереди происходит позже
-
-    this.queue = async.queue(
-        function (guidebook, afterReady) {
-            guidebook.setQueueCallback(afterReady);
-            callback(guidebook);
-        },
-        this.config.iteration.yields
-    );
 
 }
 
 util.inherits(LinksManager, EventEmitter);
 LinksManager.prototype.run = function(guide) {
 
-    var self = this,
-        config = this.config,
-        logger = this.logger,
-        queue = this.queue;
+    var self = this, queue = null,
+        config = this.config;
+
+    // определяем механизм работы обработчика для очереди
+    // обработки путеводителя, запуск очереди происходит позже
 
     if ( ! guide) {
         return self.emit('empty', null);
@@ -65,6 +56,14 @@ LinksManager.prototype.run = function(guide) {
     if ( ! guide.isEmpty()) {
 
         self.emit('start', guide);
+
+        queue = async.queue(
+            function (guidebook, afterReady) {
+                guidebook.setQueueCallback(afterReady);
+                self.callback(guidebook);
+            },
+            config.iteration.yields
+        );
 
         while ( ! guide.isEmpty()) {
 
@@ -75,6 +74,7 @@ LinksManager.prototype.run = function(guide) {
             });
             guide.next();
         }
+
 
         self.run(guide);
 

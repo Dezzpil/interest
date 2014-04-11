@@ -64,6 +64,7 @@ process.on('uncaughtException', function(error) {
     if (util.isError(error)) {
         loggerErrors.error(error);
         loggerErrors.error(error.stack);
+        process.exit(1);
     } else {
         loggerErrors.error(error);
     }
@@ -96,7 +97,7 @@ async.parallel({
         // ситуации
         pageStorage.findPageWithMaxUid(function(err, page) {
             if (page && page.uid >= 0) pageUid = page.uid;
-            callback(err, true);
+            callback(err, pageUid);
         });
     }
 }, function(error, result) {
@@ -104,13 +105,14 @@ async.parallel({
     loggerProcess.info(result);
     if (error) throw error;
 
+
     process.on('SIGTERM', function () {
 
         // unlock all links
         domainStorage.unlockLinks(null);
 
         // Disconnect from cluster master
-        process.disconnect && process.disconnect();
+        //process.disconnect && process.disconnect();
         process.exit();
 
     });
