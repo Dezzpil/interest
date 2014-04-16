@@ -120,6 +120,7 @@ LinksCollector.prototype.parseHTML = function(guidebook, html) {
                 // если ссылка еще не встречалась, мы сохраняем ее в список
                 // и в индекс, чтобы в дальнейшем ее не проходить
                 if (!(attrs.href in self.cacheMap)) {
+                    attrs.href = attrs.href.replace(/\/\//gi, '/');
                     links.push(attrs.href);
                     self.cacheMap[attrs.href] = true;
                 }

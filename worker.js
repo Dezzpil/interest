@@ -49,15 +49,6 @@ var loggerMemory = LoggerDriver.forge(
     config.loggers.memory.options
 );
 
-process.on('uncaughtException', function(error) {
-    try {
-        loggerErrors.error(error);
-        loggerErrors.error(error.stack);
-    } catch(e) {
-        loggerErrors.error(e);
-    }
-});
-
 // Установка соединения с базами
 var pageStorage = null;
 var domainStorage = null;
@@ -130,6 +121,9 @@ async.parallel({
 
             if (links && links.length) {
                 var i, c = 0;
+
+                guides.push(new LinksGuide());
+
                 // делим собранные ссылки на гид, в соотв.
                 // с указанным в конфиге количеством элементов
                 // для каждой итерации
@@ -277,6 +271,30 @@ async.parallel({
                 if (err) throw err;
             });
         });
+
+
+        process.on('uncaughtException', function(error) {
+            try {
+                loggerErrors.error(error.stack);
+            } catch(e) {
+                loggerErrors.error(e);
+            }
+
+
+            /**
+             * @todo эвристический процесс обработки ошибок
+             * если ошибка повторяется, то, возможно она
+             * критична для процесса и нет необходимости
+             * продолжать работу
+             */
+
+            // unlock all links
+            //domainStorage.unlockLinks(null);
+
+            // restart
+            //linksManager.run();
+        });
+
 
         linksManager.run();
     })();
