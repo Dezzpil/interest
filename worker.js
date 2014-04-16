@@ -36,7 +36,6 @@ var botPID = parseInt(process.pid);
 var pageUid = 0;
 
 // Логгеры для процесса работы
-
 var loggerProcess = LoggerDriver.forge(
     config.loggers.process.type,
     config.loggers.process.options
@@ -46,27 +45,16 @@ var loggerErrors = LoggerDriver.forge(
     config.loggers.errors.options
 );
 var loggerMemory = LoggerDriver.forge(
-    "mongodb",{
-        "db" : config.mongo.db,
-        "host" : config.mongo.host,
-        "port" : config.mongo.port,
-        "username" : config.mongo.username,
-        "password" : config.mongo.password,
-        "timeout" : config.mongo.reconnectTimeout,
-        "collection" : "log",
-        "level" : "info",
-        "silent" : false,
-        "safe" : false
-    }
+    config.loggers.memory.type,
+    config.loggers.memory.options
 );
 
 process.on('uncaughtException', function(error) {
-    if (util.isError(error)) {
+    try {
         loggerErrors.error(error);
         loggerErrors.error(error.stack);
-        process.exit(1);
-    } else {
-        loggerErrors.error(error);
+    } catch(e) {
+        loggerErrors.error(e);
     }
 });
 
@@ -92,12 +80,9 @@ async.parallel({
         });
     },
     'page_uid' : function(callback) {
-        // объект управляющий сохранением и завершением работы с
-        // гайдбуком по разным причинам, настраивается в зависимости от
-        // ситуации
         pageStorage.findPageWithMaxUid(function(err, page) {
             if (page && page.uid >= 0) pageUid = page.uid;
-            callback(err, pageUid);
+            callback(err, true);
         });
     }
 }, function(error, result) {
@@ -105,15 +90,15 @@ async.parallel({
     loggerProcess.info(result);
     if (error) throw error;
 
-
     process.on('SIGTERM', function () {
+
+		loggerProcess.info('GET SIGTERM. TERMINATED');
 
         // unlock all links
         domainStorage.unlockLinks(null);
 
         // Disconnect from cluster master
         //process.disconnect && process.disconnect();
-        loggerProcess.info('GET SIGTERM. TERMINATED');
         process.exit();
 
     });
@@ -131,7 +116,10 @@ async.parallel({
                 'mysql' : domainStorage,
                 'mongo' : pageStorage
             };
-
+		
+		// объект управляющий сохранением и завершением работы с
+        // гайдбуком по разным причинам, настраивается в зависимости от
+        // ситуации
         page = new PageManager(options, pageUid);
 
         linksCollector = new LinksCollector(options);
@@ -145,7 +133,6 @@ async.parallel({
                 // делим собранные ссылки на гид, в соотв.
                 // с указанным в конфиге количеством элементов
                 // для каждой итерации
-                guides.push(new LinksGuide());
                 for (i in links) {
                     c++;
                     if (c >= config.iteration.count) {

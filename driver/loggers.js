@@ -9,6 +9,12 @@
 
 var winston = require('winston');
 
+winston.addColors({
+    'info' : 'cyan',
+    'error' : 'red',
+    'warn' : 'yellow'
+});
+
 /**
  * @link https://github.com/flatiron/winston/blob/master/docs/transports.md
  *
@@ -20,23 +26,12 @@ var winston = require('winston');
  */
 function forge(type, options) {
 
-    winston.addColors({
-        'info' : 'cyan',
-        'error' : 'red',
-        'warn' : 'green'
-    });
-
-    var logger = new winston.Logger({
-        transports: [
-            new (winston.transports.Console)()
-        ]
-    });
+    var logger = new winston.Logger();
 
     if (type) switch (type.toLowerCase()) {
 
         case "file" :
             logger.add(winston.transports.File, options);
-            logger.remove(winston.transports.Console);
             break;
 
         /**
@@ -45,7 +40,6 @@ function forge(type, options) {
         case "mongodb" :
             require('winston-mongodb').MongoDB;
             logger.add(winston.transports.MongoDB, options);
-            logger.remove(winston.transports.Console);
             break;
 
         case "empty" :
@@ -56,11 +50,14 @@ function forge(type, options) {
                 'log' : function() {}
             };
             break;
+
         case "console" :
-            logger.remove(winston.transports.Console);
             logger.add(winston.transports.Console, options);
             break;
     }
+
+    logger.emitErrs = true;
+    logger.exitOnError = false;
 
     return logger;
 

@@ -31,7 +31,7 @@
         "env": null
     },
 
-    "debug" : 1,
+    "debugmode" : 0,
 
     "codes" : {
         "htmlParseError" : "970",
@@ -56,7 +56,7 @@
     "mysql" : {
         "host" : "localhost",
         "user" : "root",
-        "password": "toor",
+        "password": "Motorola9",
         "dbName" : "Crawler",
         "tableName" : "domain",
         "debug" : false,
@@ -64,20 +64,16 @@
             "timeToReprocessInSec" : 86400,
             "timeOutForRetryInSec" : 60,
             "reconnectAfterInSec" : 5,
-            "onlyGroup" : 3
+            "onlyGroup" : 0
         }
     },
 
     "analyzer" : {
-        "path" : "analyzer/",
-        "fileName" : "analyzer",
-        "maxInstances" : 100,
-        "killSignal" : "SIGKILL",
         "port" : 8124,
         "host" : "localhost",
         "maxConnections" : 10,
         "waitForAnswer" : 10000,
-        "chunkLength" : 5000,
+        "chunkLength" : 4096,
         "chunkGlue" : ".l."
     },
 
@@ -88,23 +84,32 @@
                 "filename" : "./logs/process.log",
                 "maxsize" : 10485760,
                 "maxFiles" : 5,
-                "json" : false
+                "level" : "info",
+                "json" : false,
+                "prettyPrint" : true
             }
         },
         "errors" : {
-            "type" : "file",
+            "type" : "console",
             "options" : {
-                "filename" : "./logs/error.log",
-                "maxsize" : 10485760,
-                "maxFiles" : 5,
+                "level" : "debug",
+                "colorize" : true,
                 "json" : false
             }
         },
-        "tests" : {
-            "type" : "console",
+        "memory" : {
+            "type" : "mongodb",
             "options" : {
-                "level" : "info",
-                "colorize" : true
+                "host" : "localhost",
+                "port" : 27017,
+                "db" : "crawler",
+                "password" : "",
+                "username" : "",
+                "timeout" : 1000,
+                "collection" : "memory",
+                "level" : "debug",
+                "silent" : false,
+                "safe" : false
             }
         }
     },
@@ -117,8 +122,8 @@
     },
 
     "crawler" : {
-        "ignore" : "|js|css|jpg|jpeg|png|gif|bmp|doc|docx|pdf|xls|xlsx|rar|zip|gz|exe|deb|tar|rpm",
+        "ignore" : "|js|css|jpg|jpeg|png|gif|bmp|doc|docx|pdf|xls|xlsx|rar|zip|gz|exe|deb|tar|rpm|ppt",
         "perceiveNofollow" : true,
-        "deep" : 2
+        "deep" : 0
     }
 }
