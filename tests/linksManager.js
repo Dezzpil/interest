@@ -5,7 +5,7 @@
 var LoggersFactory = require('./../driver/loggers');
 var LinksManager   = require('./../manager/link');
 var LinksGuide     = require('./../lib/linksGuide');
-var DomainDriver   = require('./../driver/mocks/mysql');
+var mock_data      = require('./mock_data.json');
 var config         = require('./../configs/config.json');
 
 (function() {
@@ -33,11 +33,11 @@ var config         = require('./../configs/config.json');
         process.exit(1);
     });
 
-    var domainDriver = new DomainDriver(options);
-    options.mysql = domainDriver;
+    var data = [], i;
+    for (i in mock_data) {
+        data.push(mock_data[i]);
+    }
 
-    domainDriver.getLinks(0, config.iteration.count, function(err, data) {
-        linksManager.run(new LinksGuide(data));
-    });
+    linksManager.run(new LinksGuide(data));
 
 })();

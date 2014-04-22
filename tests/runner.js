@@ -1,16 +1,23 @@
 /**
  * Created by dezzpil on 21.01.14.
  */
-var exec   = require('child_process').exec;
-var path   = require('path');
-var util   = require('util');
-var name   = path.basename(process.cwd(), '.js');
+var exec          = require('child_process').exec;
+var path          = require('path');
+var util          = require('util');
+var name          = path.basename(process.cwd(), '.js');
+var config        = require('./../configs/config.json');
+var LoggerFactory = require('./../driver/loggers');
 
 (function(){
 
-    var loggers = require('./../drivers/loggers'),
-        loggerSimple = loggers.forge( "console", {colorize: true }),
-        scriptForTestList = ['depending', 'responseModel'],
+    var logger = LoggerFactory.forge(
+            config.loggers.tests.type,
+            config.loggers.tests.options
+        ),
+        scriptForTestList = [
+            'depending', 'linksManager', 'requestManager',
+            'responseManager', 'linksCollector', 'textsCollector'
+        ],
         options = {
             encoding: 'utf8',
             timeout: 0,
@@ -21,11 +28,10 @@ var name   = path.basename(process.cwd(), '.js');
         };
 
     function startNextTest() {
-        var testScriptName, child;
+        var child, testScriptName = scriptForTestList.shift();
 
-        testScriptName = scriptForTestList.shift();
         if ( ! testScriptName) {
-            loggerSimple.info('%s : all test passed \n', name);
+            logger.info('%s : all test passed \n', name);
             process.exit();
         }
 
@@ -35,13 +41,13 @@ var name   = path.basename(process.cwd(), '.js');
             function(error, stdout, stderr) {
 
                 if (error && stderr) {
-                    loggerSimple.error('%s : %s error\n', name, testScriptName);
+                    logger.error('%s : %s error\n', name, testScriptName);
                     process.exit(1);
                 } else if (error) {
-                    loggerSimple.error('%s : error\n', name, error.stack);
+                    logger.error('%s : error\n', name, error.stack);
                     process.exit(1);
                 } else {
-                    loggerSimple.warn('%s : %s success \n', name, testScriptName)
+                    logger.verbose('%s : %s success \n', name, testScriptName)
                     startNextTest();
                 }
 
@@ -57,13 +63,12 @@ var name   = path.basename(process.cwd(), '.js');
         });
     }
 
-
     var currentDir = path.basename(process.cwd());
     if (currentDir == 'tests') {
         options.cwd = null;
     }
 
-    loggerSimple.info('%s : start', name);
+    logger.info('%s : start', name);
     startNextTest();
 
 })();

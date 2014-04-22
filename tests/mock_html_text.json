@@ -1,7 +1,7 @@
 {
     "0" : {
         "html" : "<!DOCTYPE html><html><head><title>Wazzup!</title></head><body>Кандидат Javascript-наук<script type='text/javascript'>alert('Hello, World!');</script></body></html>",
-        "assert" : "Wazzup! Кандидат Javascript-наук"
+        "assert" : "Кандидат Javascript-наук"
     },
     "1" : {
         "html" : "<a><div>Регистрация: 31.05.2010</div><div> Сообщений: 106 </div><br><div></div></div></td></tr></tbody></table>",

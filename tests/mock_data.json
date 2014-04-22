@@ -1,12 +1,12 @@
 {
     "0" : {
         "idD" : -100,
-        "domain" : "dezzpil.ru",
+        "domain" : "http://yandex.ru",
         "charset" : "utf-8"
     },
     "1" : {
         "idD" : -101,
-        "domain" : "crystalprotection.ru",
+        "domain" : "http://google.com",
         "charset" : "utf-8"
     }
 }

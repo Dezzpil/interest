@@ -1,152 +1,126 @@
 #! /usr/bin/node
 
-// Require need libs for daemon
-var cluster = require('cluster'),
-    cpusCount = require('os').cpus().length,
+var cluster = require('cluster');
+var fs = require('fs');
+var os = require('os');
 
-    processWorkersCount = cpusCount,
-    helperWorkersCount = 1,
+var LoggerDriver = require('./driver/loggers');
 
-    loggers = require('./../drivers/loggers'),
-    loggerProcess = null,
+(function(){
 
-// open with fs to prevent caching in require,
-// so we can require config each time for each script when reload
-    fs = require('fs'),
-    config = {};
+    // Require need libs for daemon
 
-/**
- * Get common config object (use when SIGHUP also)
- * @returns {*}
- */
-function parseConfig() {
+    var cpusCount = os.cpus().length,
+        processWorkersCount = cpusCount,
+        loggerProcess = null,
+        loggerErrors = null,
+        config = {};
 
-    try {
-        var configFile = fs.readFileSync('./../configs/config.json', { 'flag' : 'r' });
-    } catch (e) {
-        var configFile = fs.readFileSync('./configs/config.json', { 'flag' : 'r' });
+    /**
+     * Get common config object (use when SIGHUP also)
+     * @returns {*}
+     */
+    function parseConfig() {
+
+        try {
+            var configFile = fs.readFileSync('./../configs/config.json', { 'flag' : 'r' });
+        } catch (e) {
+            var configFile = fs.readFileSync('./configs/config.json', { 'flag' : 'r' });
+        }
+
+        config = JSON.parse(configFile);
+
+        // defautl values
+        if (config.daemon.workers.process) {
+            processWorkersCount = config.daemon.workers.process;
+        }
+
+        loggerProcess = LoggerDriver.forge(
+            config.loggers.process.type,
+            config.loggers.process.options
+        );
+        loggerErrors = LoggerDriver.forge(
+            config.loggers.errors.type,
+            config.loggers.errors.options
+        );
     }
 
-    var configNew = JSON.parse(configFile);
+    /**
+     * Creates a new worker when running as cluster master.
+     * Runs the Crystal Interest Bot otherwisworkerse.
+     */
+    function createProcessWorker() {
+        if (cluster.isMaster) {
+            // Fork a worker if running as cluster master
+            var child = cluster.fork();
 
-    // defautl values
-    if (configNew.daemon.workers.process) {
-        processWorkersCount = configNew.daemon.workers.process;
-    }
-
-    if (configNew.daemon.workers.helper) {
-        helperWorkersCount = configNew.daemon.workers.helper;
-    }
-
-    loggerProcess = LoggerFactory.forge(
-        configNew.LoggerFactory.process.type,
-        configNew.LoggerFactory.process.options
-    );
-
-    config = configNew;
-}
-
-/**
- * Creates a new worker when running as cluster master.
- * Runs the Crystal Interest Bot otherwisworkerse.
- */
-function createProcessWorker() {
-    if (cluster.isMaster) {
-        // Fork a worker if running as cluster master
-        var child = cluster.fork();
-
-        // Respawn the child process after exit
-        // (ex. in case of an uncaught exception)
-        child.on('exit', function (code, signal) {
-            createProcessWorker();
-        });
-    } else {
-        require('./../bot');
-    }
-}
-
-/**
- * Creates a new worker when running as cluster master.
- * Runs the Crystal Interest Bot Helper otherwisworkerse.
- */
-function createHelperWorker() {
-    if (cluster.isMaster) {
-        // Fork a worker if running as cluster master
-        var child = cluster.fork();
-
-        // Respawn the child process after exit
-        // (ex. in case of an uncaught exception)
-        child.on('exit', function (code, signal) {
-            createHelperWorker();
-        });
-    } else {
-        require('./../helper');
-    }
-}
-
-/**
- * Creates the specified number of workers.
- * @param  {Number} n Number of workers to create.
- */
-function createWorkers() {
-    var n = processWorkersCount,
-        m = helperWorkersCount;
-
-    while (n-- > 0) {
-        createProcessWorker();
-    }
-
-    while (m-- > 0) {
-        createHelperWorker();
-    }
-}
-
-/**
- * Kills all workers with the given signal.
- * Also removes all event listeners from workers before sending the signal
- * to prevent respawning.
- * @param  {Number} signal
- */
-function killAllWorkers(signal) {
-    var uniqueID,
-        worker;
-
-    for (uniqueID in cluster.workers) {
-        if (cluster.workers.hasOwnProperty(uniqueID)) {
-            worker = cluster.workers[uniqueID];
-            worker.removeAllListeners();
-            worker.process.kill(signal);
+            // Respawn the child process after exit
+            // (ex. in case of an uncaught exception)
+            child.on('exit', function (code, signal) {
+                createProcessWorker();
+            });
+        } else {
+            require('./../' + config.daemon.workers.script);
         }
     }
-}
 
-/**
- * Restarts the workers.
- */
-process.on('SIGHUP', function () {
+    /**
+     * Creates the specified number of workers.
+     * @param  {Number} n Number of workers to create.
+     */
+    function createWorkers() {
+        var n = processWorkersCount;
+        while (n-- > 0) {
+            createProcessWorker();
+        }
+    }
+
+    /**
+     * Kills all workers with the given signal.
+     * Also removes all event listeners from workers before sending the signal
+     * to prevent respawning.
+     * @param  {Number} signal
+     */
+    function killAllWorkers(signal) {
+        var uniqueID, worker;
+
+        for (uniqueID in cluster.workers) {
+            if (cluster.workers.hasOwnProperty(uniqueID)) {
+                worker = cluster.workers[uniqueID];
+                worker.removeAllListeners();
+                worker.process.kill(signal);
+            }
+        }
+    }
+
+    /**
+     * Restarts the workers.
+     */
+    process.on('SIGHUP', function () {
+
+        parseConfig();
+        loggerProcess.info('***** DAEMON RELOAD START *****');
+
+        killAllWorkers('SIGTERM');
+
+        var t = setTimeout(function(){
+            createWorkers();
+            loggerProcess.info('***** DAEMON RELOAD COMPLETE *****');
+            clearTimeout(t);
+        }, 1000);
+
+    });
+
+    /**
+     * Gracefully Shuts down the workers.
+     */
+    process.on('SIGTERM', function () {
+        killAllWorkers('SIGTERM');
+    });
 
     parseConfig();
-    loggerProcess.info('***** DAEMON RELOAD START *****');
 
-    killAllWorkers('SIGTERM');
-
-    var t = setTimeout(function(){
-        createWorkers();
-        loggerProcess.info('***** DAEMON RELOAD COMPLETE *****');
-        clearTimeout(t);
-    }, 1000);
-
-});
-
-/**
- * Gracefully Shuts down the workers.
- */
-process.on('SIGTERM', function () {
-    killAllWorkers('SIGTERM');
-});
-
-parseConfig();
-
-// run, Forest, run!
-loggerProcess.info('***** PROCESS START *****');
-createWorkers();
+    // run, Forest, run!
+    loggerProcess.info('***** PROCESS START *****');
+    createWorkers();
+})();

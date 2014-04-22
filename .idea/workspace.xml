@@ -2,7 +2,53 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="508e8065-d293-4312-9c3b-0035d12ab7e6" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tests/mock_data.json" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tests/mock_html_links.json" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tests/mock_html_text.json" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.gitmodules" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/analyzer-node/badwords/file.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/analyzer-node/server.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/analyzer-node/worker.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/driver/analyze/node.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/driver/logger.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/driver/mocks/analyzer.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/driver/mocks/mongo.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/driver/mocks/mysql.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/driver/mongo-native.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/driver/mongo.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/driver/mysql.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/driver/schemas.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/examples/badwords.json" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/examples/domain20140113.sql" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/examples/interest-bot-upstart.conf" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/manager/page.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/sphinx" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/statistics/app.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/statistics/config.json" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/statistics/package.json" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/tests/analyzeNodeDriver.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/tests/pageManager.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/utils/resetAllDataFromDB.js" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/utils/statsDataFromDB.js" afterPath="" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/examples/htmlWithLinks.json" afterPath="$PROJECT_DIR$/tests/mock_html_links.json" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/examples/htmlWithText.json" afterPath="$PROJECT_DIR$/tests/mock_html_text.json" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/examples/mysqlMockData.json" afterPath="$PROJECT_DIR$/tests/mock_data.json" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tests/depending.js" afterPath="$PROJECT_DIR$/tests/depending.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/upstart/interest-bot" afterPath="$PROJECT_DIR$/upstart/interest-bot" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tests/linksCollector.js" afterPath="$PROJECT_DIR$/tests/linksCollector.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/linksGuide.js" afterPath="$PROJECT_DIR$/lib/linksGuide.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tests/linksManager.js" afterPath="$PROJECT_DIR$/tests/linksManager.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/driver/loggers.js" afterPath="$PROJECT_DIR$/driver/loggers.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/package.json" afterPath="$PROJECT_DIR$/package.json" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tests/requestManager.js" afterPath="$PROJECT_DIR$/tests/requestManager.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/manager/response.js" afterPath="$PROJECT_DIR$/manager/response.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tests/responseManager.js" afterPath="$PROJECT_DIR$/tests/responseManager.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tests/runner.js" afterPath="$PROJECT_DIR$/tests/runner.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tests/textsCollector.js" afterPath="$PROJECT_DIR$/tests/textsCollector.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/upstart/upstart.0.6.conf" afterPath="$PROJECT_DIR$/upstart/upstart.0.6.conf" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/upstart/upstart.1.10.conf" afterPath="$PROJECT_DIR$/upstart/upstart.1.10.conf" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="interest.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -25,10 +71,46 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name=".gitignore" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/.gitignore">
+      <file leaf-file-name="runner.js" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/tests/runner.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="1" column="5" selection-start="6" selection-end="6" vertical-scroll-proportion="0.016778523" vertical-offset="0" max-vertical-offset="894">
+            <state line="17" column="25" selection-start="533" selection-end="533" vertical-scroll-proportion="0.22824858" vertical-offset="53" max-vertical-offset="1185">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="config.json" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/configs/config.json">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="23" column="11" selection-start="417" selection-end="423" vertical-scroll-proportion="-14.375" vertical-offset="0" max-vertical-offset="1230">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="loggers.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/driver/loggers.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="15" column="23" selection-start="352" selection-end="352" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1080">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="depending.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tests/depending.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="31" column="0" selection-start="909" selection-end="909" vertical-scroll-proportion="0.0" vertical-offset="45" max-vertical-offset="1110">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="requestManager.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tests/requestManager.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="9" column="0" selection-start="302" selection-end="359" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1080">
               <folding />
             </state>
           </provider>
@@ -48,6 +130,24 @@
     <option name="changedFiles">
       <list>
         <option value="$PROJECT_DIR$/.gitignore" />
+        <option value="$PROJECT_DIR$/upstart/interest-bot" />
+        <option value="$PROJECT_DIR$/README.md" />
+        <option value="$PROJECT_DIR$/upstart/upstart.1.10.conf" />
+        <option value="$PROJECT_DIR$/upstart/upstart.0.6.conf" />
+        <option value="$PROJECT_DIR$/configs/mysqlMockData.json" />
+        <option value="$PROJECT_DIR$/package.json" />
+        <option value="$PROJECT_DIR$/lib/linksGuide.js" />
+        <option value="$PROJECT_DIR$/tests/linksManager.js" />
+        <option value="$PROJECT_DIR$/tests/linksCollector.js" />
+        <option value="$PROJECT_DIR$/tests/requestManager.js" />
+        <option value="$PROJECT_DIR$/tests/responseManager.js" />
+        <option value="$PROJECT_DIR$/manager/response.js" />
+        <option value="$PROJECT_DIR$/tests/textsCollector.js" />
+        <option value="$PROJECT_DIR$/tests/mock_html_text.json" />
+        <option value="$PROJECT_DIR$/configs/config.json" />
+        <option value="$PROJECT_DIR$/driver/loggers.js" />
+        <option value="$PROJECT_DIR$/tests/depending.js" />
+        <option value="$PROJECT_DIR$/tests/runner.js" />
       </list>
     </option>
   </component>
@@ -102,6 +202,48 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="interest" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="interest" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="upstart" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="interest" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="interest" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="examples" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="interest" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="interest" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="configs" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
         </subPane>
       </pane>
       <pane id="Scope" />
@@ -109,8 +251,39 @@
   </component>
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="options.lastSelected" value="settings.nodejs" />
+    <property name="options.splitter.main.proportions" value="0.3" />
+    <property name="options.splitter.details.proportions" value="0.2" />
+    <property name="options.searchVisible" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../crystal-interest" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/tests" />
+      <recent name="$PROJECT_DIR$/configs" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/tests" />
+    </key>
   </component>
   <component name="RunManager">
+    <configuration default="true" type="PHPUnitRunConfigurationType" factoryName="PHPUnit">
+      <TestRunner />
+      <method />
+    </configuration>
+    <configuration default="true" type="PhpLocalRunConfigurationType" factoryName="PHP Console">
+      <method />
+    </configuration>
+    <configuration default="true" type="JavascriptDebugType" factoryName="JavaScript Debug" singleton="true">
+      <method />
+    </configuration>
+    <configuration default="true" type="NodeJSConfigurationType" factoryName="Node.js" working-dir="">
+      <browser start="false" url="" with-js-debugger="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="PhpUnitRemoteRunConfigurationType" factoryName="PHPUnit on Server">
+      <method />
+    </configuration>
     <list size="0" />
   </component>
   <component name="ShelveChangesManager" show_recycled="false" />
@@ -124,14 +297,14 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="57" y="786" width="931" height="1056" extended-state="4" />
-    <editor active="true" />
+    <editor active="false" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24915445" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24915445" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
@@ -160,12 +333,174 @@
     </option>
   </component>
   <component name="XDebuggerManager">
-    <breakpoint-manager />
+    <breakpoint-manager>
+      <option name="time" value="1" />
+    </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/.gitignore">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="1" column="5" selection-start="6" selection-end="6" vertical-scroll-proportion="0.016778523" vertical-offset="0" max-vertical-offset="894">
+        <state line="1" column="5" selection-start="6" selection-end="6" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="600">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/upstart/interest-bot">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="91" column="13" selection-start="2592" selection-end="2592" vertical-scroll-proportion="0.6812081" vertical-offset="756" max-vertical-offset="1965">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/upstart/upstart.1.10.conf">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="4" column="30" selection-start="121" selection-end="121" vertical-scroll-proportion="0.06880734" vertical-offset="0" max-vertical-offset="945">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/upstart/upstart.0.6.conf">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="9" column="19" selection-start="202" selection-end="202" vertical-scroll-proportion="0.15481651" vertical-offset="0" max-vertical-offset="872">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/mock_data.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="7" column="21" selection-start="143" selection-end="143" vertical-scroll-proportion="0.12195122" vertical-offset="0" max-vertical-offset="861">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/package.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="9" column="21" selection-start="212" selection-end="212" vertical-scroll-proportion="0.15288788" vertical-offset="0" max-vertical-offset="883">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/linksCollector.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="13" column="25" selection-start="440" selection-end="440" vertical-scroll-proportion="0.22033899" vertical-offset="0" max-vertical-offset="945">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$APPLICATION_HOME_DIR$/plugins/JavaScriptLanguage/lib/JavaScriptLanguage.jar!/com/intellij/lang/javascript/index/predefined/EcmaScript.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="912" column="9" selection-start="14320" selection-end="14320" vertical-scroll-proportion="0.56546926" vertical-offset="13192" max-vertical-offset="14055">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/encoding/chardet">
+      <provider editor-type-id="com.intellij.persistence.database.editor.CsvTableFileEditorProvider">
+        <state />
+      </provider>
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="12" column="0" selection-start="442" selection-end="442" vertical-scroll-proportion="0.21505377" vertical-offset="0" max-vertical-offset="2475">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/mock_html_text.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="9" column="1" selection-start="462" selection-end="462" vertical-scroll-proportion="0.16343826" vertical-offset="0" max-vertical-offset="826">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/mock_html_links.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="9" column="11" selection-start="314" selection-end="314" vertical-scroll-proportion="0.16343826" vertical-offset="0" max-vertical-offset="826">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/linksManager.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="35" column="21" selection-start="1067" selection-end="1067" vertical-scroll-proportion="0.59322035" vertical-offset="0" max-vertical-offset="885">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/manager/response.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="60" column="9" selection-start="1989" selection-end="1989" vertical-scroll-proportion="-0.005733945" vertical-offset="905" max-vertical-offset="2580">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/responseManager.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="33" column="7" selection-start="1069" selection-end="1069" vertical-scroll-proportion="0.4915254" vertical-offset="60" max-vertical-offset="945">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/worker.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="42" column="0" selection-start="1324" selection-end="1431" vertical-scroll-proportion="0.70469797" vertical-offset="0" max-vertical-offset="4605">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider editor-type-id="MarkdownPreviewEditor">
+        <state />
+      </provider>
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="50" column="0" selection-start="1224" selection-end="1224" vertical-scroll-proportion="0.44930875" vertical-offset="360" max-vertical-offset="1320">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/linksGuide.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="194" column="25" selection-start="4235" selection-end="4235" vertical-scroll-proportion="0.5592841" vertical-offset="2410" max-vertical-offset="3750">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/textsCollector.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="8" column="13" selection-start="263" selection-end="272" vertical-scroll-proportion="0.1323043" vertical-offset="0" max-vertical-offset="907">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/requestManager.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="9" column="0" selection-start="302" selection-end="359" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1080">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/driver/loggers.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="15" column="23" selection-start="352" selection-end="352" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1080">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/configs/config.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="23" column="11" selection-start="417" selection-end="423" vertical-scroll-proportion="-14.375" vertical-offset="0" max-vertical-offset="1230">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/depending.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="31" column="0" selection-start="909" selection-end="909" vertical-scroll-proportion="0.0" vertical-offset="45" max-vertical-offset="1110">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/runner.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="17" column="25" selection-start="533" selection-end="533" vertical-scroll-proportion="0.22824858" vertical-offset="53" max-vertical-offset="1185">
           <folding />
         </state>
       </provider>

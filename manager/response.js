@@ -24,6 +24,10 @@ var exec           = require('child_process').exec;
  * @event received передает guidebook, bodyHTML
  * @event detected передает guidebook, charset
  * @event recoded передает guidebook, stdout
+ * @event exec_error передает guidebook, {error}
+ * @event con_error передает guidebook, {error}
+ * @event con_timeout передает guidebook
+ * @event empty передает guidebook
  *
  * @param {object} options
  * Created by dezzpil on 18.11.13.
@@ -34,7 +38,6 @@ function ResponseManager(options) {
     
     var self = this,
         logger = options.logger,
-        mysql = options.mysql,
         config = options.config;
 
     /**
@@ -45,25 +48,26 @@ function ResponseManager(options) {
      * @param {Number} code
      * @returns {boolean}
      */
-    function catchExecErrors(guidebook, err, stderr, code) {
+    function catchExecErrors(guidebook, err, stderr) {
 
+        var error = null;
         if (err || stderr) {
 
-            guidebook.markLink(function() {
-                mysql.setStatusForLink(
-                    guidebook, code,
-                    function(err, rows) {
-                        logger.info('%s MYSQL ROW UPDATED WITH EXEC ERROR', guidebook.getIdD(), (err || stderr));
-                    }
-                );
-            });
+            if (err) error = err;
+            else if (stderr) error = new Error(stderr);
 
+            self.emit('exec_error', guidebook.markLink(), error);
             return true;
         }
 
         return false;
     }
 
+    /**
+     * Обработать тело ответа (определить кодировку и декодировать в utf8)
+     * @param guidebook
+     * @param bodyHTML
+     */
     function process(guidebook, bodyHTML) {
 
         var execOptions, chardetector;
@@ -83,8 +87,7 @@ function ResponseManager(options) {
             execOptions,
             function(err, stdout, stderr) {
 
-                if (catchExecErrors(guidebook, err, stderr,
-                    config.codes.errorWhenChardet)) return ;
+                if (catchExecErrors(guidebook, err, stderr)) return ;
 
                 var recoder,
                     charset = stdout.match(/:(.*)\(/)[1].trim().toLowerCase();
@@ -102,8 +105,7 @@ function ResponseManager(options) {
                     execOptions,
                     function(err, stdout, stderr) {
 
-                        if (catchExecErrors(guidebook, err, stderr,
-                            config.codes.errorWhenEncode)) return ;
+                        if (catchExecErrors(guidebook, err, stderr)) return ;
 
                         self.emit('recoded', guidebook, stdout);
                     }
@@ -136,16 +138,7 @@ function ResponseManager(options) {
         response.setTimeout(
             config.response.timeout,
             function(err) {
-                if (guidebook.isMarked()) return ;
-                logger.info('%s HTTP LONG RESPONSE (more %d msec)', idD, config.response.timeout);
-                guidebook.markLink(function(){
-                    mysql.setStatusForLink(guidebook, config.codes.requestTimeout,
-                        function(err, rows) {
-                            if (err) throw err;
-                            logger.info('%s MYSQL ROW UPDATED WITH HTTP LONG RESPONSE', idD);
-                        }
-                    );
-                });
+                self.emit('con_timeout', guidebook.markLink());
             }
         );
 
@@ -156,30 +149,15 @@ function ResponseManager(options) {
         }).on('end', function() {
 
             if ( ! responseBody || ! responseBody.length) {
-                return guidebook.markLink(function() {
-                    mysql.setStatusForLink(guidebook, config.codes.requestEmpty, function(err, rows) {
-                        logger.info('%s MYSQL ROW UPDATED WITH EMPTY RESPONSE', idD);
-                    });
-                });
+                self.emit('empty', guidebook.markLink());
             }
 
             logger.info('%s CONTENT RECEIVED, %d length', idD, responseBody.length);
             self.emit('received', guidebook, responseBody, process);
 
-            //process(guidebook, responseBody);
-
         }).on('error', function(err) {
 
-            logger.info('%s HTTP ', idD, err);
-            guidebook.markLink(function() {
-                mysql.setStatusForLink(guidebook, config.codes.requestAbbruptly,
-                    function(err, rows) {
-                        if (err) logger.console.error(err);
-                        logger.info('%s MYSQL ROW UPDATED WITH HTTP ERROR', idD);
-                    }
-                );
-            });
-
+            self.emit('con_error', guidebook.markLink(), err);
 
         });
     }

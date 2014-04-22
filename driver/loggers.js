@@ -12,7 +12,8 @@ var winston = require('winston');
 winston.addColors({
     'info' : 'cyan',
     'error' : 'red',
-    'warn' : 'yellow'
+    'warn' : 'yellow',
+    'verbose' : 'green'
 });
 
 /**

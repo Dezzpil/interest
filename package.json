@@ -1,36 +1,29 @@
 {
-    "name": "crystal-interest",
-    "version": "2.0.0",
-    "description": "bot for detour links from Crawler db in mysql and checks content and collect data for sphinx",
+    "name": "interest-bot",
+    "version": "1.0.0",
+    "description": "framework for web-crawling on nodejs",
     "keywords": [
-        "bot",
-        "interest"
+        "bot", "crawler",
+        "web", "interest"
     ],
 
     "dependencies": {
         "async": "~0.2.9",
         "htmlparser2": "~3.3.0",
-        "memwatch": "~0.2.2",
-        "mongodb": "~1.3.19",
-        "mongoose": "~3.8.1",
-        "mysql": "~2.0.0-rc2",
-        "winston": "~0.7.2",
-        "winston-mongodb": "~0.4.3",
-        "ld": "~0.1.0"
+        "winston": "~0.7.2"
     },
     "devDependencies": {},
 
     "scripts": {
         "test" : "node tests/runner.js",
-        "prestart": "node tests/runner.js",
-        "start": "node bot.js"
+        "start": "node worker.js"
     },
 
     "repository": {
         "type": "git",
-        "url": "http://gitlab.crystalteam.ru/n.orlov/bot-crystal-interest.git"
+        "url": "https://github.com/Dezzpil/interest.git"
     },
 
     "author": "Nikita Dezzpil Orlov",
-    "license": "BSD-2-Clause"
+    "license": "GNU GPL"
 }

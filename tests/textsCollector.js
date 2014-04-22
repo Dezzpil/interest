@@ -6,7 +6,7 @@ var LoggersFactory = require('./../driver/loggers');
 var TextsCollector = require('./../collector/texts');
 var LinksGuide     = require('./../lib/linksGuide');
 var config         = require('./../configs/config.json');
-var testHtml       = require('./../configs/htmlWithText.json');
+var mock_text      = require('./mock_html_text.json');
 var async          = require('async');
 
 (function() {
@@ -21,8 +21,8 @@ var async          = require('async');
     guide = new LinksGuide([{idD : 0, link : 'le.et'}]);
     guidebook = guide.getGuideBook();
 
-    for (i in testHtml) {
-        testHmlList.push(testHtml[i]);
+    for (i in mock_text) {
+        testHmlList.push(mock_text[i]);
     }
 
     async.each(testHmlList, function(test, callback) {
