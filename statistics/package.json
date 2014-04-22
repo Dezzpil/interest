@@ -1,0 +1,9 @@
+{
+    "name": "crystal-interest-statistics",
+    "version": "0.0.1",
+    "dependencies": {
+        "express": "3.x",
+        "mongodb": "1.4.x",
+        "mysql": "~2.0.0-rc2"
+    }
+}

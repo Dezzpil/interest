@@ -47,7 +47,7 @@
     "mongo" : {
         "host" : "localhost",
         "port" : 27017,
-        "db" : "crawler",
+        "db" : "crawlerv3",
         "password" : "",
         "username" : "",
         "reconnectTimeout" : 1000
@@ -56,7 +56,7 @@
     "mysql" : {
         "host" : "localhost",
         "user" : "root",
-        "password": "Motorola9",
+        "password": "toor",
         "dbName" : "Crawler",
         "tableName" : "domain",
         "debug" : false,
@@ -102,7 +102,7 @@
             "options" : {
                 "host" : "localhost",
                 "port" : 27017,
-                "db" : "crawler",
+                "db" : "crawlerv3",
                 "password" : "",
                 "username" : "",
                 "timeout" : 1000,
@@ -124,6 +124,6 @@
     "crawler" : {
         "ignore" : "|js|css|jpg|jpeg|png|gif|bmp|doc|docx|pdf|xls|xlsx|rar|zip|gz|exe|deb|tar|rpm|ppt",
         "perceiveNofollow" : true,
-        "deep" : 0
+        "deep" : 1
     }
 }
