@@ -1,6 +1,14 @@
+
+#IDEA
+.idea
+
+# configs path
+configs
+
 # Logs
 logs
 *.log
+*.err
 
 # Runtime data
 pids
